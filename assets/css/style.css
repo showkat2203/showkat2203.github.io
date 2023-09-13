@@ -5,20 +5,16 @@
   width: auto;
   height: auto;
   overflow: hidden;
-  /* display: inline-block; */
-  
-  
-  /* background-size: cover;  */
   margin: -31px; 
   margin-left:-7px;
-  border: 6px solid rgba(37, 40, 37, 0.484); 
+  border: 9px solid rgba(37, 40, 37, 0.484); 
   border-radius: 50% !important;
 }
 
 .profile-pic img {
   width: 100%;
   height: auto;
-}
+} 
 
 .tracker {
   /* visibility: hidden; */
