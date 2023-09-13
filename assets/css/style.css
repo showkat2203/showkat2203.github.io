@@ -175,7 +175,7 @@ blockquote * {
 /* main nav */
 
 nav {
-  background: white;
+  background: rgb(86, 30, 30);
   box-shadow: none;
   height: 0;
 }
@@ -200,7 +200,7 @@ nav i {
 } */
 
 main {
-  background: url(../../assets/img/bg.png) repeat;
+  background: url(../../assets/img/bg1.jpg) repeat;
   padding-left: 190px;
 }
 
@@ -320,7 +320,7 @@ h3 {
 } */
 
 #intro.section {
-  background: #a7ffeb repeat;
+  background: #4d383a repeat; #
   position: relative;
 }
 
@@ -473,7 +473,7 @@ a.hoverline {
 } */
 
 a.hoverline:hover {
-  border-bottom: 3px solid #004d40 !important;
+  border-bottom: 3px solid #64946f !important;
 }
 
 #skills .card.large {
@@ -559,7 +559,7 @@ small {
 /* .teal */
 
 .teal {
-  background-color: #008073 !important;
+  background-color: #5a7f63 !important;
 }
 
 /* .teal {
