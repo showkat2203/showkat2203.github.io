@@ -13,7 +13,7 @@ Welcome to my personal portfolio—a pristine playground where I paint my journe
 ## A Glimpse 🖼️
 <p align="center"> 
   <kbd>
-    <!-- <a href="https://chy.github.io" target="_blank"><img src="examples/preview.gif"> -->
+    <a href="https://chy.github.io" target="_blank"><img src="examples/preview.gif">
   </a>
   </kbd>
 </p>
