@@ -3,9 +3,9 @@
 
 Welcome to my personal portfolio—a pristine playground where I paint my journey as a Software Developer. Explore the artistry at [https://chy.io](https://chy.io).
 
-![GitHub stars](https://img.shields.io/github/stars/showkat2203/showkat.github.io) 
-![GitHub forks](https://img.shields.io/github/forks/showkat2203/showkat.github.io)
-[![Maintenance](https://img.shields.io/badge/maintained-yes-green.svg)](https://github.com/showkat2203/showkat.github.io/commits/master)
+![GitHub stars](https://img.shields.io/github/stars/showkat2203/chy.github.io) 
+![GitHub forks](https://img.shields.io/github/forks/showkat2203/chy.github.io)
+[![Maintenance](https://img.shields.io/badge/maintained-yes-green.svg)](https://github.com/showkat2203/chy.github.io/commits/master)
 [![Website shields.io](https://img.shields.io/badge/website-up-yellow)](http://chy.github.io/)
 [![Ask Me Anything !](https://img.shields.io/badge/ask%20me-linkedin-1abc9c.svg)](https://www.linkedin.com/in/sonnet-n/)
 [![License](http://img.shields.io/:license-mit-blue.svg?style=flat-square)](http://badges.mit-license.org)
