@@ -13,7 +13,7 @@ Welcome to my personal portfolio—a pristine playground where I paint my journe
 ## A Glimpse 🖼️
 <p align="center"> 
   <kbd>
-    <a href="https://chy.io" target="_blank"><img src="examples/preview.gif">
+    <a href="https://showkat2203.github.io" target="_blank"><img src="examples/preview.gif">
   </a>
   </kbd>
 </p>
@@ -43,7 +43,7 @@ Welcome to my personal portfolio—a pristine playground where I paint my journe
 - Contact Info
 - Resume
 
-For a live tour, journey here: **[click me](https://chy.io/)**
+For a live tour, journey here: **[click me](https://showkat2203.github.io/)**
 
 ## Tools of the Trade 🛠️
 - [**GitHub Pages**](https://create-react-app.dev/docs/deployment/#github-pages) - A magical realm for hosting static websites (HTML, CSS, JS).
