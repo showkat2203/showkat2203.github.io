@@ -1,7 +1,7 @@
 # Personal Portfolio ⚡️ 
 *A digital canvas for software artistry.*
 
-Welcome to my personal portfolio—a pristine playground where I paint my journey as a Software Developer. Explore the artistry at [https://chy.io](https://chy.io).
+Welcome to my personal portfolio—a pristine playground where I paint my journey as a Software Developer. Explore the artistry at [https://showkat2203.github.io](https://showkat2203.github.io).
 
 ![GitHub stars](https://img.shields.io/github/stars/showkat2203/chy.github.io) 
 ![GitHub forks](https://img.shields.io/github/forks/showkat2203/chy.github.io)
