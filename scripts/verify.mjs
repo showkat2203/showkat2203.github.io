@@ -420,6 +420,252 @@ for (const width of [320, 360, 414, 768]) {
   await ctx.close();
 }
 
+// --- metadata and structured data ----------------------------------------
+// Search engines are the only reader of most of this, so it is checked here
+// rather than by looking at a page.
+{
+  const ROUTES = ['/', '/publications/', '/cv/', '/blog/', '/blog/reconciliation-is-a-feature/'];
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+
+  for (const route of ROUTES) {
+    await page.goto(`http://localhost:4321${route}`, { waitUntil: 'load' });
+    const head = await page.evaluate(() => ({
+      title: document.title,
+      desc: document.querySelector('meta[name="description"]')?.content ?? '',
+      canonical: document.querySelector('link[rel="canonical"]')?.href ?? '',
+      robots: document.querySelector('meta[name="robots"]')?.content ?? '',
+      ogUrl: document.querySelector('meta[property="og:url"]')?.content ?? '',
+      ogImage: document.querySelector('meta[property="og:image"]')?.content ?? '',
+      h1: [...document.querySelectorAll('h1')].map((h) => h.textContent.trim()),
+      ld: [...document.querySelectorAll('script[type="application/ld+json"]')].map((s) => s.textContent),
+    }));
+
+    const expected = `https://chy.io${route}`;
+    check(`canonical is the served URL on ${route}`, head.canonical === expected, head.canonical);
+    check(`og:url matches canonical on ${route}`, head.ogUrl === expected, head.ogUrl);
+    check(`exactly one h1 on ${route}`, head.h1.length === 1, head.h1.join(' | '));
+    check(
+      `title and description are present and distinct on ${route}`,
+      head.title.length > 10 && head.desc.length > 50 && head.title !== head.desc,
+      `${head.title.length}/${head.desc.length} chars`,
+    );
+    check(
+      `no unsubstituted tokens in the description on ${route}`,
+      !/\{(publications|citations|hIndex)\}/.test(head.desc),
+      head.desc.slice(0, 60),
+    );
+    check(`robots lifts the image preview cap on ${route}`, head.robots.includes('max-image-preview:large'), head.robots);
+
+    check(`one JSON-LD block on ${route}`, head.ld.length === 1, String(head.ld.length));
+    let graph;
+    try {
+      graph = JSON.parse(head.ld[0]);
+    } catch (err) {
+      check(`JSON-LD parses on ${route}`, false, String(err));
+      continue;
+    }
+    check(`JSON-LD parses on ${route}`, true, `${graph['@graph'].length} nodes`);
+    check(`JSON-LD declares the schema.org context on ${route}`, graph['@context'] === 'https://schema.org');
+
+    const nodes = graph['@graph'];
+    const ids = new Set(nodes.map((n) => n['@id']).filter(Boolean));
+    const types = nodes.map((n) => n['@type']);
+    check(`graph carries the Person and WebSite on ${route}`, types.includes('Person') && types.includes('WebSite'), types.join(','));
+    check(
+      `every node is typed and identified on ${route}`,
+      nodes.every((n) => n['@type'] && n['@id']),
+      nodes.filter((n) => !n['@type'] || !n['@id']).length + ' bad',
+    );
+
+    // A reference to an @id this graph never defines is a dangling node.
+    const refs = [];
+    const walk = (value) => {
+      if (Array.isArray(value)) return value.forEach(walk);
+      if (value && typeof value === 'object') {
+        const keys = Object.keys(value);
+        if (keys.length === 1 && keys[0] === '@id') refs.push(value['@id']);
+        else Object.values(value).forEach(walk);
+      }
+    };
+    walk(nodes);
+    const dangling = refs.filter((ref) => !ids.has(ref));
+    check(`no dangling @id references on ${route}`, dangling.length === 0, dangling.join(', '));
+
+    // Every absolute URL in the graph must be on the canonical origin or an
+    // outbound profile — never a localhost or relative leftover.
+    const urls = JSON.stringify(nodes).match(/"https?:\/\/[^"]+"/g) ?? [];
+    const local = urls.filter((u) => u.includes('localhost') || u.includes('127.0.0.1'));
+    check(`no localhost URLs leaked into the graph on ${route}`, local.length === 0, local.join(', '));
+
+    const pageNode = nodes.find((n) => String(n['@id']).endsWith('#page'));
+    check(`the page node names this URL on ${route}`, pageNode?.url === expected, pageNode?.url ?? 'missing');
+
+    if (route !== '/') {
+      const crumbs = nodes.find((n) => n['@type'] === 'BreadcrumbList');
+      const last = crumbs?.itemListElement?.at(-1);
+      check(`breadcrumbs end at this URL on ${route}`, last?.item === expected, last?.item ?? 'missing');
+      check(
+        `breadcrumb positions are sequential on ${route}`,
+        crumbs?.itemListElement?.every((s, i) => s.position === i + 1) === true,
+      );
+    }
+  }
+
+  // The person node: the part that decides whether search engines can tell
+  // who this is.
+  await page.goto('http://localhost:4321/', { waitUntil: 'load' });
+  const person = await page.evaluate(() => {
+    const g = JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent);
+    return g['@graph'].find((n) => n['@type'] === 'Person');
+  });
+  for (const field of ['name', 'url', 'image', 'jobTitle', 'description', 'address', 'sameAs', 'worksFor', 'alumniOf', 'knowsAbout']) {
+    check(`person node has ${field}`, Boolean(person[field]));
+  }
+  check('person links all three profiles', person.sameAs.length === 3, person.sameAs.join(' '));
+  check(
+    'person profile links are absolute https',
+    person.sameAs.every((u) => u.startsWith('https://')),
+    person.sameAs.join(' '),
+  );
+  check('home page is typed as a profile', await page.evaluate(() => {
+    const g = JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent);
+    return g['@graph'].some((n) => n['@type'] === 'ProfilePage');
+  }));
+
+  // Publications: every paper in the list has to be in the graph, with its DOI.
+  await page.goto('http://localhost:4321/publications/', { waitUntil: 'load' });
+  const papers = await page.evaluate(() => {
+    const g = JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent);
+    const nodes = g['@graph'].filter((n) => n['@type'] === 'ScholarlyArticle');
+    const list = g['@graph'].find((n) => n['@type'] === 'ItemList');
+    return {
+      count: nodes.length,
+      rendered: document.querySelectorAll('.pub').length,
+      listed: list?.itemListElement?.length ?? 0,
+      numberOfItems: list?.numberOfItems ?? 0,
+      complete: nodes.every((n) => n.name && n.author?.length && n.datePublished && n.isPartOf?.name),
+      withDoi: nodes.filter((n) => n.identifier?.propertyID === 'DOI').length,
+      withUrl: nodes.filter((n) => n.url).length,
+      // What the page itself shows, so the graph is compared against the page
+      // rather than against a number that goes stale when a paper is added.
+      doisOnPage: document.querySelectorAll('.cite__doi').length,
+      linksOnPage: document.querySelectorAll('.cite__link').length,
+      absolute: nodes.filter((n) => n.url).every((n) => n.url.startsWith('https://')),
+    };
+  });
+  check('every rendered paper is in the graph', papers.count === papers.rendered, `${papers.count} vs ${papers.rendered}`);
+  check('the item list matches the papers', papers.listed === papers.count && papers.numberOfItems === papers.count, `${papers.listed}/${papers.numberOfItems}`);
+  check('every paper has title, authors, year and venue', papers.complete);
+  check(
+    'the graph carries a DOI for every paper that shows one',
+    papers.withDoi === papers.doisOnPage,
+    `${papers.withDoi} in graph, ${papers.doisOnPage} on page`,
+  );
+  check(
+    'the graph links every paper the page links',
+    papers.withUrl === papers.linksOnPage,
+    `${papers.withUrl} in graph, ${papers.linksOnPage} on page`,
+  );
+  check('paper links are absolute', papers.absolute);
+
+  // A post: the article metadata social and search both read.
+  await page.goto('http://localhost:4321/blog/reconciliation-is-a-feature/', { waitUntil: 'load' });
+  const article = await page.evaluate(() => {
+    const g = JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent);
+    const post = g['@graph'].find((n) => n['@type'] === 'BlogPosting');
+    const meta = (prop) => document.querySelector(`meta[property="${prop}"]`)?.content ?? '';
+    return {
+      post,
+      ogType: meta('og:type'),
+      published: meta('article:published_time'),
+      tags: [...document.querySelectorAll('meta[property="article:tag"]')].map((m) => m.content),
+      ogImage: meta('og:image'),
+    };
+  });
+  check('post is typed as a BlogPosting', article.post?.['@type'] === 'BlogPosting');
+  check(
+    'post carries headline, dates, author and word count',
+    Boolean(article.post?.headline && article.post?.datePublished && article.post?.dateModified && article.post?.author && article.post?.wordCount),
+  );
+  check('og:type is article on a post', article.ogType === 'article', article.ogType);
+  check('article:published_time is set', /^\d{4}-\d{2}-\d{2}T/.test(article.published), article.published);
+  check('article tags are emitted', article.tags.length === 2, article.tags.join(','));
+  check(
+    'the post has its own social card',
+    article.ogImage.endsWith('/og/reconciliation-is-a-feature.png'),
+    article.ogImage,
+  );
+  // The default alt describes the portrait, which a post's card does not show.
+  const cardAlt = await page.evaluate(
+    () => document.querySelector('meta[property="og:image:alt"]')?.content ?? '',
+  );
+  check(
+    "the post card's alt text describes the post",
+    cardAlt.startsWith('Reconciliation is a product feature'),
+    cardAlt,
+  );
+
+  // Social cards must actually exist, or every share shows a broken image.
+  for (const card of ['/og.png', '/og/reconciliation-is-a-feature.png']) {
+    const res = await page.request.get(`http://localhost:4321${card}`);
+    check(`social card ${card} is served`, res.status() === 200, String(res.status()));
+  }
+
+  // Internal links must not point at a URL the host would redirect. On GitHub
+  // Pages a directory route without its trailing slash costs a 301.
+  for (const route of ROUTES) {
+    await page.goto(`http://localhost:4321${route}`, { waitUntil: 'load' });
+    const slashless = await page.evaluate(() =>
+      [...document.querySelectorAll('a[href]')]
+        .map((a) => a.getAttribute('href'))
+        .filter((href) => /^\/[a-z0-9-]+(\/[a-z0-9-]+)*$/i.test(href) && !/\.[a-z0-9]+$/i.test(href)),
+    );
+    check(`no internal link skips its trailing slash on ${route}`, slashless.length === 0, slashless.join(', '));
+  }
+
+  await ctx.close();
+}
+
+// --- sitemap and robots --------------------------------------------------
+{
+  const ctx = await browser.newContext();
+  const page = await ctx.newPage();
+
+  const robots = await (await page.request.get('http://localhost:4321/robots.txt')).text();
+  check('robots.txt allows crawling', /Allow:\s*\//.test(robots), robots.split('\n')[1]);
+  check('robots.txt points at the sitemap', /Sitemap:\s*https:\/\/chy\.io\/sitemap-index\.xml/.test(robots));
+
+  const xml = await (await page.request.get('http://localhost:4321/sitemap-0.xml')).text();
+  const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  const mods = [...xml.matchAll(/<lastmod>([^<]+)<\/lastmod>/g)].map((m) => m[1]);
+
+  check('sitemap lists every route', locs.length === 5, locs.length + ': ' + locs.join(' '));
+  check(
+    'sitemap urls all use the directory form',
+    locs.every((loc) => loc.endsWith('/')),
+    locs.filter((loc) => !loc.endsWith('/')).join(' '),
+  );
+  check('every sitemap url has a lastmod', mods.length === locs.length, `${mods.length}/${locs.length}`);
+  check(
+    'lastmod dates are valid and in the past',
+    mods.every((m) => !Number.isNaN(Date.parse(m)) && Date.parse(m) <= Date.now()),
+    mods.join(' '),
+  );
+  check(
+    'lastmod dates are not all identical',
+    new Set(mods).size > 1,
+    `${new Set(mods).size} distinct`,
+  );
+
+  // Each canonical the pages declare must be a URL the sitemap offers.
+  for (const loc of locs) {
+    const res = await page.request.get(loc.replace('https://chy.io', 'http://localhost:4321'));
+    check(`sitemap url ${new URL(loc).pathname} is served`, res.status() === 200, String(res.status()));
+  }
+  await ctx.close();
+}
+
 // --- motion layer --------------------------------------------------------
 {
   // Reduced motion: the layer never turns on, and nothing is left animating.

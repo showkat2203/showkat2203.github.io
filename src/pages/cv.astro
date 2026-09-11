@@ -4,6 +4,7 @@ import Citation from '../components/Citation.astro';
 import InstitutionMark from '../components/InstitutionMark.astro';
 import { getCollection, getEntry } from 'astro:content';
 import { buildRecord, fillTokens, formatAsOf } from '../lib/record';
+import { personId } from '../lib/schema';
 
 const profile = await getEntry('profile', 'main');
 if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
@@ -31,6 +32,9 @@ const record = buildRecord(pubs, scholar.data);
 
 <Base
   title={`CV — ${p.name}`}
+  trail={[{ name: 'CV', path: '/cv/' }]}
+  mainEntity={personId(new URL('/', Astro.site!))}
+  aboutPerson
   description={`Curriculum vitae of ${p.name}: seven years across embedded firmware, distributed cloud infrastructure, and graph machine learning research, with ${record.publications} peer-reviewed publications.`}
   current="cv"
 >

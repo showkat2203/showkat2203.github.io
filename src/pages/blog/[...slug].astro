@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { readingMinutes } from '../../lib/reading';
+import { blogPostingNode, blogStubNode } from '../../lib/schema';
 import { getCollection, getEntry, render } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import type { GetStaticPaths } from 'astro';
@@ -22,6 +23,7 @@ if (!profile) throw new Error('src/content/profile.yaml is missing the "main" re
 const p = profile.data;
 
 const minutes = readingMinutes(post.body);
+const words = post.body?.trim().split(/\s+/).filter(Boolean).length ?? 0;
 const dateLong = post.data.date.toLocaleDateString('en-US', {
   year: 'numeric',
   month: 'long',
@@ -29,10 +31,29 @@ const dateLong = post.data.date.toLocaleDateString('en-US', {
 });
 ---
 
-<Base title={`${post.data.title} — ${p.name}`} description={post.data.description} current="blog" ogType="article">
+<Base
+  title={`${post.data.title} — ${p.name}`}
+  description={post.data.description}
+  current="blog"
+  ogType="article"
+  ogImage={`/og/${post.id}.png`}
+  ogImageAlt={`${post.data.title} — a post by ${p.name}`}
+  trail={[{ name: 'Writing', path: '/blog/' }, { name: post.data.title, path: `/blog/${post.id}/` }]}
+  mainEntity={`${new URL(`/blog/${post.id}/`, Astro.site!).href}#post`}
+  published={post.data.date}
+  tags={post.data.tags}
+  schema={(ctx) => [
+    blogStubNode(ctx),
+    blogPostingNode(ctx, post, {
+      canonical: new URL(`/blog/${post.id}/`, ctx.site),
+      image: new URL(`/og/${post.id}.png`, ctx.site),
+      wordCount: words,
+    }),
+  ]}
+>
   <article class="shell post">
     <header class="post__head">
-      <p class="post__back"><a href="/blog">All posts</a></p>
+      <p class="post__back"><a href="/blog/">All posts</a></p>
       <h1 class="post__t">{post.data.title}</h1>
       <p class="lede post__d">{post.data.description}</p>
       <p class="post__m mono">
@@ -53,7 +74,7 @@ const dateLong = post.data.date.toLocaleDateString('en-US', {
 
     <footer class="post__foot">
       <p>
-        Written by {p.name}. <a href="/blog">More posts</a>, or
+        Written by {p.name}. <a href="/blog/">More posts</a>, or
         <a href={`mailto:${p.email}`}>send a reply by email</a>.
       </p>
     </footer>

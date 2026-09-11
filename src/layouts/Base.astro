@@ -2,6 +2,16 @@
 import '../styles/global.css';
 import { getCollection, getEntry } from 'astro:content';
 import { buildRecord, fillTokens } from '../lib/record';
+import {
+  breadcrumbs,
+  pageNode,
+  personNode,
+  serialiseGraph,
+  websiteNode,
+  type JsonLd,
+  type PageType,
+  type SiteContext,
+} from '../lib/schema';
 
 interface Props {
   title: string;
@@ -9,10 +19,43 @@ interface Props {
   current?: 'home' | 'publications' | 'blog' | 'cv';
   /** Social card override, for blog posts. */
   ogImage?: string;
+  /** What that card shows. Required alongside ogImage, or the alt text would
+   *  still describe the portrait on the default card. */
+  ogImageAlt?: string;
   ogType?: 'website' | 'article';
+  /** What this URL is, for structured data. */
+  pageType?: PageType;
+  /** Breadcrumb steps after Home. Omitted on the home page. */
+  trail?: Array<{ name: string; path: string }>;
+  /** `@id` of this page's principal subject. */
+  mainEntity?: string;
+  /** Set where the page's subject matter really is the person. */
+  aboutPerson?: boolean;
+  /** Extra JSON-LD nodes this page contributes to the graph. */
+  schema?: (ctx: SiteContext) => Array<JsonLd | null>;
+  /** Publication and modification times, for an article. */
+  published?: Date;
+  modified?: Date;
+  /** Tags, emitted as article:tag. */
+  tags?: string[];
 }
 
-const { title, description, current = 'home', ogImage, ogType = 'website' } = Astro.props;
+const {
+  title,
+  description,
+  current = 'home',
+  ogImage,
+  ogImageAlt,
+  ogType = 'website',
+  pageType = 'WebPage',
+  trail = [],
+  mainEntity,
+  aboutPerson = false,
+  schema,
+  published,
+  modified,
+  tags = [],
+} = Astro.props;
 const profile = await getEntry('profile', 'main');
 if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
 const p = profile.data;
@@ -22,14 +65,47 @@ if (!scholar) throw new Error('src/content/scholar.yaml is missing the "main" re
 const record = buildRecord(await getCollection('publications'), scholar.data);
 
 const desc = fillTokens(description ?? p.metaDescription, record);
-const canonical = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', Astro.site);
+// Canonical must name the URL the server serves without redirecting, which
+// for a directory route is the trailing-slash form.
+const path = Astro.url.pathname;
+const canonical = new URL(path.endsWith('/') ? path : `${path}/`, Astro.site);
 const image = new URL(ogImage ?? '/og.png', Astro.site);
+const imageAlt = ogImageAlt ?? `${p.name}, ${p.role}`;
+const site = Astro.site!;
 
+// The Person node is described once and referenced everywhere, so it is built
+// here from the collections rather than per page.
+const experience = await getCollection('experience');
+const cvSections = await getCollection('cv');
+const education = cvSections.find((section) => section.id === 'education');
+
+const ctx: SiteContext = {
+  site,
+  profile: p,
+  siteDescription: fillTokens(p.metaDescription, record),
+  worksFor: experience.find((role) => role.data.current)?.data.org ?? null,
+  alumniOf: (education?.data.entries ?? []).map((entry) => entry.institution),
+  knowsAbout: (await getCollection('domains'))
+    .sort((a, b) => a.data.order - b.data.order)
+    .map((domain) => domain.data.label),
+};
+
+const graph = serialiseGraph([
+  personNode(ctx),
+  websiteNode(ctx),
+  pageNode(ctx, { canonical, type: pageType, title, description: desc, image, mainEntity, aboutPerson }),
+  breadcrumbs(site, canonical, trail),
+  ...(schema?.(ctx) ?? []),
+]);
+
+// Directory form throughout. GitHub Pages serves each route from its own
+// index.html and 301s the slashless spelling to it, so a link without the
+// slash costs every visitor and every crawler an extra hop.
 const nav = [
   { href: '/#work', label: 'Work', key: 'home' },
-  { href: '/publications', label: 'Publications', key: 'publications' },
-  { href: '/blog', label: 'Writing', key: 'blog' },
-  { href: '/cv', label: 'CV', key: 'cv' },
+  { href: '/publications/', label: 'Publications', key: 'publications' },
+  { href: '/blog/', label: 'Writing', key: 'blog' },
+  { href: '/cv/', label: 'CV', key: 'cv' },
   { href: '/#contact', label: 'Contact', key: 'contact' },
 ];
 ---
@@ -43,6 +119,9 @@ const nav = [
     <meta name="description" content={desc} />
     <link rel="canonical" href={canonical.href} />
     <meta name="author" content={p.name} />
+    <!-- Default is index,follow; this only lifts the image-preview cap, which
+         is what lets the portrait and social card show at full size. -->
+    <meta name="robots" content="index, follow, max-image-preview:large" />
 
     <link rel="preload" href="/fonts/source-serif.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/inter-tight.woff2" as="font" type="font/woff2" crossorigin />
@@ -56,16 +135,26 @@ const nav = [
     <meta property="og:image" content={image.href} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content={`${p.name}, ${p.role}`} />
+    <meta property="og:image:alt" content={imageAlt} />
+    <meta property="og:image:type" content="image/png" />
+    {published && <meta property="article:published_time" content={published.toISOString()} />}
+    {(modified ?? published) && (
+      <meta property="article:modified_time" content={(modified ?? published)!.toISOString()} />
+    )}
+    {ogType === 'article' && <meta property="article:author" content={p.name} />}
+    {tags.map((tag) => <meta property="article:tag" content={tag} />)}
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={desc} />
     <meta name="twitter:image" content={image.href} />
+    <meta name="twitter:image:alt" content={imageAlt} />
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="alternate" type="application/rss+xml" title={`${p.name} — writing`} href="/rss.xml" />
     <meta name="theme-color" content="#fbfaf9" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0f1419" media="(prefers-color-scheme: dark)" />
+
+    <script type="application/ld+json" is:inline set:html={graph} />
 
     <script is:inline>
       // Runs before first paint: without it the page renders in the system

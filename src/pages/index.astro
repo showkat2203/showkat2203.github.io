@@ -7,6 +7,7 @@ import CopyEmail from '../components/CopyEmail.astro';
 import InstitutionMark from '../components/InstitutionMark.astro';
 import { readingMinutes } from '../lib/reading';
 import { buildRecord, fillTokens } from '../lib/record';
+import { personId } from '../lib/schema';
 import { getCollection, getEntry } from 'astro:content';
 
 const profile = await getEntry('profile', 'main');
@@ -44,7 +45,12 @@ const news = (await getCollection('news'))
 
 ---
 
-<Base title={`${p.name} — ${p.role}`} current="home">
+<Base
+  title={`${p.name} — ${p.role}`}
+  current="home"
+  pageType="ProfilePage"
+  mainEntity={personId(new URL('/', Astro.site!))}
+>
   <!-- hero ------------------------------------------------------------- -->
   <section class="shell hero">
     <div class="hero__text">
@@ -147,7 +153,7 @@ const news = (await getCollection('news'))
   <section class="shell section" id="publications" aria-labelledby="pubs-t">
     <div class="section__head">
       <h2 class="h2" id="pubs-t">Publications</h2>
-      <a class="section__more" href="/publications">All {record.publications} publications</a>
+      <a class="section__more" href="/publications/">All {record.publications} publications</a>
     </div>
     <ol class="pubs">
       {
@@ -166,7 +172,7 @@ const news = (await getCollection('news'))
       <section class="shell section" id="writing" aria-labelledby="writing-t">
         <div class="section__head">
           <h2 class="h2" id="writing-t">Writing</h2>
-          <a class="section__more" href="/blog">All posts</a>
+          <a class="section__more" href="/blog/">All posts</a>
         </div>
         <div class="posts">
           {posts.map((post) => (
@@ -181,7 +187,7 @@ const news = (await getCollection('news'))
   <section class="shell section" id="experience" aria-labelledby="exp-t">
     <div class="section__head">
       <h2 class="h2" id="exp-t">Experience</h2>
-      <a class="section__more" href="/cv">Full CV</a>
+      <a class="section__more" href="/cv/">Full CV</a>
     </div>
     <ol class="tl">
       {
@@ -235,7 +241,7 @@ const news = (await getCollection('news'))
         </div>
         <div>
           <dt>CV</dt>
-          <dd><a href="/cv">Read on this site</a>, or <a href={p.cv.hosted} download>download the PDF</a></dd>
+          <dd><a href="/cv/">Read on this site</a>, or <a href={p.cv.hosted} download>download the PDF</a></dd>
         </div>
         <div>
           <dt>Status</dt>

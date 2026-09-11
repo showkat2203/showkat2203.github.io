@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Citation from '../components/Citation.astro';
 import { getCollection, getEntry } from 'astro:content';
 import { buildRecord, formatAsOf } from '../lib/record';
+import { publicationListNode, publicationNode } from '../lib/schema';
 
 const profile = await getEntry('profile', 'main');
 if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
@@ -25,6 +26,11 @@ const record = buildRecord(pubs, scholar.data);
 
 <Base
   title={`Publications — ${p.name}`}
+  pageType="CollectionPage"
+  trail={[{ name: 'Publications', path: '/publications/' }]}
+  mainEntity={`${new URL('/publications/', Astro.site!).href}#list`}
+  aboutPerson
+  schema={(ctx) => [publicationListNode(ctx.site, pubs), ...pubs.map((pub) => publicationNode(ctx.site, pub))]}
   description={`All ${counts.all} peer-reviewed publications by ${p.name}: ${counts.journal} journal articles and ${counts.conference} conference papers in ${record.venues.slice(0, 6).join(', ')}, and elsewhere.`}
   current="publications"
 >

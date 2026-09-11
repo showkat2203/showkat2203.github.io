@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import PostCard from '../../components/PostCard.astro';
 import { readingMinutes } from '../../lib/reading';
 import { getCollection, getEntry } from 'astro:content';
+import { blogNode } from '../../lib/schema';
 
 const profile = await getEntry('profile', 'main');
 if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
@@ -17,6 +18,10 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
   title={`Writing — ${p.name}`}
   description={`Posts by ${p.name} on distributed systems, embedded firmware, graph machine learning, and measuring the performance of concurrent systems.`}
   current="blog"
+  pageType="Blog"
+  trail={[{ name: 'Writing', path: '/blog/' }]}
+  mainEntity={`${new URL('/blog/', Astro.site!).href}#blog`}
+  schema={(ctx) => [blogNode(ctx, posts)]}
 >
   <div class="shell head">
     <h1 class="page__t">Writing</h1>

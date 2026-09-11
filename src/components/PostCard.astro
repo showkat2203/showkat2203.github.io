@@ -13,7 +13,7 @@ const date = post.data.date.toLocaleDateString('en-US', { month: 'short', year: 
 ---
 
 <article class="card post">
-  <a class="post__link" href={`/blog/${post.id}`}>
+  <a class="post__link" href={`/blog/${post.id}/`}>
     <Heading class="post__title">{post.data.title}</Heading>
   </a>
   <p class="post__desc">{post.data.description}</p>

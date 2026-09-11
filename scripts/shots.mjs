@@ -10,9 +10,9 @@ const browser = await launch(chromium);
 const shots = [
   ['home-desktop', '/', 1280, 900, true],
   ['home-360', '/', 360, 740, true],
-  ['pubs-desktop', '/publications', 1280, 900, true],
-  ['pubs-360', '/publications', 360, 740, true],
-  ['cv-desktop', '/cv', 1280, 900, false],
+  ['pubs-desktop', '/publications/', 1280, 900, true],
+  ['pubs-360', '/publications/', 360, 740, true],
+  ['cv-desktop', '/cv/', 1280, 900, false],
 ];
 
 for (const [name, path, width, height, fullPage] of shots) {

@@ -7,7 +7,9 @@ const server = await serve();
 const browser = await launch(chromium);
 let failures = 0;
 
-for (const path of ['/', '/publications', '/cv', '/blog', '/blog/reconciliation-is-a-feature']) {
+// Directory form: these are the URLs the site actually serves and declares
+// canonical, so they are the ones worth auditing.
+for (const path of ['/', '/publications/', '/cv/', '/blog/', '/blog/reconciliation-is-a-feature/']) {
   for (const width of [1280, 360]) {
     for (const scheme of ['light', 'dark']) {
     const context = await browser.newContext({ viewport: { width, height: 900 }, colorScheme: scheme });

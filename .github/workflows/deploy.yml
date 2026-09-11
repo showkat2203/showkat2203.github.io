@@ -19,6 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history: the sitemap dates each route from the newest commit
+          # touching its content, and a shallow clone collapses them all onto
+          # one commit. See scripts/lastmod.mjs.
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
