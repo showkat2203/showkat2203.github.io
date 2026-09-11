@@ -13,6 +13,8 @@ if a required field is missing or misspelled.
 | File | Holds |
 | --- | --- |
 | `profile.yaml` | Name, email, links, hero sentence |
+| `prep.yaml` | The interview-prep offer, including the booking link |
+| `series.yaml` | Blog series, for posts meant to be read in order |
 | `scholar.yaml` | Citation count and h-index, with the date they were read |
 | `domains.yaml` | The three practice areas under "What I work on" |
 | `work.yaml` | Selected work entries, each naming a diagram and its stack |
@@ -34,10 +36,49 @@ publisher, derived from the DOI's registrant prefix in
 Author names print exactly as written. Any name matching
 `profile.selfAliases` is bolded automatically.
 
+## Interview prep
+
+`/interview-prep/` describes the free 30-minute sessions: the four formats, who
+they are and are not for, how one runs, and where the credibility comes from.
+All of the copy is in `prep.yaml`.
+
+The booking call to action has two working states and no broken one. With
+`booking.url` set to a Cal.com link it is an outbound link to that booking page;
+with it null the same button becomes the real email address. Either way it is a
+plain anchor, so it works with JavaScript off and the outbound-link pass gives
+the Cal.com version its own tab.
+
+It is deliberately not an inline embed. An embed means a third-party script and
+a modal on a site that loads neither, Cal.com's own booking page is better than
+an embed of it, and the page scores 100 on all four Lighthouse categories as it
+stands. Setting `booking.url` is the only step needed to switch booking on.
+
 ## Writing a post
 
 Add a Markdown file to `src/content/blog/`. The filename becomes the URL, so
-`reconciliation.md` is served at `/blog/reconciliation`.
+`reconciliation.md` is served at `/blog/reconciliation/`.
+
+To put a post in a series, add `series:` with a key from `series.yaml` and
+`seriesOrder:` with its position:
+
+```yaml
+series: system-design
+seriesOrder: 1
+```
+
+The post then shows which part of the series it is and links back to the series
+index at `/blog/series/system-design/`, and the series appears on the writing
+page and on the interview-prep page. Two series are declared and waiting for
+their first post: `system-design` and `object-oriented-design`.
+
+A series with no published post is not built, linked, or indexed anywhere —
+there is no empty shell to land on, and adding a key to `series.yaml` costs
+nothing until a post joins it. `verify` checks that a series is built exactly
+when something links it.
+
+Social cards are generated per post by `npm run og`, which is a separate step
+from the build. A post published before that step runs falls back to the site
+card rather than pointing at a missing image.
 
 ```yaml
 ---
@@ -254,14 +295,15 @@ keyboard focus, the publications filter, copy-to-clipboard, reduced motion,
 image alt text and loading, diagram labels, the blog and its feed, the theme
 toggle and its persistence, institution marks, the motion layer in all three
 of its states, the SVG sanitiser and outbound-link contracts, the research
-record derivation, and the no-JavaScript fallback), `npm run lighthouse`.
+record derivation, the interview-prep page and its booking fallback, blog
+series, and the no-JavaScript fallback), `npm run lighthouse`.
 
 Last run: Lighthouse performance 96–100, accessibility 100, best practices
-96–100, SEO 100 across all four routes; zero axe violations across five routes,
-two widths, and both themes (20 combinations); 221 of 221 behaviour checks
+96–100, SEO 100 across all five routes; zero axe violations across five routes,
+two widths, and both themes (24 combinations); 262 of 262 behaviour checks
 passing.
 
-Best practices is 96 rather than 100 on `/` and `/cv` only inside this sandbox,
+Best practices is 96 rather than 100 on `/` and `/cv/` only inside this sandbox,
 where the eight logo hosts are unreachable: the console errors are the blocked
 requests, and the pages score 100 where those hosts resolve. `/publications`
 and `/blog` carry no logos and score 100 here.
@@ -287,6 +329,8 @@ resolves inside the document it appears in, which `verify` enforces.
 | `/cv/` | `WebPage` about the `Person` | breadcrumbs |
 | `/blog/` | `Blog` | every post, described inline |
 | `/blog/<slug>/` | `WebPage` → `BlogPosting` | the `Blog` it belongs to |
+| `/blog/series/<slug>/` | `CollectionPage` → `CreativeWorkSeries` | each post in the series |
+| `/interview-prep/` | `WebPage` → `Service` | a zero-price `Offer` and one per session format |
 
 A conference paper's proceedings is modelled as a `CreativeWork` and a journal
 issue as a `Periodical`, because only one of the two is genuinely periodical.
@@ -298,12 +342,25 @@ each route from its own `index.html` and 301s the slashless spelling to it, so
 the old mixture meant internal links cost a redirect and canonical pointed at
 one. `verify` fails on any internal link that drops the slash.
 
+The offer is typed as a `Service` with a `price` of 0 rather than no price at
+all, because a search engine reads zero as free and a missing price as unknown.
+
+The CV is published twice, as `/cv/` and as the PDF that page links, so
+`robots.txt` disallows `/cv.pdf`: a PDF that outranks the page drops the reader
+into a file with no navigation, and the two competing for one query helps
+neither.
+
 `lastmod` in the sitemap comes from git: each route is dated by the newest
 commit touching the files it renders (`scripts/lastmod.mjs`), and a route whose
 date cannot be established is left undated rather than given a false one. This
 needs real history, so CI checks out with `fetch-depth: 0` — a shallow clone
 would collapse every file onto one commit. `changefreq` and `priority` are
 omitted because Google ignores both.
+
+Identical `lastmod` dates across routes are normal rather than a bug: one commit
+to the shared layout really does change every page. What `verify` insists on is
+that every `lastmod` matches an actual commit timestamp in this repository, which
+is the check that stamping the build time would fail.
 
 Each post gets its own social card at `public/og/<slug>.png`, generated by
 `npm run og` alongside the site card, so a shared post shows its own title
@@ -375,6 +432,8 @@ every paper has an entry, the stored aggregates are ignored.
 
 ## Optional extras
 
+- `booking.url` in `prep.yaml`: a Cal.com link turns the interview-prep call to
+  action into a booking link. Until then it is the email address, which works.
 - `cv.drive` and `cv.latex` in `profile.yaml`: put a URL in either and a second
   link appears beside the CV download. The committed PDF always works, so
   neither is needed.

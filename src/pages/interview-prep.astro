@@ -1,0 +1,344 @@
+---
+import Base from '../layouts/Base.astro';
+import BookingCta from '../components/BookingCta.astro';
+import { getCollection, getEntry } from 'astro:content';
+import { serviceNode } from '../lib/schema';
+
+const profile = await getEntry('profile', 'main');
+if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
+const p = profile.data;
+
+const entry = await getEntry('prep', 'main');
+if (!entry) throw new Error('src/content/prep.yaml is missing the "main" record');
+const prep = entry.data;
+
+const formats = [...prep.formats].sort((a, b) => a.order - b.order);
+const process = [...prep.process].sort((a, b) => a.order - b.order);
+
+// Series are only worth pointing at once they hold something to read.
+const posts = await getCollection('blog', ({ data }) => !data.draft);
+const series = (await getCollection('series'))
+  .map((s) => ({ ...s, count: posts.filter((post) => post.data.series === s.id).length }))
+  .filter((s) => s.count > 0)
+  .sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base
+  title={`Interview prep — ${p.name}`}
+  description={prep.metaDescription}
+  current="prep"
+  trail={[{ name: 'Interview prep', path: '/interview-prep/' }]}
+  mainEntity={`${new URL('/interview-prep/', Astro.site!).href}#service`}
+  schema={(ctx) => [serviceNode(ctx, prep)]}
+>
+  <div class="shell head">
+    <p class="kicker">{prep.kicker}</p>
+    <h1 class="page__t">{prep.headline}</h1>
+    <p class="lede measure">{prep.lede}</p>
+    <div class="head__cta">
+      <BookingCta url={prep.booking.url} email={p.email} />
+      <p class="head__note">{prep.booking.note}</p>
+    </div>
+  </div>
+
+  <div class="shell">
+    <!-- what a session can be ------------------------------------------- -->
+    <section class="section" aria-labelledby="formats-t">
+      <div class="section__head">
+        <h2 class="h2" id="formats-t">{prep.formatsHeading}</h2>
+      </div>
+      <p class="note measure">{prep.formatsNote}</p>
+      <div class="fmts">
+        {
+          formats.map((f) => (
+            <article class="fmt" data-rule>
+              <h3 class="fmt__t">{f.title}</h3>
+              <p class="fmt__b">{f.body}</p>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+
+    <!-- who it is for ---------------------------------------------------- -->
+    <section class="section" aria-labelledby="fit-t">
+      <div class="section__head">
+        <h2 class="h2" id="fit-t">{prep.fitHeading}</h2>
+      </div>
+      <div class="fit">
+        <div>
+          <h3 class="fit__t">Worth booking if</h3>
+          <ul class="fit__l">{prep.fitFor.map((line) => <li>{line}</li>)}</ul>
+        </div>
+        <div>
+          <h3 class="fit__t">What it is not</h3>
+          <ul class="fit__l fit__l--not">{prep.fitNot.map((line) => <li>{line}</li>)}</ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- how it works ----------------------------------------------------- -->
+    <section class="section" aria-labelledby="how-t">
+      <div class="section__head">
+        <h2 class="h2" id="how-t">{prep.processHeading}</h2>
+      </div>
+      <ol class="steps">
+        {
+          process.map((step) => (
+            <li class="steps__row" data-rule>
+              <h3 class="steps__t">{step.title}</h3>
+              <p class="steps__b">{step.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <!-- where this comes from -------------------------------------------- -->
+    <section class="section" aria-labelledby="who-t">
+      <div class="section__head">
+        <h2 class="h2" id="who-t">{prep.credibilityHeading}</h2>
+      </div>
+      <p class="measure">{prep.credibility}</p>
+      <p class="more"><a href="/cv/">{prep.credibilityLink}</a></p>
+    </section>
+
+    <!-- free written material -------------------------------------------- -->
+    {
+      series.length > 0 && (
+        <section class="section" aria-labelledby="read-t">
+          <div class="section__head">
+            <h2 class="h2" id="read-t">Read first, for free</h2>
+          </div>
+          <p class="note measure">
+            Two series cover the rounds that are hardest to practise alone. Worth reading
+            before a session, so the thirty minutes goes on your gaps rather than the basics.
+          </p>
+          <ul class="tracks">
+            {series.map((s) => (
+              <li class="track" data-rule>
+                <h3 class="track__t">
+                  <a href={`/blog/series/${s.id}/`}>{s.data.title}</a>
+                </h3>
+                <p class="track__b">{s.data.description}</p>
+                <p class="track__n mono">
+                  {s.count} {s.count === 1 ? 'post' : 'posts'}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <!-- book ------------------------------------------------------------- -->
+    <section class="section book" aria-labelledby="book-t">
+      <div class="section__head">
+        <h2 class="h2" id="book-t">{prep.bookingHeading}</h2>
+      </div>
+      <p class="measure">
+        Thirty minutes, one to one, no charge. Say which of the four you want and
+        roughly where you are in the process.
+      </p>
+      <div class="book__cta">
+        <BookingCta url={prep.booking.url} email={p.email} />
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .head {
+    padding-top: clamp(2.25rem, 5vw, 3.5rem);
+  }
+
+  .head .lede {
+    margin-top: 0.85rem;
+  }
+
+  .head__cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1.25rem;
+    margin-top: 1.6rem;
+  }
+
+  .head__note,
+  .note {
+    font-size: var(--t-small);
+    color: var(--sec);
+    max-width: 26rem;
+  }
+
+  .note {
+    max-width: var(--measure);
+    margin-bottom: 1.5rem;
+  }
+
+  .more {
+    margin-top: 0.9rem;
+    font-size: var(--t-meta);
+  }
+
+  /* Four formats in a 2x2. auto-fit gives three across at desktop widths and
+     leaves the fourth stranded on its own row, which reads as an afterthought
+     rather than as the fourth of four. Rule-topped rather than boxed, so they
+     are divisions of one page and not four interchangeable cards. */
+  .fmts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.25rem, 3vw, 2.25rem) clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .fmt {
+    border-top: 2px solid var(--navy);
+    padding-top: 0.9rem;
+  }
+
+  .fmt__t {
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .fmt__b {
+    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--sec);
+    text-wrap: pretty;
+  }
+
+  .fit {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .fit__t {
+    font-family: var(--serif);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .fit__l {
+    list-style: none;
+    padding: 0;
+    margin: 0.9rem 0 0;
+    display: grid;
+    gap: 0.7rem;
+    font-size: 0.9375rem;
+    color: var(--sec);
+    text-wrap: pretty;
+  }
+
+  /* A hairline stub in place of a bullet: present enough to mark the item,
+     quiet enough not to read as a checklist of selling points. */
+  .fit__l li {
+    padding-left: 1.1rem;
+    position: relative;
+  }
+
+  .fit__l li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.72em;
+    width: 0.6rem;
+    height: 1px;
+    background: var(--navy);
+  }
+
+  .fit__l--not li::before {
+    background: var(--rule-strong);
+  }
+
+  .steps {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .steps__row {
+    display: grid;
+    grid-template-columns: 13rem minmax(0, 1fr);
+    gap: 0.35rem 1.5rem;
+    padding-block: 1.1rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .steps__row:first-child {
+    border-top: 0;
+  }
+
+  .steps__t {
+    font-family: var(--serif);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.008em;
+  }
+
+  .steps__b {
+    color: var(--sec);
+    font-size: 0.9375rem;
+    text-wrap: pretty;
+    max-width: var(--measure);
+  }
+
+  .tracks {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: clamp(1.25rem, 3vw, 2.25rem);
+  }
+
+  .track {
+    border-top: 1px solid var(--rule);
+    padding-top: 0.9rem;
+  }
+
+  .tracks > :only-child {
+    max-width: 34rem;
+  }
+
+  .track__t {
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .track__b {
+    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--sec);
+    text-wrap: pretty;
+  }
+
+  .track__n {
+    margin-top: 0.5rem;
+    font-size: var(--t-small);
+    color: var(--sec);
+  }
+
+  .book__cta {
+    margin-top: 1.35rem;
+  }
+
+  @media (max-width: 46rem) {
+    .fmts {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 52rem) {
+    .steps__row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

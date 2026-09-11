@@ -44,6 +44,12 @@ const ROUTES = {
     `${CONTENT}/institutions.yaml`,
   ],
   '/blog/': ['src/pages/blog/index.astro', `${CONTENT}/blog`],
+  '/interview-prep/': [
+    'src/pages/interview-prep.astro',
+    'src/components/BookingCta.astro',
+    `${CONTENT}/prep.yaml`,
+    `${CONTENT}/series.yaml`,
+  ],
 };
 
 /** Newest committer date across `paths`, as an ISO string, or null. */
@@ -67,10 +73,13 @@ function newestCommit(paths) {
  * @returns {Date | undefined} undefined when no date can be established
  */
 export function lastmodFor(pathname) {
-  const post = pathname.match(/^\/blog\/([^/]+)\/$/);
-  const paths = post
-    ? ['src/pages/blog/[...slug].astro', `${CONTENT}/blog/${post[1]}.md`]
-    : ROUTES[pathname];
+  const series = pathname.match(/^\/blog\/series\/([^/]+)\/$/);
+  const post = series ? null : pathname.match(/^\/blog\/([^/]+)\/$/);
+  const paths = series
+    ? ['src/pages/blog/series/[slug].astro', `${CONTENT}/series.yaml`, `${CONTENT}/blog`]
+    : post
+      ? ['src/pages/blog/[...slug].astro', `${CONTENT}/blog/${post[1]}.md`]
+      : ROUTES[pathname];
   if (!paths) return undefined;
   const iso = newestCommit(paths);
   return iso ? new Date(iso) : undefined;

@@ -43,6 +43,11 @@ const news = (await getCollection('news'))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
   .slice(0, 4);
 
+const prepEntry = await getEntry('prep', 'main');
+if (!prepEntry) throw new Error('src/content/prep.yaml is missing the "main" record');
+const prep = prepEntry.data;
+const formats = [...prep.formats].sort((a, b) => a.order - b.order);
+
 ---
 
 <Base
@@ -182,6 +187,23 @@ const news = (await getCollection('news'))
       </section>
     )
   }
+
+  <!-- interview prep ---------------------------------------------------- -->
+  <!-- Placed after the work and the writing rather than above them: a reader
+       who has got this far is the one worth the offer, and leading with it
+       would make the whole page read as a funnel. -->
+  <section class="shell section" id="prep" aria-labelledby="prep-t">
+    <div class="section__head">
+      <h2 class="h2" id="prep-t">Interview prep</h2>
+      <a class="section__more" href="/interview-prep/">How a session works</a>
+    </div>
+    <div class="prep">
+      <p class="prep__b measure">{prep.lede}</p>
+      <ul class="prep__l">
+        {formats.map((format) => <li>{format.title}</li>)}
+      </ul>
+    </div>
+  </section>
 
   <!-- experience ------------------------------------------------------- -->
   <section class="shell section" id="experience" aria-labelledby="exp-t">
@@ -362,6 +384,37 @@ const news = (await getCollection('news'))
     border-top: 1px solid var(--rule);
   }
 
+  .prep {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: clamp(1.25rem, 4vw, 3rem);
+    align-items: start;
+  }
+
+  .prep__b {
+    color: var(--sec);
+    text-wrap: pretty;
+  }
+
+  /* The four formats as a plain list of names: enough to say what is on offer
+     without restating the page it links to. */
+  .prep__l {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.55rem;
+    font-family: var(--serif);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    letter-spacing: -0.008em;
+  }
+
+  .prep__l li {
+    padding-top: 0.55rem;
+    border-top: 1px solid var(--rule);
+  }
+
   .news__row {
     display: grid;
     grid-template-columns: 6.5rem minmax(0, 1fr);
@@ -526,7 +579,8 @@ const news = (await getCollection('news'))
       grid-template-columns: minmax(0, 1fr);
     }
     .tl__row,
-    .news__row {
+    .news__row,
+    .prep {
       grid-template-columns: minmax(0, 1fr);
     }
   }

@@ -1,0 +1,109 @@
+---
+import Base from '../../../layouts/Base.astro';
+import PostCard from '../../../components/PostCard.astro';
+import { readingMinutes } from '../../../lib/reading';
+import { getCollection, getEntry } from 'astro:content';
+import { seriesNode } from '../../../lib/schema';
+import type { CollectionEntry } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+
+/** Order within a series: explicit position first, then oldest to newest. */
+export function orderSeries(posts: CollectionEntry<'blog'>[]): CollectionEntry<'blog'>[] {
+  return [...posts].sort((a, b) => {
+    const ao = a.data.seriesOrder ?? Number.MAX_SAFE_INTEGER;
+    const bo = b.data.seriesOrder ?? Number.MAX_SAFE_INTEGER;
+    return ao - bo || a.data.date.getTime() - b.data.date.getTime();
+  });
+}
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  // Only series that hold something to read get a page, so there are no empty
+  // shells to land on and nothing to index that says "nothing here yet".
+  return (await getCollection('series'))
+    .map((series) => ({ series, posts: orderSeries(posts.filter((p) => p.data.series === series.id)) }))
+    .filter(({ posts: inSeries }) => inSeries.length > 0)
+    .map(({ series, posts: inSeries }) => ({
+      params: { slug: series.id },
+      props: { series, posts: inSeries },
+    }));
+};
+
+interface Props {
+  series: CollectionEntry<'series'>;
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { series, posts } = Astro.props as Props;
+
+const profile = await getEntry('profile', 'main');
+if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
+const p = profile.data;
+---
+
+<Base
+  title={`${series.data.title} — ${p.name}`}
+  description={series.data.description}
+  current="blog"
+  pageType="CollectionPage"
+  trail={[
+    { name: 'Writing', path: '/blog/' },
+    { name: series.data.title, path: `/blog/series/${series.id}/` },
+  ]}
+  mainEntity={`${new URL(`/blog/series/${series.id}/`, Astro.site!).href}#series`}
+  schema={(ctx) => [seriesNode(ctx, { id: series.id, ...series.data }, posts)]}
+>
+  <div class="shell head">
+    <p class="kicker">Series</p>
+    <h1 class="page__t">{series.data.title}</h1>
+    <p class="lede measure">{series.data.description}</p>
+    <p class="count mono">
+      {posts.length} {posts.length === 1 ? 'post' : 'posts'}, in reading order
+    </p>
+  </div>
+
+  <div class="shell section">
+    <h2 class="sr-only">Posts in this series</h2>
+    <div class="list">
+      {
+        posts.map((post) => (
+          <PostCard post={post} readingMinutes={readingMinutes(post.body)} level="h3" />
+        ))
+      }
+    </div>
+    <p class="more"><a href="/blog/">All writing</a></p>
+  </div>
+</Base>
+
+<style>
+  .head {
+    padding-top: clamp(2.25rem, 5vw, 3.5rem);
+  }
+
+  .head .lede {
+    margin-top: 0.85rem;
+  }
+
+  .count {
+    margin-top: 1.1rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--rule);
+    font-size: var(--t-small);
+    color: var(--sec);
+  }
+
+  .list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: 1rem;
+  }
+
+  .list > :only-child {
+    max-width: 34rem;
+  }
+
+  .more {
+    margin-top: 1.75rem;
+    font-size: var(--t-meta);
+  }
+</style>

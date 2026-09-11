@@ -172,12 +172,65 @@ const blog = defineCollection({
     /** Omit or set false to publish. Drafts are excluded from the build. */
     draft: z.boolean().default(false),
     tags: z.array(z.string()).default([]),
+    /** Key from series.yaml. Null leaves the post standing alone. */
+    series: z.string().nullable().default(null),
+    /** Position within the series. Posts without one sort last, by date. */
+    seriesOrder: z.number().int().positive().nullable().default(null),
+  }),
+});
+
+/** Groups of posts meant to be read in order. See src/content/series.yaml. */
+const series = defineCollection({
+  loader: file('src/content/series.yaml'),
+  schema: z.object({
+    order: z.number(),
+    title: z.string(),
+    description: z.string(),
+  }),
+});
+
+/**
+ * The interview-prep offer. `booking.url` null is a working state, not a
+ * placeholder: the page falls back to the email address and loads no
+ * third-party script.
+ */
+const prep = defineCollection({
+  loader: file('src/content/prep.yaml'),
+  schema: z.object({
+    kicker: z.string(),
+    headline: z.string(),
+    lede: z.string(),
+    metaDescription: z.string(),
+    sessionMinutes: z.number().int().positive(),
+    fitHeading: z.string(),
+    fitFor: z.array(z.string()).min(1),
+    fitNot: z.array(z.string()).min(1),
+    formatsHeading: z.string(),
+    formatsNote: z.string(),
+    formats: z
+      .array(z.object({ order: z.number(), title: z.string(), body: z.string() }))
+      .min(1),
+    processHeading: z.string(),
+    process: z
+      .array(z.object({ order: z.number(), title: z.string(), body: z.string() }))
+      .min(1),
+    credibilityHeading: z.string(),
+    credibility: z.string(),
+    credibilityLink: z.string(),
+    bookingHeading: z.string(),
+    booking: z.object({
+      /** Cal.com booking link. Null falls back to the email call to action. */
+      url: z.string().url().nullable(),
+      note: z.string(),
+    }),
   }),
 });
 
 export const collections = {
   profile,
   scholar,
+  prep,
+  series,
   domains,
   work,
   experience,

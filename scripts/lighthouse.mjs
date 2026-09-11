@@ -9,7 +9,7 @@ const page = await browser.newPage();
 await page.goto('http://localhost:4321/');
 
 const results = [];
-for (const path of ['/', '/publications/', '/cv/', '/blog/']) {
+for (const path of ['/', '/publications/', '/interview-prep/', '/cv/', '/blog/']) {
   const r = await lighthouse(`http://localhost:4321${path}`, {
     port: 9222,
     output: 'json',

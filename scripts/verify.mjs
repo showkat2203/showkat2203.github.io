@@ -1,5 +1,8 @@
 /** Behavioural and responsive checks that a11y/Lighthouse do not cover. */
 import { chromium } from 'playwright';
+import { readdir, readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { serve, launch } from './lib.mjs';
 import { sanitiseSvg } from './logo-lib.mjs';
 import { rewriteOutbound } from '../src/integrations/outbound-links.mjs';
@@ -424,7 +427,7 @@ for (const width of [320, 360, 414, 768]) {
 // Search engines are the only reader of most of this, so it is checked here
 // rather than by looking at a page.
 {
-  const ROUTES = ['/', '/publications/', '/cv/', '/blog/', '/blog/reconciliation-is-a-feature/'];
+  const ROUTES = ['/', '/publications/', '/interview-prep/', '/cv/', '/blog/', '/blog/reconciliation-is-a-feature/'];
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
   const page = await ctx.newPage();
 
@@ -627,6 +630,108 @@ for (const width of [320, 360, 414, 768]) {
   await ctx.close();
 }
 
+// --- interview prep and blog series --------------------------------------
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  await page.goto('http://localhost:4321/interview-prep/', { waitUntil: 'networkidle' });
+
+  const prep = await page.evaluate(() => ({
+    h1: document.querySelector('h1')?.textContent?.trim() ?? '',
+    formats: [...document.querySelectorAll('.fmt__t')].map((el) => el.textContent.trim()),
+    fitLists: document.querySelectorAll('.fit__l').length,
+    fitItems: document.querySelectorAll('.fit__l li').length,
+    steps: document.querySelectorAll('.steps__row').length,
+    ctas: [...document.querySelectorAll('.btn')].map((a) => ({
+      href: a.getAttribute('href') ?? '',
+      text: a.textContent.trim(),
+      tag: a.tagName,
+    })),
+    cvLink: !!document.querySelector('a[href="/cv/"]'),
+  }));
+
+  check('interview prep page has its heading', prep.h1.length > 0, prep.h1);
+  check('all four session formats render', prep.formats.length === 4, prep.formats.join(', '));
+  check('the fit section states both sides', prep.fitLists === 2 && prep.fitItems >= 6, `${prep.fitLists} lists, ${prep.fitItems} items`);
+  check('the process steps render', prep.steps === 4, String(prep.steps));
+  check('the page links the CV for its claims', prep.cvLink);
+
+  // The booking call to action must always be a working link, in either state.
+  check('a booking call to action appears twice', prep.ctas.length === 2, String(prep.ctas.length));
+  check(
+    'every booking call to action is a real link',
+    prep.ctas.length > 0 && prep.ctas.every((c) => c.tag === 'A' && c.href.length > 0),
+    JSON.stringify(prep.ctas),
+  );
+  const configured = prep.ctas.every((c) => /^https?:/.test(c.href));
+  const fallback = prep.ctas.every((c) => c.href.startsWith('mailto:'));
+  check(
+    'booking is either a scheduler link or the email fallback, not a dead button',
+    configured || fallback,
+    JSON.stringify(prep.ctas.map((c) => c.href)),
+  );
+  check(
+    'the call to action text says where it goes',
+    prep.ctas.every((c) => (configured ? /Cal\.com/.test(c.text) : /Email/i.test(c.text))),
+    prep.ctas.map((c) => c.text).join(' | '),
+  );
+
+  // The Service node: what makes a free offer legible to a search engine.
+  const service = await page.evaluate(() => {
+    const g = JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent);
+    return g['@graph'].find((n) => n['@type'] === 'Service');
+  });
+  check('the offer is described as a Service', Boolean(service));
+  check('the Service names the person as provider', service?.provider?.['@id']?.endsWith('#person') === true, service?.provider?.['@id']);
+  check('the Service is priced at zero', service?.offers?.price === 0, JSON.stringify(service?.offers));
+  check(
+    'the Service catalogue matches the formats on the page',
+    service?.hasOfferCatalog?.itemListElement?.length === prep.formats.length,
+    `${service?.hasOfferCatalog?.itemListElement?.length} vs ${prep.formats.length}`,
+  );
+
+  // Nav: the new entry exists and marks itself current on its own page.
+  const nav = await page.evaluate(() => ({
+    hrefs: [...document.querySelectorAll('nav a')].map((a) => a.getAttribute('href')),
+    current: document.querySelector('nav a[aria-current="page"]')?.getAttribute('href') ?? '',
+  }));
+  check('nav links interview prep', nav.hrefs.includes('/interview-prep/'), nav.hrefs.join(' '));
+  check('nav marks interview prep current on its page', nav.current === '/interview-prep/', nav.current);
+
+  // The home page points at it without leading with it: after the writing.
+  await page.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
+  const order = await page.evaluate(() => {
+    const ids = [...document.querySelectorAll('section[id]')].map((s) => s.id);
+    return { ids, hasLink: !!document.querySelector('a[href="/interview-prep/"]') };
+  });
+  check('home page links interview prep', order.hasLink);
+  check(
+    'the interview prep block sits after the work and the writing',
+    order.ids.indexOf('prep') > order.ids.indexOf('work') &&
+      order.ids.indexOf('prep') > order.ids.indexOf('publications'),
+    order.ids.join(' > '),
+  );
+
+  // A series with no published post must not exist as a page or a link. It
+  // would be an empty shell to land on and an empty page to index.
+  const built = (await readdir('dist', { recursive: true })).filter((n) => n.endsWith('index.html'));
+  const html = built.map((n) => readFileSync(`dist/${n}`, 'utf8')).join('\n');
+  const seriesKeys = [...(await readFile('src/content/series.yaml', 'utf8')).matchAll(/^([a-z0-9-]+):$/gm)].map((m) => m[1]);
+  check('series are declared in content', seriesKeys.length >= 2, seriesKeys.join(', '));
+  for (const key of seriesKeys) {
+    const page = built.includes(`blog/series/${key}/index.html`);
+    const linked = html.includes(`/blog/series/${key}/`);
+    // Either it has posts and is both built and linked, or it has neither.
+    check(
+      `series "${key}" is built exactly when something links it`,
+      page === linked,
+      `built=${page} linked=${linked}`,
+    );
+  }
+
+  await ctx.close();
+}
+
 // --- sitemap and robots --------------------------------------------------
 {
   const ctx = await browser.newContext();
@@ -634,29 +739,52 @@ for (const width of [320, 360, 414, 768]) {
 
   const robots = await (await page.request.get('http://localhost:4321/robots.txt')).text();
   check('robots.txt allows crawling', /Allow:\s*\//.test(robots), robots.split('\n')[1]);
+  // The CV is published twice; only the page should be indexed.
+  check('robots.txt keeps the CV PDF out of the index', /Disallow:\s*\/cv\.pdf/.test(robots), robots);
   check('robots.txt points at the sitemap', /Sitemap:\s*https:\/\/chy\.io\/sitemap-index\.xml/.test(robots));
 
   const xml = await (await page.request.get('http://localhost:4321/sitemap-0.xml')).text();
   const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
   const mods = [...xml.matchAll(/<lastmod>([^<]+)<\/lastmod>/g)].map((m) => m[1]);
 
-  check('sitemap lists every route', locs.length === 5, locs.length + ': ' + locs.join(' '));
+  // Compared against the canonicals the build emitted, so adding a route
+  // cannot quietly leave it out of the sitemap.
+  const canonicals = new Set(
+    (await readdir('dist', { recursive: true }))
+      .filter((name) => name.endsWith('index.html'))
+      .map((name) => readFileSync(`dist/${name}`, 'utf8').match(/<link rel="canonical" href="([^"]+)"/)?.[1])
+      .filter(Boolean),
+  );
+  const missing = [...canonicals].filter((href) => !locs.includes(href));
+  const extra = locs.filter((loc) => !canonicals.has(loc));
+  check('sitemap lists every page the build produced', missing.length === 0, missing.join(' '));
+  check('sitemap lists nothing the build did not produce', extra.length === 0, extra.join(' '));
+  check('sitemap is not empty', locs.length > 0, `${locs.length} urls`);
   check(
     'sitemap urls all use the directory form',
     locs.every((loc) => loc.endsWith('/')),
     locs.filter((loc) => !loc.endsWith('/')).join(' '),
   );
-  check('every sitemap url has a lastmod', mods.length === locs.length, `${mods.length}/${locs.length}`);
+  // Not every url is required to carry a lastmod: a route whose content has no
+  // commit yet is deliberately left undated rather than given a false date.
+  check('the lastmod mechanism is producing dates', mods.length > 0, `${mods.length}/${locs.length}`);
   check(
     'lastmod dates are valid and in the past',
     mods.every((m) => !Number.isNaN(Date.parse(m)) && Date.parse(m) <= Date.now()),
     mods.join(' '),
   );
-  check(
-    'lastmod dates are not all identical',
-    new Set(mods).size > 1,
-    `${new Set(mods).size} distinct`,
+  // The point of dating from git: every lastmod must be an actual commit time.
+  // Stamping the build time would pass the checks above and fail this one.
+  // Identical dates across routes are fine and often true — one commit to the
+  // shared layout really does change every page.
+  const commits = new Set(
+    execFileSync('git', ['log', '--format=%cI'], { encoding: 'utf8' })
+      .trim()
+      .split('\n')
+      .map((iso) => Date.parse(iso)),
   );
+  const invented = mods.filter((m) => !commits.has(Date.parse(m)));
+  check('every lastmod is a real commit date', invented.length === 0, invented.join(' '));
 
   // Each canonical the pages declare must be a URL the sitemap offers.
   for (const loc of locs) {

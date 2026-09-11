@@ -16,7 +16,7 @@ import {
 interface Props {
   title: string;
   description?: string;
-  current?: 'home' | 'publications' | 'blog' | 'cv';
+  current?: 'home' | 'publications' | 'prep' | 'blog' | 'cv';
   /** Social card override, for blog posts. */
   ogImage?: string;
   /** What that card shows. Required alongside ogImage, or the alt text would
@@ -104,6 +104,7 @@ const graph = serialiseGraph([
 const nav = [
   { href: '/#work', label: 'Work', key: 'home' },
   { href: '/publications/', label: 'Publications', key: 'publications' },
+  { href: '/interview-prep/', label: 'Interview prep', key: 'prep' },
   { href: '/blog/', label: 'Writing', key: 'blog' },
   { href: '/cv/', label: 'CV', key: 'cv' },
   { href: '/#contact', label: 'Contact', key: 'contact' },

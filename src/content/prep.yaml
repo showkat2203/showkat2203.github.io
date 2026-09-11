@@ -1,0 +1,111 @@
+# The interview-prep offer. Everything the page says lives here, so the copy
+# can change without touching the component.
+#
+# booking.url is the Cal.com link. While it is null the page still works: the
+# call to action becomes the real email address instead of a dead button, and
+# no third-party script is loaded at all.
+main:
+  kicker: Free 30-minute sessions
+  headline: Interview prep for big tech
+  lede: >-
+    One-to-one sessions for engineers working toward a loop at a large tech
+    company: the coding rounds, the design round, and the behavioural round
+    that decides more offers than candidates expect. Thirty minutes, no charge.
+
+  metaDescription: >-
+    Free 30-minute interview prep with an engineer who has worked through
+    big-tech loops: mock coding and system design interviews, behavioural
+    interview practice, and career advice for engineers targeting FAANG-style
+    companies.
+
+  sessionMinutes: 30
+
+  # Who the session helps, stated plainly so nobody books the wrong thing.
+  fitHeading: Who this is for
+  fitFor:
+    - Engineers with a loop already booked who want to rehearse under time
+      pressure rather than read more advice.
+    - Engineers a few months out who want a study order instead of a reading
+      list, and an honest read on which round will fail them first.
+    - Engineers switching from a smaller company or from research, where the
+      format is unfamiliar even when the engineering is not.
+  fitNot:
+    - A referral. I do not have one to give, and a referral from a stranger is
+      worth less than a prepared candidate.
+    - Questions from any company's actual question bank. I would not pass those
+      on if I had them.
+    - A guarantee. Nobody can offer one, and an hour with me changes your
+      preparation, not the committee.
+
+  formatsHeading: What a session can be
+  formatsNote: >-
+    Pick one when you book. Thirty minutes is enough for one of these done
+    properly, and not enough for two.
+  formats:
+    - order: 1
+      title: Technical mock
+      body: >-
+        A coding or system design problem run the way the round runs: you drive,
+        I probe, and we stop with ten minutes left so the feedback is specific
+        rather than general. You get the signal an interviewer would have
+        written down.
+    - order: 2
+      title: Behavioural mock
+      body: >-
+        Two or three questions of the kind that open a behavioural round, then a
+        read on what your answers actually demonstrated. This is the round
+        strong engineers most often lose, usually by describing a team's work
+        instead of their own decisions.
+    - order: 3
+      title: Interview preparation
+      body: >-
+        What to study and in what order, given the loop you are facing and the
+        time you have left. Most candidates over-prepare algorithms and
+        under-prepare design and behavioural, and the ratio is fixable.
+    - order: 4
+      title: Career advice
+      body: >-
+        Whether to switch, what level to target, how an offer compares, or how a
+        CV reads to the person screening it. Bring the decision you are stuck
+        on.
+
+  processHeading: How it works
+  process:
+    - order: 1
+      title: Book a slot
+      body: >-
+        Pick a time and say which of the four you want, plus one or two lines of
+        context: the company stage, the round, the date.
+    - order: 2
+      title: Send anything relevant first
+      body: >-
+        A CV, a job description, or the problem you fell over last time. Thirty
+        minutes goes further when I have read something beforehand.
+    - order: 3
+      title: Thirty minutes, one to one
+      body: >-
+        Video call. Mocks run to the clock on purpose, because the time pressure
+        is the part that is hard to practise alone.
+    - order: 4
+      title: Written notes afterwards
+      body: >-
+        A short summary of what I would work on next, so the session is
+        something you can act on a week later.
+
+  # Drawn from the same data as the rest of the site, so it cannot overstate.
+  credibilityHeading: Where this comes from
+  credibility: >-
+    Seven years building distributed systems, cloud infrastructure, and embedded
+    firmware, most recently as a Software Development Engineer at AWS, and
+    earlier at Samsung Research. I have been on both sides of the table, built
+    the contest platform the ICPC runs for more than fifty thousand students a
+    year, and chaired programme committees for two international conferences.
+  credibilityLink: The full record is on the CV
+
+  bookingHeading: Book a session
+  booking:
+    url: null
+    # Shown under the button, whichever call to action is in use.
+    note: >-
+      Sessions are free while I have the time for them. If a slot does not suit,
+      email me and we will find one.

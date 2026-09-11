@@ -540,8 +540,10 @@ html.anim .area {
   --rule-weight: 2px;
 }
 
-/* The first timeline row has no rule to draw — it is the top of the list. */
-html.anim .tl__row:first-child {
+/* The first row of a list has no rule to draw — it is the top of the list, and
+   painting one there would invent a line the page does not have. */
+html.anim .tl__row:first-child,
+html.anim .steps__row:first-child {
   background-image: none;
 }
 

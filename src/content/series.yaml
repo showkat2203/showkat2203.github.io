@@ -1,0 +1,21 @@
+# Blog series. A series groups posts that are meant to be read in order and
+# teach one subject, rather than standing alone.
+#
+# A post joins a series with `series: <key>` and `seriesOrder: <n>` in its front
+# matter. A series with no published posts is not linked or built anywhere, so
+# adding a key here costs nothing until the first post exists.
+system-design:
+  order: 1
+  title: System design
+  # Shown on the series index and on the writing page.
+  description: >-
+    Working through the design round the way it is actually assessed: bounding
+    the problem, choosing where state lives, and being explicit about what
+    breaks under load rather than naming technologies.
+object-oriented-design:
+  order: 2
+  title: Object-oriented design
+  description: >-
+    The low-level design round. Modelling a small domain in code under time
+    pressure, where the grade comes from the boundaries you draw and how the
+    design absorbs the change the interviewer asks for at the end.

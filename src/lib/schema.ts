@@ -271,6 +271,87 @@ export function blogNode(ctx: SiteContext, posts: PostEntry[]): JsonLd {
   };
 }
 
+/**
+ * The interview-prep offer.
+ *
+ * Typed as a `Service` with a zero-price `Offer`, which is the accurate shape
+ * while sessions are free: search engines read a price of 0 as free rather than
+ * as missing. `provider` points at the Person, so the offer inherits the
+ * credibility that node already carries.
+ */
+export function serviceNode(
+  ctx: SiteContext,
+  prep: {
+    headline: string;
+    lede: string;
+    sessionMinutes: number;
+    formats: Array<{ title: string; body: string }>;
+  },
+): JsonLd {
+  const { site } = ctx;
+  const url = abs(site, '/interview-prep/');
+  return {
+    '@type': 'Service',
+    '@id': `${url}#service`,
+    name: prep.headline,
+    description: prep.lede,
+    url,
+    serviceType: 'Technical interview preparation',
+    provider: { '@id': personId(site) },
+    audience: { '@type': 'Audience', audienceType: 'Software engineers' },
+    // Remote sessions, so the reach is not a place.
+    availableChannel: {
+      '@type': 'ServiceChannel',
+      serviceUrl: url,
+      availableLanguage: { '@type': 'Language', name: 'English' },
+    },
+    offers: {
+      '@type': 'Offer',
+      price: 0,
+      priceCurrency: 'USD',
+      availability: 'https://schema.org/InStock',
+      description: `${prep.sessionMinutes}-minute one-to-one session`,
+    },
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Session formats',
+      itemListElement: prep.formats.map((format) => ({
+        '@type': 'Offer',
+        price: 0,
+        priceCurrency: 'USD',
+        itemOffered: { '@type': 'Service', name: format.title, description: format.body },
+      })),
+    },
+  };
+}
+
+/** A series of posts, for its own index page. */
+export function seriesNode(
+  ctx: SiteContext,
+  series: { id: string; title: string; description: string },
+  posts: PostEntry[],
+): JsonLd {
+  const { site } = ctx;
+  const url = abs(site, `/blog/series/${series.id}/`);
+  return {
+    '@type': 'CreativeWorkSeries',
+    '@id': `${url}#series`,
+    name: series.title,
+    description: series.description,
+    url,
+    author: { '@id': personId(site) },
+    inLanguage: 'en-US',
+    hasPart: posts.map((post) => ({
+      '@type': 'BlogPosting',
+      '@id': `${abs(site, `/blog/${post.id}/`)}#post`,
+      headline: post.data.title,
+      url: abs(site, `/blog/${post.id}/`),
+      datePublished: post.data.date.toISOString(),
+      author: { '@id': personId(site) },
+    })),
+  };
+}
+
 /** Minimal Blog node for a post page, so its `isPartOf` resolves locally. */
 export function blogStubNode(ctx: SiteContext): JsonLd {
   const { site } = ctx;

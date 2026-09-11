@@ -12,6 +12,13 @@ const p = profile.data;
 const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
   (a, b) => b.data.date.getTime() - a.data.date.getTime(),
 );
+
+// A series is only shown once it holds a post: an empty one advertises an
+// intention rather than something to read.
+const series = (await getCollection('series'))
+  .map((entry) => ({ entry, count: posts.filter((post) => post.data.series === entry.id).length }))
+  .filter(({ count }) => count > 0)
+  .sort((a, b) => a.entry.data.order - b.entry.data.order);
 ---
 
 <Base
@@ -31,7 +38,37 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
     </p>
   </div>
 
+  {
+    series.length > 0 && (
+      <div class="shell section">
+        <div class="section__head">
+          <h2 class="h2" id="series-t">Series</h2>
+        </div>
+        <ul class="series" aria-labelledby="series-t">
+          {series.map(({ entry, count }) => (
+            <li class="series__i" data-rule>
+              <h3 class="series__t">
+                <a href={`/blog/series/${entry.id}/`}>{entry.data.title}</a>
+              </h3>
+              <p class="series__b">{entry.data.description}</p>
+              <p class="series__n mono">
+                {count} {count === 1 ? 'post' : 'posts'}
+              </p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
   <div class="shell section">
+    {
+      series.length > 0 && (
+        <div class="section__head">
+          <h2 class="h2" id="all-t">All posts</h2>
+        </div>
+      )
+    }
     {
       posts.length === 0 ? (
         <p class="lede">No posts yet.</p>
@@ -49,6 +86,46 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft)).sort(
 <style>
   .head {
     padding-top: clamp(2.25rem, 5vw, 3.5rem);
+  }
+
+  .series {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+    gap: clamp(1.25rem, 3vw, 2.25rem);
+  }
+
+  .series__i {
+    border-top: 2px solid var(--navy);
+    padding-top: 0.9rem;
+  }
+
+  /* A lone series would otherwise stretch its description across the full
+     page and read at twice a comfortable measure. */
+  .series > :only-child {
+    max-width: 34rem;
+  }
+
+  .series__t {
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .series__b {
+    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--sec);
+    text-wrap: pretty;
+  }
+
+  .series__n {
+    margin-top: 0.5rem;
+    font-size: var(--t-small);
+    color: var(--sec);
   }
 
   .page__t {

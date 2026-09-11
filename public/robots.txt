@@ -1,4 +1,9 @@
 User-agent: *
 Allow: /
 
+# The CV is published twice: as /cv/ and as the PDF that page links. Only the
+# page should be indexed — a PDF that outranks it drops the reader into a file
+# with no navigation, and the two competing for the same query helps neither.
+Disallow: /cv.pdf
+
 Sitemap: https://chy.io/sitemap-index.xml
