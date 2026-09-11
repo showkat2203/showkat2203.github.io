@@ -190,9 +190,9 @@ const series = defineCollection({
 });
 
 /**
- * The interview-prep offer. `booking.url` null is a working state, not a
- * placeholder: the page falls back to the email address and loads no
- * third-party script.
+ * The interview-prep offer. `booking.calUser` null is a working state, not a
+ * placeholder: with no calendar to embed the page falls back to the email
+ * address and loads no third-party script.
  */
 const prep = defineCollection({
   loader: file('src/content/prep.yaml'),
@@ -208,7 +208,15 @@ const prep = defineCollection({
     formatsHeading: z.string(),
     formatsNote: z.string(),
     formats: z
-      .array(z.object({ order: z.number(), title: z.string(), body: z.string() }))
+      .array(
+        z.object({
+          order: z.number(),
+          title: z.string(),
+          body: z.string(),
+          /** Cal.com event slug for this format. Null uses booking.calEvent. */
+          calEvent: z.string().nullable().default(null),
+        }),
+      )
       .min(1),
     processHeading: z.string(),
     process: z
@@ -219,8 +227,11 @@ const prep = defineCollection({
     credibilityLink: z.string(),
     bookingHeading: z.string(),
     booking: z.object({
-      /** Cal.com booking link. Null falls back to the email call to action. */
-      url: z.string().url().nullable(),
+      /** Cal.com username. Null means no calendar is wired up yet. */
+      calUser: z.string().nullable(),
+      /** Event slug for formats that do not name their own. */
+      calEvent: z.string().nullable(),
+      origin: z.string().url(),
       note: z.string(),
     }),
   }),

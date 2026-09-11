@@ -642,11 +642,6 @@ for (const width of [320, 360, 414, 768]) {
     fitLists: document.querySelectorAll('.fit__l').length,
     fitItems: document.querySelectorAll('.fit__l li').length,
     steps: document.querySelectorAll('.steps__row').length,
-    ctas: [...document.querySelectorAll('.btn')].map((a) => ({
-      href: a.getAttribute('href') ?? '',
-      text: a.textContent.trim(),
-      tag: a.tagName,
-    })),
     cvLink: !!document.querySelector('a[href="/cv/"]'),
   }));
 
@@ -656,25 +651,90 @@ for (const width of [320, 360, 414, 768]) {
   check('the process steps render', prep.steps === 4, String(prep.steps));
   check('the page links the CV for its claims', prep.cvLink);
 
-  // The booking call to action must always be a working link, in either state.
-  check('a booking call to action appears twice', prep.ctas.length === 2, String(prep.ctas.length));
+  // Booking must be usable in whichever state it is in. Which state that is
+  // depends on whether a calendar is configured in prep.yaml, so these checks
+  // establish the state first and then hold it to that state's contract.
+  const booking = await page.evaluate(() => {
+    // data-booking-block marks the block in both states; data-booking-mount
+    // exists only where a calendar is configured to load into it.
+    const root = document.querySelector('[data-booking-block]');
+    const mount = root?.querySelector('[data-booking-mount]');
+    return {
+      present: !!root,
+      configured: !!mount,
+      types: [...(root?.querySelectorAll('a[data-cal-link]') ?? [])].map((a) => ({
+        href: a.getAttribute('href'),
+        calLink: a.dataset.calLink,
+        current: a.getAttribute('aria-current'),
+      })),
+      mountLink: mount?.dataset.calLink ?? null,
+      mountAnchor: mount?.querySelector('a')?.getAttribute('href') ?? null,
+      mountText: mount?.textContent.replace(/\s+/g, ' ').trim() ?? '',
+      cta: [...(root?.querySelectorAll('.btn') ?? [])].map((a) => ({
+        href: a.getAttribute('href') ?? '',
+        text: a.textContent.trim(),
+        tag: a.tagName,
+      })),
+    };
+  });
+
+  check('the booking block renders', booking.present);
   check(
-    'every booking call to action is a real link',
-    prep.ctas.length > 0 && prep.ctas.every((c) => c.tag === 'A' && c.href.length > 0),
-    JSON.stringify(prep.ctas),
+    'every booking action is a real anchor with a destination',
+    booking.cta.length > 0 && booking.cta.every((c) => c.tag === 'A' && c.href.length > 0),
+    JSON.stringify(booking.cta.map((c) => c.href)),
   );
-  const configured = prep.ctas.every((c) => /^https?:/.test(c.href));
-  const fallback = prep.ctas.every((c) => c.href.startsWith('mailto:'));
-  check(
-    'booking is either a scheduler link or the email fallback, not a dead button',
-    configured || fallback,
-    JSON.stringify(prep.ctas.map((c) => c.href)),
-  );
-  check(
-    'the call to action text says where it goes',
-    prep.ctas.every((c) => (configured ? /Cal\.com/.test(c.text) : /Email/i.test(c.text))),
-    prep.ctas.map((c) => c.text).join(' | '),
-  );
+
+  if (booking.configured) {
+    // Configured: a working link to the same booking page must be in the markup
+    // before any script runs, because the inline calendar may never load.
+    check(
+      'the calendar panel ships a real Cal.com link',
+      booking.mountAnchor?.startsWith('https://') === true,
+      booking.mountAnchor ?? 'missing',
+    );
+    check('the panel names the calendar to load', Boolean(booking.mountLink), booking.mountLink ?? 'missing');
+    check(
+      'the panel is not an empty box before scripting',
+      booking.mountText.length > 0,
+      booking.mountText.slice(0, 60),
+    );
+    check(
+      'session types are links, not dead buttons',
+      booking.types.length > 0 && booking.types.every((t) => t.href?.startsWith('https://')),
+      JSON.stringify(booking.types.map((t) => t.href)),
+    );
+    check(
+      'exactly one session type starts selected',
+      booking.types.filter((t) => t.current === 'true').length === 1,
+      JSON.stringify(booking.types.map((t) => t.current)),
+    );
+    check(
+      'every session type names a distinct calendar',
+      new Set(booking.types.map((t) => t.calLink)).size === booking.types.length,
+      JSON.stringify(booking.types.map((t) => t.calLink)),
+    );
+    check(
+      'the booking action says where it goes',
+      booking.cta.some((c) => /Cal\.com/.test(c.text)),
+      booking.cta.map((c) => c.text).join(' | '),
+    );
+  } else {
+    // Not configured: nothing to embed, so the offer falls back to the real
+    // email address rather than to a dead button.
+    check(
+      'with no calendar configured, booking falls back to email',
+      booking.cta.every((c) => c.href.startsWith('mailto:')),
+      JSON.stringify(booking.cta.map((c) => c.href)),
+    );
+    check(
+      'the email fallback says what it does',
+      booking.cta.every((c) => /Email/i.test(c.text)),
+      booking.cta.map((c) => c.text).join(' | '),
+    );
+    const markup = await page.content();
+    check('no third-party calendar script is referenced when unconfigured', !markup.includes('cal.com'));
+  }
 
   // The Service node: what makes a free offer legible to a search engine.
   const service = await page.evaluate(() => {

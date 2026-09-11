@@ -42,16 +42,49 @@ Author names print exactly as written. Any name matching
 they are and are not for, how one runs, and where the credibility comes from.
 All of the copy is in `prep.yaml`.
 
-The booking call to action has two working states and no broken one. With
-`booking.url` set to a Cal.com link it is an outbound link to that booking page;
-with it null the same button becomes the real email address. Either way it is a
-plain anchor, so it works with JavaScript off and the outbound-link pass gives
-the Cal.com version its own tab.
+### Booking
 
-It is deliberately not an inline embed. An embed means a third-party script and
-a modal on a site that loads neither, Cal.com's own booking page is better than
-an embed of it, and the page scores 100 on all four Lighthouse categories as it
-stands. Setting `booking.url` is the only step needed to switch booking on.
+Booking happens on the page. The visitor picks a session type, a date and a
+time, writes what they want out of it, and gets a confirmation and a calendar
+invite — without leaving the site. Cal.com's calendar is embedded inline;
+Cal.com holds the availability and sends the mail, because doing either needs a
+server and this site is static.
+
+To switch it on, set `booking.calUser` in `prep.yaml` to the Cal.com username.
+Give each format its own `calEvent` slug to offer them as separate session
+types, or set just `booking.calEvent` to run everything through one event type.
+Turn on the **Additional notes** question on the Cal.com event so the message
+field appears in the booking form.
+
+Three states, all of them working:
+
+| State | What the visitor gets |
+| --- | --- |
+| No `calUser` | The real email address. No third-party script is loaded at all. |
+| Configured, script blocked or failed | A real link to the same Cal.com booking page. |
+| Configured, script runs | The calendar inline, no navigation. |
+
+The third state is an upgrade of the second, never a replacement for it. That
+distinction is the whole difficulty: installing the embed **never throws** — it
+appends a script tag and queues instructions against it — so a blocked or
+unreachable Cal.com produces no error, just instructions that never execute.
+Removing the link up front and trusting a `try`/`catch` leaves an empty panel,
+which is exactly the bug the checks caught. So the link stays until an iframe
+actually appears, and if none does within the timeout the calendar is torn back
+down and the link remains, with the reserved height given back.
+
+The embed is fetched when the section nears the viewport rather than on load, so
+a reader who never scrolls that far pays nothing for it. `/interview-prep/`
+scores 100 on all four Lighthouse categories.
+
+The calendar follows the site's light and dark setting, including later changes
+from the theme toggle and the system preference behind it.
+
+One limit worth stating: the happy path could not be verified here, because
+Cal.com is unreachable from this sandbox. The integration follows the documented
+`@calcom/embed-snippet` and `embed-core` API, and the two degraded paths *are*
+verified — the sandbox's blocked egress makes the failure case a real test
+rather than a simulated one. Check the calendar renders once `calUser` is set.
 
 ## Writing a post
 
@@ -295,12 +328,13 @@ keyboard focus, the publications filter, copy-to-clipboard, reduced motion,
 image alt text and loading, diagram labels, the blog and its feed, the theme
 toggle and its persistence, institution marks, the motion layer in all three
 of its states, the SVG sanitiser and outbound-link contracts, the research
-record derivation, the interview-prep page and its booking fallback, blog
-series, and the no-JavaScript fallback), `npm run lighthouse`.
+record derivation, the interview-prep page, booking in whichever of its three
+states is configured, blog series, and the no-JavaScript fallback),
+`npm run lighthouse`.
 
 Last run: Lighthouse performance 96–100, accessibility 100, best practices
 96–100, SEO 100 across all five routes; zero axe violations across five routes,
-two widths, and both themes (24 combinations); 262 of 262 behaviour checks
+two widths, and both themes (24 combinations); 263 of 263 behaviour checks
 passing.
 
 Best practices is 96 rather than 100 on `/` and `/cv/` only inside this sandbox,
@@ -432,8 +466,9 @@ every paper has an entry, the stored aggregates are ignored.
 
 ## Optional extras
 
-- `booking.url` in `prep.yaml`: a Cal.com link turns the interview-prep call to
-  action into a booking link. Until then it is the email address, which works.
+- `booking.calUser` in `prep.yaml`: a Cal.com username turns the interview-prep
+  section into an inline booking calendar. Until then it is the email address,
+  which works.
 - `cv.drive` and `cv.latex` in `profile.yaml`: put a URL in either and a second
   link appears beside the CV download. The committed PDF always works, so
   neither is needed.

@@ -1,9 +1,18 @@
 # The interview-prep offer. Everything the page says lives here, so the copy
 # can change without touching the component.
 #
-# booking.url is the Cal.com link. While it is null the page still works: the
-# call to action becomes the real email address instead of a dead button, and
-# no third-party script is loaded at all.
+# Booking runs on the page itself: Cal.com's calendar is embedded inline, so a
+# visitor picks a session type, a date and a time, writes what they want out of
+# it, and gets a confirmation and a calendar invite without leaving the site.
+# Cal.com holds the availability and sends the mail, because doing that needs a
+# server and this site is static.
+#
+# To switch it on, set `booking.calUser` to the Cal.com username. Give each
+# format its own `calEvent` slug to offer them as separate session types, or set
+# just `booking.calEvent` to run everything through one event type.
+#
+# While `calUser` is null there is nothing to embed, so the page falls back to
+# the email address and loads no third-party script at all.
 main:
   kicker: Free 30-minute sessions
   headline: Interview prep for big tech
@@ -44,6 +53,8 @@ main:
   formats:
     - order: 1
       title: Technical mock
+      # Cal.com event slug for this format. Null falls back to booking.calEvent.
+      calEvent: null
       body: >-
         A coding or system design problem run the way the round runs: you drive,
         I probe, and we stop with ten minutes left so the feedback is specific
@@ -51,6 +62,8 @@ main:
         written down.
     - order: 2
       title: Behavioural mock
+      # Cal.com event slug for this format. Null falls back to booking.calEvent.
+      calEvent: null
       body: >-
         Two or three questions of the kind that open a behavioural round, then a
         read on what your answers actually demonstrated. This is the round
@@ -58,12 +71,16 @@ main:
         instead of their own decisions.
     - order: 3
       title: Interview preparation
+      # Cal.com event slug for this format. Null falls back to booking.calEvent.
+      calEvent: null
       body: >-
         What to study and in what order, given the loop you are facing and the
         time you have left. Most candidates over-prepare algorithms and
         under-prepare design and behavioural, and the ratio is fixable.
     - order: 4
       title: Career advice
+      # Cal.com event slug for this format. Null falls back to booking.calEvent.
+      calEvent: null
       body: >-
         Whether to switch, what level to target, how an offer compares, or how a
         CV reads to the person screening it. Bring the decision you are stuck
@@ -104,8 +121,15 @@ main:
 
   bookingHeading: Book a session
   booking:
-    url: null
-    # Shown under the button, whichever call to action is in use.
+    # Cal.com username, e.g. "showkat". Null means booking is not wired up yet.
+    calUser: null
+    # Event slug used by any format that does not name its own.
+    calEvent: null
+    # Where the calendar is served from. Only change this for a self-hosted
+    # Cal.com instance.
+    origin: https://cal.com
+    # Shown beneath the calendar.
     note: >-
-      Sessions are free while I have the time for them. If a slot does not suit,
-      email me and we will find one.
+      Sessions are free while I have the time for them. Pick a slot that suits
+      you — times are shown in your own timezone, and you will get a
+      confirmation and a calendar invite straight away.

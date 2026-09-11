@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import BookingCta from '../components/BookingCta.astro';
+import Booking from '../components/Booking.astro';
 import { getCollection, getEntry } from 'astro:content';
 import { serviceNode } from '../lib/schema';
 
@@ -35,10 +35,9 @@ const series = (await getCollection('series'))
     <p class="kicker">{prep.kicker}</p>
     <h1 class="page__t">{prep.headline}</h1>
     <p class="lede measure">{prep.lede}</p>
-    <div class="head__cta">
-      <BookingCta url={prep.booking.url} email={p.email} />
-      <p class="head__note">{prep.booking.note}</p>
-    </div>
+    <p class="head__jump">
+      <a href="#book">Pick a time</a>
+    </p>
   </div>
 
   <div class="shell">
@@ -132,16 +131,17 @@ const series = (await getCollection('series'))
     }
 
     <!-- book ------------------------------------------------------------- -->
-    <section class="section book" aria-labelledby="book-t">
+    <section class="section book" id="book" aria-labelledby="book-t">
       <div class="section__head">
         <h2 class="h2" id="book-t">{prep.bookingHeading}</h2>
       </div>
       <p class="measure">
-        Thirty minutes, one to one, no charge. Say which of the four you want and
-        roughly where you are in the process.
+        Thirty minutes, one to one, no charge. Pick a session, choose a time, and
+        say in the notes what you want out of it — the more specific, the better
+        the thirty minutes goes.
       </p>
       <div class="book__cta">
-        <BookingCta url={prep.booking.url} email={p.email} />
+        <Booking booking={prep.booking} formats={formats} email={p.email} />
       </div>
     </section>
   </div>
@@ -156,15 +156,11 @@ const series = (await getCollection('series'))
     margin-top: 0.85rem;
   }
 
-  .head__cta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.6rem 1.25rem;
-    margin-top: 1.6rem;
+  .head__jump {
+    margin-top: 1.5rem;
+    font-size: var(--t-meta);
   }
 
-  .head__note,
   .note {
     font-size: var(--t-small);
     color: var(--sec);

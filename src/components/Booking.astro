@@ -1,0 +1,221 @@
+---
+/**
+ * Booking, on the page.
+ *
+ * The visitor picks a session type, a date and a time, says what they want out
+ * of it, and gets a confirmation and a calendar invite — without leaving the
+ * site. Cal.com holds the availability and sends the mail, because doing either
+ * needs a server and this site is static; its calendar is embedded inline so
+ * the whole flow still happens here.
+ *
+ * Three states, all of them working:
+ *
+ *   - no calendar configured  →  the real email address
+ *   - configured, no script   →  a real link to the Cal.com booking page
+ *   - configured, script runs →  the calendar inline, no navigation
+ *
+ * The embed is fetched when the section nears the viewport rather than on load,
+ * so a reader who never scrolls this far pays nothing for it.
+ */
+interface Format {
+  title: string;
+  calEvent: string | null;
+}
+
+interface Props {
+  booking: {
+    calUser: string | null;
+    calEvent: string | null;
+    origin: string;
+    note: string;
+  };
+  formats: Format[];
+  email: string;
+}
+
+const { booking, formats, email } = Astro.props;
+
+/** A bookable session type: a label, a Cal.com link, and its public URL. */
+const types = booking.calUser
+  ? formats
+      .map((format) => ({ title: format.title, event: format.calEvent ?? booking.calEvent }))
+      .filter((type): type is { title: string; event: string } => Boolean(type.event))
+      .map((type) => ({
+        title: type.title,
+        calLink: `${booking.calUser}/${type.event}`,
+        url: `${booking.origin.replace(/\/$/, '')}/${booking.calUser}/${type.event}`,
+      }))
+  : [];
+
+// Where every format shares one event there is nothing to choose between, so
+// the chooser is not shown — the visitor names the format in the notes instead.
+const distinct = new Set(types.map((type) => type.calLink));
+const chooser = distinct.size > 1;
+const configured = types.length > 0;
+const mailto = `mailto:${email}?subject=${encodeURIComponent('Interview prep session')}`;
+---
+
+{
+  configured ? (
+    <div class="bk" data-booking-block data-booking data-origin={booking.origin}>
+      {chooser && (
+        <div class="bk__types">
+          <p class="bk__l mono" id="bk-types">
+            Choose a session
+          </p>
+          <ul class="bk__list" aria-labelledby="bk-types">
+            {types.map((type, i) => (
+              <li>
+                <a
+                  class="bk__type"
+                  href={type.url}
+                  data-cal-link={type.calLink}
+                  aria-current={i === 0 ? 'true' : undefined}
+                >
+                  {type.title}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/*
+        Holds the calendar once the embed loads. Until then — and for good if
+        the script is blocked or fails — it holds a real link to the same
+        booking page, so this is never an empty box.
+      */}
+      <div class="bk__cal" data-booking-mount data-cal-link={types[0].calLink}>
+        <div class="bk__await">
+          <a class="btn btn--primary" href={types[0].url}>
+            Open the booking calendar on Cal.com
+          </a>
+          <p class="bk__hint">Loading the calendar here. The link works either way.</p>
+        </div>
+      </div>
+
+      <p class="bk__note">{booking.note}</p>
+    </div>
+  ) : (
+    /* data-booking is the script's hook and is deliberately absent here:
+       there is no calendar to load. data-booking-block marks the block in
+       either state. */
+    <div class="bk" data-booking-block>
+      <a class="btn btn--primary" href={mailto}>
+        Email me to arrange a time
+      </a>
+      <p class="bk__note">{booking.note}</p>
+    </div>
+  )
+}
+
+{
+  configured && (
+    <script>
+      import '../scripts/booking';
+    </script>
+  )
+}
+
+<style>
+  .bk {
+    display: grid;
+    gap: 1.25rem;
+    justify-items: start;
+  }
+
+  .bk__l {
+    font-size: var(--t-small);
+    color: var(--sec);
+  }
+
+  .bk__list {
+    list-style: none;
+    padding: 0;
+    margin: 0.6rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Real links, so they work before and without the script. With it they
+     behave as a chooser, and aria-current says which one is showing. */
+  .bk__type {
+    display: inline-block;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ink);
+    text-decoration: none;
+    border: 1px solid var(--rule-strong);
+    border-radius: var(--r);
+    transition:
+      background-color 120ms linear,
+      border-color 120ms linear;
+  }
+
+  .bk__type:hover {
+    border-color: var(--navy);
+  }
+
+  .bk__type[aria-current='true'] {
+    background: var(--navy);
+    border-color: var(--navy);
+    color: var(--on-accent);
+  }
+
+  .bk__cal {
+    width: 100%;
+    /* Reserve the calendar's height so its arrival does not shove the page. */
+    min-height: 34rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--r);
+    background: var(--card);
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    overflow: hidden;
+  }
+
+  .bk__cal[data-booking-ready] {
+    align-content: start;
+    justify-items: stretch;
+  }
+
+  /* Nothing is coming: give the reserved height back rather than leave a
+     tall empty box around a single link. */
+  .bk__cal[data-booking-failed] {
+    min-height: 0;
+  }
+
+  .bk__await {
+    display: grid;
+    gap: 0.8rem;
+    justify-items: center;
+    padding: 2rem 1.25rem;
+    text-align: center;
+  }
+
+  .bk__hint,
+  .bk__note {
+    font-size: var(--t-small);
+    color: var(--sec);
+    max-width: 34rem;
+  }
+
+  .bk__note {
+    text-wrap: pretty;
+  }
+
+  @media (max-width: 40rem) {
+    .bk__cal {
+      min-height: 40rem;
+    }
+  }
+
+  @media print {
+    .bk__cal {
+      display: none;
+    }
+  }
+</style>
