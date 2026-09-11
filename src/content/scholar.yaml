@@ -1,0 +1,22 @@
+# Google Scholar figures. These are the only research numbers on the site that
+# cannot be computed from publications.yaml, because Scholar is the source of
+# truth for them and it has no API.
+#
+# Everything else is derived: the paper count and the venue list come straight
+# from publications.yaml, so adding a paper there updates every page.
+#
+# Two ways to keep this honest:
+#
+#   1. Fill in `perPublication` with the "Cited by" number next to each paper on
+#      the Scholar profile, keyed by its publications.yaml key. Once every paper
+#      has an entry, the total and the h-index are computed from them and the
+#      `totalCitations` / `hIndex` fields below are ignored.
+#   2. Or leave `perPublication` empty and just update the two aggregates.
+#
+# Either way, bump `asOf` — the site prints it next to the figures, so a number
+# is never shown as if it were live.
+main:
+  asOf: 2026-09
+  totalCitations: 148
+  hIndex: 8
+  perPublication: {}

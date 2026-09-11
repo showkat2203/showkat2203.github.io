@@ -1,7 +1,9 @@
 import { defineCollection, z } from 'astro:content';
 import { file, glob } from 'astro/loaders';
 
-const link = z.object({ label: z.string(), url: z.string().url().nullable() });
+/** A profile link. The URL is required: a link with nowhere to go is a bug,
+ *  not a state to render, so a missing one fails the build. */
+const link = z.object({ label: z.string(), url: z.string().url() });
 
 const profile = defineCollection({
   loader: file('src/content/profile.yaml'),
@@ -22,12 +24,22 @@ const profile = defineCollection({
       latex: z.string().url().nullable(),
     }),
     links: z.object({ github: link, scholar: link, linkedin: link }),
-    record: z.object({
-      publications: z.number(),
-      citations: z.number(),
-      hIndex: z.number(),
-      venues: z.array(z.string()),
-    }),
+  }),
+});
+
+/**
+ * Scholar's own figures. Everything else about the research record is computed
+ * from the publications collection — see src/lib/record.ts.
+ */
+const scholar = defineCollection({
+  loader: file('src/content/scholar.yaml'),
+  schema: z.object({
+    /** `YYYY-MM` these figures were read off the Scholar profile. */
+    asOf: z.string().regex(/^\d{4}-\d{2}$/),
+    totalCitations: z.number().int().nonnegative(),
+    hIndex: z.number().int().nonnegative(),
+    /** Citation count per publications.yaml key. Complete means computed. */
+    perPublication: z.record(z.string(), z.number().int().nonnegative()).default({}),
   }),
 });
 
@@ -165,6 +177,7 @@ const blog = defineCollection({
 
 export const collections = {
   profile,
+  scholar,
   domains,
   work,
   experience,

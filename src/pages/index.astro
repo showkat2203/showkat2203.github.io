@@ -6,6 +6,7 @@ import PostCard from '../components/PostCard.astro';
 import CopyEmail from '../components/CopyEmail.astro';
 import InstitutionMark from '../components/InstitutionMark.astro';
 import { readingMinutes } from '../lib/reading';
+import { buildRecord, fillTokens } from '../lib/record';
 import { getCollection, getEntry } from 'astro:content';
 
 const profile = await getEntry('profile', 'main');
@@ -18,7 +19,8 @@ const experience = (await getCollection('experience')).sort(
   (a, b) => b.data.start.localeCompare(a.data.start) || a.data.order - b.data.order,
 );
 
-const headline = (await getCollection('publications'))
+const publications = await getCollection('publications');
+const headline = publications
   .filter((pub) => pub.data.headlineOrder !== null)
   .sort((a, b) => b.data.year - a.data.year || (a.data.headlineOrder ?? 0) - (b.data.headlineOrder ?? 0));
 
@@ -32,6 +34,10 @@ const featured = institutions
   .filter((i) => i.data.featured)
   .sort((a, b) => a.data.order - b.data.order);
 
+const scholar = await getEntry('scholar', 'main');
+if (!scholar) throw new Error('src/content/scholar.yaml is missing the "main" record');
+const record = buildRecord(publications, scholar.data);
+
 const news = (await getCollection('news'))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
   .slice(0, 4);
@@ -44,12 +50,12 @@ const news = (await getCollection('news'))
     <div class="hero__text">
       <p class="kicker">{p.role} — {p.locationShort}</p>
       <h1 class="hero__h1">{p.headline}</h1>
-      <p class="lede hero__lede">{p.positioning}</p>
+      <p class="lede hero__lede">{fillTokens(p.positioning, record)}</p>
       <div class="hero__cta">
-        {p.links.linkedin.url && <a class="btn btn--ghost" href={p.links.linkedin.url}>LinkedIn</a>}
-        <a class="btn btn--primary" href={p.cv.hosted} download>Download CV</a>
-        {p.links.scholar.url && <a class="btn btn--ghost" href={p.links.scholar.url}>Google Scholar</a>}
-        <a class="btn btn--ghost" href={p.links.github.url!}>GitHub</a>
+        <a class="btn btn--primary" href={p.links.linkedin.url}>LinkedIn</a>
+        <a class="btn btn--ghost" href={p.cv.hosted} download>Download CV</a>
+        <a class="btn btn--ghost" href={p.links.scholar.url}>Google Scholar</a>
+        <a class="btn btn--ghost" href={p.links.github.url}>GitHub</a>
       </div>
     </div>
     <figure class="hero__photo">
@@ -61,7 +67,7 @@ const news = (await getCollection('news'))
   </section>
 
   <!-- credibility ------------------------------------------------------ -->
-  <section class="shell orgs" aria-label="Organisations">
+  <section class="shell orgs" aria-label="Organisations" data-rule>
     <p class="orgs__label">Built systems at</p>
     <ul class="orgs__list">
       {
@@ -87,7 +93,7 @@ const news = (await getCollection('news'))
         <div class="section__head">
           <h2 class="h2" id="news-t">Latest</h2>
         </div>
-        <ol class="news">
+        <ol class="news" data-rule>
           {news.map((n) => (
             <li class="news__row">
               <p class="news__when mono">
@@ -119,7 +125,7 @@ const news = (await getCollection('news'))
     <div class="areas">
       {
         domains.map((d) => (
-          <article class="area">
+          <article class="area" data-rule>
             <h3 class="area__t">{d.data.label}</h3>
             <p class="area__b">{d.data.body}</p>
           </article>
@@ -141,7 +147,7 @@ const news = (await getCollection('news'))
   <section class="shell section" id="publications" aria-labelledby="pubs-t">
     <div class="section__head">
       <h2 class="h2" id="pubs-t">Publications</h2>
-      <a class="section__more" href="/publications">All {p.record.publications} publications</a>
+      <a class="section__more" href="/publications">All {record.publications} publications</a>
     </div>
     <ol class="pubs">
       {
@@ -180,7 +186,7 @@ const news = (await getCollection('news'))
     <ol class="tl">
       {
         experience.map((role) => (
-          <li class="tl__row">
+          <li class="tl__row" data-rule>
             <p class="tl__when mono">{role.data.period}</p>
             <div class="tl__what">
               <h3 class="tl__role">
@@ -217,31 +223,15 @@ const news = (await getCollection('news'))
         </div>
         <div>
           <dt>Code</dt>
-          <dd><a href={p.links.github.url!}>github.com/showkat2203</a></dd>
+          <dd><a href={p.links.github.url}>github.com/showkat2203</a></dd>
         </div>
         <div>
           <dt>Papers</dt>
-          <dd>
-            {
-              p.links.scholar.url ? (
-                <a href={p.links.scholar.url}>Google Scholar profile</a>
-              ) : (
-                <span>Google Scholar <span class="pending mono">link pending</span></span>
-              )
-            }
-          </dd>
+          <dd><a href={p.links.scholar.url}>Google Scholar profile</a></dd>
         </div>
         <div>
           <dt>Profile</dt>
-          <dd>
-            {
-              p.links.linkedin.url ? (
-                <a href={p.links.linkedin.url}>LinkedIn profile</a>
-              ) : (
-                <span>LinkedIn <span class="pending mono">link pending</span></span>
-              )
-            }
-          </dd>
+          <dd><a href={p.links.linkedin.url}>LinkedIn profile</a></dd>
         </div>
         <div>
           <dt>CV</dt>
@@ -293,8 +283,12 @@ const news = (await getCollection('news'))
   }
 
   /* The photograph carries its own background, so the frame is just a hairline
-     and a clip — the same image serves both themes. */
-  .hero__photo {
+     and a clip — the same image serves both themes. The clip goes on the
+     picture rather than the figure, because the figure is the positioning
+     context for the offset rule below, which sits outside the photo's bounds
+     and would be cropped away by an overflow clip here. */
+  .hero__photo picture {
+    display: block;
     border: 1px solid var(--rule);
     border-radius: var(--r);
     overflow: hidden;
@@ -306,11 +300,14 @@ const news = (await getCollection('news'))
     display: block;
   }
 
-  /* A thin offset rule behind the photo: the one ornamental move on the page. */
+  /* A thin offset rule behind the photo: the one ornamental move on the page.
+     The inset is a custom property so the load animation in global.css can
+     animate to whatever this breakpoint's offset happens to be. */
   .hero__photo::after {
+    --frame-inset: 0.85rem -0.85rem -0.85rem 0.85rem;
     content: '';
     position: absolute;
-    inset: 0.85rem -0.85rem -0.85rem 0.85rem;
+    inset: var(--frame-inset);
     border: 1px solid var(--navy);
     border-radius: var(--r);
     z-index: -1;
@@ -508,11 +505,6 @@ const news = (await getCollection('news'))
     margin-top: 0.25rem;
   }
 
-  .pending {
-    font-size: var(--t-small);
-    color: var(--sec);
-  }
-
   @media (max-width: 52rem) {
     .hero {
       grid-template-columns: minmax(0, 1fr);
@@ -522,7 +514,7 @@ const news = (await getCollection('news'))
       max-width: 20rem;
     }
     .hero__photo::after {
-      inset: 0.6rem -0.6rem -0.6rem 0.6rem;
+      --frame-inset: 0.6rem -0.6rem -0.6rem 0.6rem;
     }
     .areas {
       grid-template-columns: minmax(0, 1fr);

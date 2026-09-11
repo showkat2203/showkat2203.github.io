@@ -1,11 +1,12 @@
-# Twelve peer-reviewed publications, newest first. To add one, copy a block.
+# Peer-reviewed publications, newest first. To add one, copy a block; the
+# counts and venue lists on every page are computed from this file.
 #
 #   headlineOrder: 1-5 puts it in the five shown on the home page, in that
 #                  order. Omit or set null to leave it on /publications only.
 #   type:          conference | journal  (drives the filter on /publications)
 #   doi / url:     Either one makes the entry link itself; a DOI is preferred.
-#                  Both null renders a visible "link pending" note rather than
-#                  a dead link.
+#                  Both null simply renders the citation with no link, which is
+#                  what a paper with no public record should look like.
 #
 # Author names are printed exactly as written here. Any name matching
 # profile.selfAliases is bolded automatically.

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-0.47 1.73 24.34 17.94">
+  <!-- Stacked records; the lowest one lifts away as a signal and resolves to a
+       point. Single colour, no detail below 3 units, so it holds at ~13px. -->
+  <g fill="currentColor">
+    <rect x="0" y="2.2" width="14.5" height="3.2" rx="1.6"/>
+    <rect x="0" y="9.4" width="9.5" height="3.2" rx="1.6"/>
+  </g>
+  <path d="M1.8 19.2 L10 19.2 L20.4 6.6" fill="none" stroke="currentColor"
+        stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="20.4" cy="6.6" r="3" fill="currentColor"/>
+</svg>
+

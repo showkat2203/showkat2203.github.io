@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Citation from '../components/Citation.astro';
 import InstitutionMark from '../components/InstitutionMark.astro';
 import { getCollection, getEntry } from 'astro:content';
+import { buildRecord, fillTokens, formatAsOf } from '../lib/record';
 
 const profile = await getEntry('profile', 'main');
 if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
@@ -22,17 +23,21 @@ const byKey = new Map(institutions.map((i) => [i.id, i.data]));
 const pubs = (await getCollection('publications')).sort((a, b) => b.data.year - a.data.year);
 const journals = pubs.filter((x) => x.data.type === 'journal');
 const conferences = pubs.filter((x) => x.data.type === 'conference');
+
+const scholar = await getEntry('scholar', 'main');
+if (!scholar) throw new Error('src/content/scholar.yaml is missing the "main" record');
+const record = buildRecord(pubs, scholar.data);
 ---
 
 <Base
   title={`CV — ${p.name}`}
-  description={`Curriculum vitae of ${p.name}: seven years across embedded firmware, distributed cloud infrastructure, and graph machine learning research, with ${p.record.publications} peer-reviewed publications.`}
+  description={`Curriculum vitae of ${p.name}: seven years across embedded firmware, distributed cloud infrastructure, and graph machine learning research, with ${record.publications} peer-reviewed publications.`}
   current="cv"
 >
   <div class="shell head">
     <p class="kicker">Curriculum vitae</p>
     <h1 class="page__t">{p.name}</h1>
-    <p class="lede measure">{p.positioning}</p>
+    <p class="lede measure">{fillTokens(p.positioning, record)}</p>
     <p class="head__meta">
       {p.location} — {p.residency} — <a href={`mailto:${p.email}`}>{p.email}</a>
     </p>
@@ -41,24 +46,21 @@ const conferences = pubs.filter((x) => x.data.type === 'conference');
       <a class="btn btn--primary" href={p.cv.hosted} download>Download PDF</a>
       {p.cv.drive && <a class="btn btn--ghost" href={p.cv.drive}>Open in Google Drive</a>}
       {p.cv.latex && <a class="btn btn--ghost" href={p.cv.latex}>LaTeX source on Overleaf</a>}
-      {
-        !p.cv.drive && !p.cv.latex && (
-          <span class="head__pending mono">Google Drive and LaTeX links pending</span>
-        )
-      }
     </div>
   </div>
 
   <div class="shell">
     <section class="section cv-sec" aria-labelledby="cv-rec">
       <h2 class="h2" id="cv-rec">Research record</h2>
-      <dl class="rec">
-        <div><dt>{p.record.publications}</dt><dd>peer-reviewed papers</dd></div>
-        <div><dt>{p.record.citations}</dt><dd>citations</dd></div>
-        <div><dt>{p.record.hIndex}</dt><dd>h-index</dd></div>
+      <dl class="rec" data-figures>
+        <div><dt data-figure={record.publications}>{record.publications}</dt><dd>peer-reviewed papers</dd></div>
+        <div><dt data-figure={record.citations}>{record.citations}</dt><dd>citations</dd></div>
+        <div><dt data-figure={record.hIndex}>{record.hIndex}</dt><dd>h-index</dd></div>
       </dl>
       <p class="cv-note measure">
-        Venues include {p.record.venues.slice(0, -1).join(', ')}, and {p.record.venues.at(-1)}.
+        Venues include {record.venues.slice(0, -1).join(', ')}, and {record.venues.at(-1)}.
+        Citations and h-index are from <a href={p.links.scholar.url}>Google Scholar</a>,
+        read {formatAsOf(record.asOf)}.
       </p>
     </section>
 
@@ -192,14 +194,6 @@ const conferences = pubs.filter((x) => x.data.type === 'conference');
     gap: 0.6rem;
     align-items: center;
     margin-top: 1.35rem;
-  }
-
-  .head__pending {
-    font-size: var(--t-small);
-    color: var(--sec);
-    border: 1px dashed var(--rule);
-    border-radius: var(--r);
-    padding: 0.25rem 0.5rem;
   }
 
   .cv-sec {

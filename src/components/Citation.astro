@@ -62,12 +62,10 @@ if (pub.doi) {
       <span class="mono cite__y">{pub.year}</span>
       {pub.details && <span class="cite__d">{pub.details}</span>}
       {
-        href ? (
+        href && (
           <a class="cite__link" href={href} rel="noopener">
             Read on {linkLabel}
           </a>
-        ) : (
-          <span class="cite__pending mono">link pending</span>
         )
       }
     </p>
@@ -133,14 +131,6 @@ if (pub.doi) {
     font-weight: 500;
   }
 
-  .cite__pending {
-    font-size: var(--t-small);
-    color: var(--sec);
-    border: 1px dashed var(--rule);
-    border-radius: var(--r);
-    padding: 0.1rem 0.4rem;
-  }
-
   .cite__doi {
     margin-top: 0.3rem;
     font-size: var(--t-small);
@@ -150,9 +140,6 @@ if (pub.doi) {
 
   @media print {
     .cite__link {
-      display: none;
-    }
-    .cite__pending {
       display: none;
     }
     .cite__title {

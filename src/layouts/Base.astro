@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
-import { getEntry } from 'astro:content';
+import { getCollection, getEntry } from 'astro:content';
+import { buildRecord, fillTokens } from '../lib/record';
 
 interface Props {
   title: string;
@@ -16,7 +17,11 @@ const profile = await getEntry('profile', 'main');
 if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
 const p = profile.data;
 
-const desc = description ?? p.metaDescription;
+const scholar = await getEntry('scholar', 'main');
+if (!scholar) throw new Error('src/content/scholar.yaml is missing the "main" record');
+const record = buildRecord(await getCollection('publications'), scholar.data);
+
+const desc = fillTokens(description ?? p.metaDescription, record);
 const canonical = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', Astro.site);
 const image = new URL(ogImage ?? '/og.png', Astro.site);
 
@@ -303,6 +308,10 @@ const nav = [
         }
       }
     </style>
+    <script>
+      import '../scripts/motion';
+    </script>
+
     <script>
       const btn = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
       const label = btn?.querySelector<HTMLElement>('.theme__label');

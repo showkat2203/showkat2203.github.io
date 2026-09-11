@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import outboundLinks from './src/integrations/outbound-links.mjs';
 
 // chy.io is canonical; the showkat2203.github.io address redirects to it
 // via the CNAME in public/. Base stays at the root because this repo is a
@@ -22,5 +23,5 @@ export default defineConfig({
       wrap: false,
     },
   },
-  integrations: [sitemap()],
+  integrations: [sitemap(), outboundLinks()],
 });

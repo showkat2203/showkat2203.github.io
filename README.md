@@ -12,7 +12,8 @@ if a required field is missing or misspelled.
 
 | File | Holds |
 | --- | --- |
-| `profile.yaml` | Name, email, links, hero sentence, publication record |
+| `profile.yaml` | Name, email, links, hero sentence |
+| `scholar.yaml` | Citation count and h-index, with the date they were read |
 | `domains.yaml` | The three practice areas under "What I work on" |
 | `work.yaml` | Selected work entries, each naming a diagram and its stack |
 | `experience.yaml` | Roles, with exact `start`/`end` dates and CV bullets |
@@ -25,9 +26,9 @@ if a required field is missing or misspelled.
 
 To add a publication, copy any block in `publications.yaml`. Set
 `headlineOrder` to 1–5 to surface it on the home page, or `null` to leave it on
-`/publications` only. Fill `doi` or `url` and the entry links itself; while both
-are `null` it renders a visible "link pending" note rather than a dead link. The
-link text names the publisher, derived from the DOI's registrant prefix in
+`/publications` only. Fill `doi` or `url` and the entry links itself; with both
+`null` the citation simply renders without a link. The link text names the
+publisher, derived from the DOI's registrant prefix in
 `src/components/Citation.astro` — add a prefix there if a new one appears.
 
 Author names print exactly as written. Any name matching
@@ -65,12 +66,18 @@ Logos resolve in three tiers, best first:
 1. **A downloaded file** at `public/img/logos/<key>.svg` — inlined, so it can
    inherit type colour, is measured for optical sizing, and costs no
    third-party request.
-2. **The `logoSource` URL**, loaded by the visitor's browser. This is what ships
-   today: no files are committed, so all eight load from the URLs recorded in
-   `institutions.yaml`.
+2. **The `logoSource` URL**, loaded by the visitor's browser. This is how the
+   eight real company and university marks ship today: no files for them are
+   committed, so each loads from the URL recorded in `institutions.yaml`.
 3. **The monogram**, if there is no file and no URL — or if the URL fails, since
    the image removes itself on error and reveals the monogram underneath rather
    than a broken-image icon.
+
+One mark is committed as a file: `stealth.svg`, drawn here for the stealth AI
+startup, which has no public logo to link to. It is a single-colour drawing in
+`currentColor` — stacked records, the lowest lifting away as a signal that
+resolves to a point — with no detail below three units so it holds at the 13px
+the timeline renders it at.
 
 Tier 1 takes over automatically once a file lands, with no content change. The
 trade-off of tier 2 is worth being explicit about: it depends on four
@@ -244,17 +251,45 @@ Individually: `npm run check` (types), `npm run a11y` (axe-core on every route
 at 1280px and 360px), `npm run verify` (no horizontal scroll from 320px,
 keyboard focus, the publications filter, copy-to-clipboard, reduced motion,
 image alt text and loading, diagram labels, the blog and its feed, the theme
-toggle and its persistence, institution marks, and the no-JavaScript
-fallback), `npm run lighthouse`.
+toggle and its persistence, institution marks, the motion layer in all three
+of its states, the SVG sanitiser and outbound-link contracts, the research
+record derivation, and the no-JavaScript fallback), `npm run lighthouse`.
 
-Last run: Lighthouse performance 95–100, accessibility 100, best practices 100,
-SEO 100 across all four routes; zero axe violations across five routes, two
-widths, and both themes (20 combinations); 48 of 48 behaviour checks passing.
+Last run: Lighthouse performance 96–100, accessibility 100, best practices
+96–100, SEO 100 across all four routes; zero axe violations across five routes,
+two widths, and both themes (20 combinations); 98 of 98 behaviour checks
+passing.
+
+Best practices is 96 rather than 100 on `/` and `/cv` only inside this sandbox,
+where the eight logo hosts are unreachable: the console errors are the blocked
+requests, and the pages score 100 where those hosts resolve. `/publications`
+and `/blog` carry no logos and score 100 here.
 
 Lighthouse reports one failure that is not actionable here — `bf-cache`, which
 Chrome disables by command line in a headless container.
 
 `npm run shots` writes screenshots to `.shots/` for design review.
+
+## Links and motion
+
+Every link that leaves the site opens in its own tab. That is applied once, to
+the built HTML, by `src/integrations/outbound-links.mjs`, rather than at each
+call site — so a hand-written page, a rendered Markdown post, and generated
+markup all behave the same and a new link cannot forget to opt in. Each such
+link also gets `rel="noopener noreferrer"` and a visually hidden "opens in a
+new tab", because changing context without saying so fails WCAG 3.2.5.
+Internal navigation deliberately stays in the same tab: a nav item that spawned
+a tab would read as a bug and would strand the back button.
+
+Motion is in `src/scripts/motion.ts` and the block at the end of
+`global.css`. The page ships in its finished state and the layer only adds the
+arrival, so it is gated on an `anim` class that the script adds — and never
+adds when `prefers-reduced-motion: reduce` is set, in either direction, even if
+the preference changes after load. With JavaScript off there is no reveal to
+miss. The moves follow what the layout is made of: this design separates
+sections with hairline rules, so the rules draw, the portrait's offset frame
+slides out to its offset once, and the research figures count up to the numbers
+already in the HTML. `verify` checks all three states.
 
 ## Design
 
@@ -284,13 +319,28 @@ Engineer, AWS Infrastructure Supply Chain". Everything else — section
 headings, prose, link text — stays sentence case. Publication titles keep
 whatever capitalisation the publisher used, because they are citations.
 
-## Still to fill in
+## The research numbers
 
-Search the content files for `PLACEHOLDER`:
+Nothing about the research record is typed out twice. The paper count and the
+venue list are computed from `publications.yaml` by `src/lib/record.ts`, so
+adding a paper updates the home page, `/publications`, `/cv`, and the meta
+descriptions at once. Prose can use `{publications}`, `{citations}` and
+`{hIndex}` — the tokens in `profile.yaml` are filled from the same record.
 
-- Optional `cv.drive` and `cv.latex` URLs in `profile.yaml`.
-- One link in `publications.yaml`: `segah-2023-bless` has no DOI or stable
-  publisher page indexed, so it still renders "link pending".
+Citations and the h-index are the two figures that cannot be derived: Google
+Scholar is the source of truth and it has no API. They live in `scholar.yaml`
+with an `asOf` date, which the site prints beside them, so a figure is never
+shown as though it were live. Filling in `perPublication` with the per-paper
+"Cited by" numbers makes both figures computed rather than asserted — once
+every paper has an entry, the stored aggregates are ignored.
+
+## Optional extras
+
+- `cv.drive` and `cv.latex` in `profile.yaml`: put a URL in either and a second
+  link appears beside the CV download. The committed PDF always works, so
+  neither is needed.
+- `segah-2023-bless` in `publications.yaml` has no DOI or stable publisher page
+  indexed, so it renders as a citation with no link. Adding a `doi` links it.
 
 Four entries in `publications.yaml` carry a `VERIFY` comment where the
 publisher's record disagrees with the CV the content came from — the venue on

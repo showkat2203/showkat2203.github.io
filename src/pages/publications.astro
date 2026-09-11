@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Citation from '../components/Citation.astro';
 import { getCollection, getEntry } from 'astro:content';
+import { buildRecord, formatAsOf } from '../lib/record';
 
 const profile = await getEntry('profile', 'main');
 if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
@@ -16,11 +17,15 @@ const counts = {
   journal: pubs.filter((x) => x.data.type === 'journal').length,
   conference: pubs.filter((x) => x.data.type === 'conference').length,
 };
+
+const scholar = await getEntry('scholar', 'main');
+if (!scholar) throw new Error('src/content/scholar.yaml is missing the "main" record');
+const record = buildRecord(pubs, scholar.data);
 ---
 
 <Base
   title={`Publications — ${p.name}`}
-  description={`All ${counts.all} peer-reviewed publications by ${p.name}: ${counts.journal} journal articles and ${counts.conference} conference papers in IEEE/ACM ASE, ECSA, CLOSER, Journal of Systems and Software, Cluster Computing, Electronics, and Telecom.`}
+  description={`All ${counts.all} peer-reviewed publications by ${p.name}: ${counts.journal} journal articles and ${counts.conference} conference papers in ${record.venues.slice(0, 6).join(', ')}, and elsewhere.`}
   current="publications"
 >
   <div class="shell head">
@@ -28,14 +33,17 @@ const counts = {
     <p class="lede measure">
       Graph learning over dependency graphs, microservice architecture, and
       measured comparisons of concurrent systems.
-      {p.links.scholar.url && <a href={p.links.scholar.url}>Citation counts on Google Scholar</a>}.
     </p>
 
-    <dl class="rec">
-      <div><dt>{counts.all}</dt><dd>peer-reviewed papers</dd></div>
-      <div><dt>{p.record.citations}</dt><dd>citations</dd></div>
-      <div><dt>{p.record.hIndex}</dt><dd>h-index</dd></div>
+    <dl class="rec" data-figures data-rule>
+      <div><dt data-figure={record.publications}>{record.publications}</dt><dd>peer-reviewed papers</dd></div>
+      <div><dt data-figure={record.citations}>{record.citations}</dt><dd>citations</dd></div>
+      <div><dt data-figure={record.hIndex}>{record.hIndex}</dt><dd>h-index</dd></div>
     </dl>
+    <p class="rec__src">
+      The paper count is the list below. Citations and h-index are from
+      <a href={p.links.scholar.url}>Google Scholar</a>, read {formatAsOf(record.asOf)}.
+    </p>
   </div>
 
   <div class="shell section">
@@ -101,6 +109,13 @@ const counts = {
     font-size: var(--t-meta);
     color: var(--sec);
     margin-top: 0.2rem;
+  }
+
+  .rec__src {
+    font-size: var(--t-small);
+    color: var(--sec);
+    margin-top: 0.9rem;
+    max-width: 34rem;
   }
 
   .filter {

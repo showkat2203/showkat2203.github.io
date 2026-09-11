@@ -305,7 +305,10 @@ a:focus-visible {
   border-radius: var(--r);
   text-decoration: none;
   border: 1px solid transparent;
-  transition: background-color 120ms linear, border-color 120ms linear;
+  transition:
+    background-color 120ms linear,
+    border-color 120ms linear,
+    transform 90ms ease-out;
 }
 
 .btn--primary {
@@ -502,5 +505,86 @@ a:focus-visible {
   .card,
   .cv-entry {
     break-inside: avoid;
+  }
+}
+
+/* --- motion ---------------------------------------------------------------
+   Every animation here is gated on `html.anim`, a class added by script only
+   when the reader has not asked for reduced motion. Nothing is hidden or
+   collapsed by default, so with JavaScript off, with the class absent, or
+   under `prefers-reduced-motion: reduce`, the page is simply the finished
+   state — there is no "reveal" to miss.
+
+   The moves follow what the layout is already made of: this design separates
+   sections with hairline rules, so the rules draw. No section-wide fade and
+   slide, and nothing that moves text while it is being read. */
+
+html.anim [data-rule] {
+  /* Paint the rule as a background line instead of the real border, so it can
+     be animated without needing a pseudo-element the component may already use. */
+  border-top-color: transparent;
+  background-image: linear-gradient(to right, var(--rule-line, var(--rule)), var(--rule-line, var(--rule)));
+  background-repeat: no-repeat;
+  background-position: top left;
+  background-size: 0 var(--rule-weight, 1px);
+  transition: background-size 620ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+html.anim [data-rule].is-in {
+  background-size: 100% var(--rule-weight, 1px);
+}
+
+/* The 2px navy rule over each practice area, and the areas draw in sequence. */
+html.anim .area {
+  --rule-line: var(--navy);
+  --rule-weight: 2px;
+}
+
+/* The first timeline row has no rule to draw — it is the top of the list. */
+html.anim .tl__row:first-child {
+  background-image: none;
+}
+
+/* The offset frame behind the portrait starts flush with the photo and slides
+   out to its offset once: the one piece of ornament on the page, arriving. */
+html.anim .hero__photo::after {
+  animation: frame-settle 900ms cubic-bezier(0.22, 0.61, 0.36, 1) 120ms both;
+}
+
+@keyframes frame-settle {
+  from {
+    inset: 0;
+    opacity: 0;
+  }
+  40% {
+    opacity: 1;
+  }
+  to {
+    inset: var(--frame-inset);
+    opacity: 1;
+  }
+}
+
+/* Print does not animate, and the CV PDF is generated with backgrounds off —
+   so put the real borders back rather than lose every rule on the page. */
+@media print {
+  html.anim [data-rule] {
+    border-top-color: var(--rule-line, var(--rule));
+    background-image: none;
+  }
+
+  html.anim .hero__photo::after {
+    animation: none;
+  }
+}
+
+/* Pressing a button should feel like pressing it. */
+.btn:active {
+  transform: translateY(1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn:active {
+    transform: none;
   }
 }

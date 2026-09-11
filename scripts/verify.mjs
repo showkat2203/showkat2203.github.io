@@ -2,6 +2,8 @@
 import { chromium } from 'playwright';
 import { serve, launch } from './lib.mjs';
 import { sanitiseSvg } from './logo-lib.mjs';
+import { rewriteOutbound } from '../src/integrations/outbound-links.mjs';
+import { buildRecord, hIndexOf, venuesOf, fillTokens, formatAsOf } from '../src/lib/record.ts';
 
 const server = await serve();
 const browser = await launch(chromium);
@@ -40,6 +42,104 @@ const check = (name, pass, detail = '') => results.push({ check: name, pass: pas
   check('sanitiser removes the title', !/<title>/i.test(out));
   check('sanitiser marks the root decorative', /aria-hidden="true"/.test(root));
   check('sanitiser keeps fills', /fill="#0c234b"/.test(out));
+}
+
+// --- outbound link rewriter contract -------------------------------------
+// A transform over built HTML, so it is checked against the shapes it has to
+// survive rather than only through the pages it happens to produce today.
+{
+  const site = 'https://chy.io';
+  const one = (html) => rewriteOutbound(html, { site });
+
+  const ext = one('<a href="https://scholar.google.com/x">Scholar</a>');
+  check('rewriter adds target to an off-site link', /target="_blank"/.test(ext.html), ext.html);
+  check('rewriter adds noopener and noreferrer', /rel="noopener noreferrer"/.test(ext.html), ext.html);
+  check(
+    'rewriter announces the new tab',
+    /<span class="sr-only"> \(opens in a new tab\)<\/span><\/a>/.test(ext.html),
+    ext.html,
+  );
+
+  for (const [label, html] of [
+    ['a root-relative path', '<a href="/publications">Publications</a>'],
+    ['a fragment', '<a href="#work">Work</a>'],
+    ['a mailto', '<a href="mailto:a@b.com">mail</a>'],
+    ['the canonical origin', '<a href="https://chy.io/cv">CV</a>'],
+  ]) {
+    const left = one(html);
+    check(`rewriter leaves ${label} alone`, left.rewritten === 0 && left.html === html, left.html);
+  }
+
+  const already = one('<a href="https://example.com" target="_self">x</a>');
+  check('rewriter respects an explicit target', already.rewritten === 0, already.html);
+
+  const keptRel = one('<a href="https://example.com" rel="me">x</a>');
+  check(
+    'rewriter keeps an existing rel token',
+    /rel="me noopener noreferrer"/.test(keptRel.html),
+    keptRel.html,
+  );
+
+  const nested = one('<a href="https://example.com"><strong>bold</strong> text</a>');
+  check(
+    'rewriter preserves link contents',
+    nested.html.includes('<strong>bold</strong> text<span class="sr-only">'),
+    nested.html,
+  );
+
+  const pair = one('<a href="/a">in</a> <a href="https://example.com">out</a>');
+  check('rewriter handles a mixed run', pair.rewritten === 1 && pair.html.startsWith('<a href="/a">in</a>'), pair.html);
+
+  const bad = one('<a href="not a url">x</a>');
+  check('rewriter ignores an unparseable href', bad.rewritten === 0, bad.html);
+
+  const noTag = one('<p>no links here</p>');
+  check('rewriter leaves link-free html byte-identical', noTag.html === '<p>no links here</p>', noTag.html);
+}
+
+// --- research record derivation ------------------------------------------
+{
+  check('h-index of an empty list is 0', hIndexOf([]) === 0);
+  check('h-index counts papers at or above their rank', hIndexOf([10, 8, 5, 4, 3]) === 4, String(hIndexOf([10, 8, 5, 4, 3])));
+  check('h-index is capped by paper count', hIndexOf([99, 99]) === 2, String(hIndexOf([99, 99])));
+  check('h-index ignores zero-citation papers', hIndexOf([3, 2, 1, 0, 0]) === 2, String(hIndexOf([3, 2, 1, 0, 0])));
+
+  const pubs = [
+    { id: 'a', data: { venue: 'Long Journal Name', venueShort: 'JSS', year: 2025 } },
+    { id: 'b', data: { venue: 'European Conference', venueShort: 'ECSA', year: 2024 } },
+    { id: 'c', data: { venue: 'European Conference', venueShort: 'ECSA', year: 2023 } },
+    { id: 'd', data: { venue: 'Old Workshop', venueShort: 'ICSEC', year: 2023 } },
+  ];
+  const venues = venuesOf(pubs);
+  check('venues dedupe by short name', venues.length === 3, venues.join(', '));
+  check('venues lead with the most recent', venues[0] === 'JSS', venues.join(', '));
+  check('venues break ties by paper count', venues[1] === 'ECSA', venues.join(', '));
+
+  const stored = { asOf: '2026-09', totalCitations: 148, hIndex: 8, perPublication: {} };
+  const fallback = buildRecord(pubs, stored);
+  check('record counts publications from the collection', fallback.publications === 4, String(fallback.publications));
+  check('record falls back to stored citations', fallback.citations === 148 && !fallback.computed);
+
+  const full = buildRecord(pubs, { ...stored, perPublication: { a: 10, b: 4, c: 2, d: 0 } });
+  check('record computes citations when counts are complete', full.citations === 16 && full.computed, String(full.citations));
+  // [10, 4, 2, 0]: two papers have at least two citations, none has three.
+  check('record computes the h-index from counts', full.hIndex === 2, String(full.hIndex));
+
+  const partial = buildRecord(pubs, { ...stored, perPublication: { a: 10 } });
+  check('record ignores partial counts', partial.citations === 148 && !partial.computed, String(partial.citations));
+
+  check(
+    'tokens are filled from the record',
+    fillTokens('{publications} papers, {citations} citations, h {hIndex}', fallback) ===
+      '4 papers, 148 citations, h 8',
+    fillTokens('{publications} papers, {citations} citations, h {hIndex}', fallback),
+  );
+  check(
+    'unknown tokens are left alone',
+    fillTokens('{unknown} and {citations}', fallback) === '{unknown} and 148',
+    fillTokens('{unknown} and {citations}', fallback),
+  );
+  check('asOf renders as a month and year', formatAsOf('2026-09') === 'September 2026', formatAsOf('2026-09'));
 }
 
 // --- no horizontal overflow at narrow widths -----------------------------
@@ -292,7 +392,133 @@ for (const width of [320, 360, 414, 768]) {
   await page.goto('http://localhost:4321/publications', { waitUntil: 'load' });
   const visible = await page.locator('.pub:not([hidden])').count();
   check('all publications visible without JS', visible === 12, `${visible} visible`);
+
+  // The motion layer only adds arrival. With no script the page must already
+  // be in its finished state: rules painted, figures showing real numbers.
+  const noJs = await page.evaluate(() => ({
+    anim: document.documentElement.classList.contains('anim'),
+    figures: [...document.querySelectorAll('[data-figure]')].map((el) => el.textContent.trim()),
+    borders: [...document.querySelectorAll('[data-rule]')].map((el) => getComputedStyle(el).borderTopWidth),
+    opacity: [...document.querySelectorAll('[data-rule]')].map((el) => getComputedStyle(el).opacity),
+  }));
+  check('no-JS leaves the motion layer off', noJs.anim === false);
+  check(
+    'no-JS shows the real figures',
+    noJs.figures.join(',') === '12,148,8',
+    noJs.figures.join(','),
+  );
+  check(
+    'no-JS still paints the section rules',
+    noJs.borders.length > 0 && noJs.borders.every((w) => w !== '0px'),
+    noJs.borders.join(','),
+  );
+  check(
+    'no-JS hides nothing',
+    noJs.opacity.every((o) => o === '1'),
+    noJs.opacity.join(','),
+  );
   await ctx.close();
+}
+
+// --- motion layer --------------------------------------------------------
+{
+  // Reduced motion: the layer never turns on, and nothing is left animating.
+  const quiet = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
+  const qp = await quiet.newPage();
+  await qp.goto('http://localhost:4321/publications', { waitUntil: 'networkidle' });
+  const q = await qp.evaluate(() => ({
+    anim: document.documentElement.classList.contains('anim'),
+    figures: [...document.querySelectorAll('[data-figure]')].map((el) => el.textContent.trim()),
+    running: document.getAnimations().length,
+  }));
+  check('reduced motion leaves the layer off', q.anim === false);
+  check('reduced motion shows the real figures', q.figures.join(',') === '12,148,8', q.figures.join(','));
+  check('reduced motion runs no animations', q.running === 0, String(q.running));
+  await quiet.close();
+
+  // The layer redraws a rule the layout already has; it must never invent one.
+  // So for each tagged element, a line painted with JS on has to correspond to
+  // a real border with JS off. Compared by position, since the markup matches.
+  for (const path of ['/', '/publications', '/cv', '/blog']) {
+    const tagged = async (jsOn) => {
+      const ctx = await browser.newContext({
+        viewport: { width: 1280, height: 900 },
+        javaScriptEnabled: jsOn,
+        reducedMotion: 'no-preference',
+      });
+      const pg = await ctx.newPage();
+      await pg.goto(`http://localhost:4321${path}`, { waitUntil: jsOn ? 'networkidle' : 'load' });
+      const found = await pg.evaluate(() =>
+        [...document.querySelectorAll('[data-rule]')].map((el) => ({
+          name: el.className || el.tagName,
+          paints: getComputedStyle(el).backgroundImage !== 'none',
+          border: getComputedStyle(el).borderTopWidth !== '0px',
+        })),
+      );
+      await ctx.close();
+      return found;
+    };
+
+    const [live, bare] = [await tagged(true), await tagged(false)];
+    const invented = live
+      .map((el, i) => (el.paints && !bare[i]?.border ? el.name : null))
+      .filter(Boolean);
+    check(
+      `no tagged rule is invented by the motion layer on ${path}`,
+      live.length === bare.length && invented.length === 0,
+      invented.join(', ') || `${live.length} tagged`,
+    );
+  }
+
+  // Motion allowed: rules draw to full width and figures land on the real value.
+  const live = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'no-preference' });
+  const lp = await live.newPage();
+  await lp.goto('http://localhost:4321/publications', { waitUntil: 'networkidle' });
+  check('motion layer turns on', await lp.evaluate(() => document.documentElement.classList.contains('anim')));
+  await lp.waitForTimeout(1600);
+  const drawn = await lp.evaluate(() => ({
+    figures: [...document.querySelectorAll('[data-figure]')].map((el) => el.textContent.trim()),
+    sizes: [...document.querySelectorAll('[data-rule]')].map((el) => getComputedStyle(el).backgroundSize),
+  }));
+  check('counted figures settle on the real value', drawn.figures.join(',') === '12,148,8', drawn.figures.join(','));
+  check(
+    'drawn rules reach full width',
+    drawn.sizes.length > 0 && drawn.sizes.every((size) => size.startsWith('100%')),
+    drawn.sizes.join(' | '),
+  );
+
+  await lp.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
+  const frame = await lp.evaluate(() =>
+    document
+      .querySelector('.hero__photo')
+      .getAnimations({ subtree: true })
+      .map((a) => a.animationName),
+  );
+  check('the portrait frame animates in', frame.includes('frame-settle'), frame.join(','));
+  check(
+    'a rule below the fold waits its turn',
+    (await lp.evaluate(() => document.querySelector('.tl__row:last-child').classList.contains('is-in'))) === false,
+  );
+  await lp.evaluate(() => document.querySelector('.tl__row:last-child').scrollIntoView({ behavior: 'instant' }));
+  await lp.waitForTimeout(1600);
+  const late = await lp.evaluate(() => {
+    const row = document.querySelector('.tl__row:last-child');
+    return { in: row.classList.contains('is-in'), size: getComputedStyle(row).backgroundSize };
+  });
+  check('a rule draws once scrolled into view', late.in && late.size.startsWith('100%'), JSON.stringify(late));
+  check(
+    'the first timeline row draws no rule',
+    (await lp.evaluate(() => getComputedStyle(document.querySelector('.tl__row:first-child')).backgroundImage)) === 'none',
+  );
+
+  // A figure that changes width mid-count would jog the layout beside it.
+  await lp.goto('http://localhost:4321/cv', { waitUntil: 'networkidle' });
+  await lp.evaluate(() => document.querySelector('[data-figures]').scrollIntoView({ behavior: 'instant' }));
+  const w1 = await lp.evaluate(() => document.querySelector('[data-figure]').getBoundingClientRect().width);
+  await lp.waitForTimeout(1400);
+  const w2 = await lp.evaluate(() => document.querySelector('[data-figure]').getBoundingClientRect().width);
+  check('counting does not resize the figure', Math.abs(w1 - w2) < 0.6, `${w1.toFixed(2)} -> ${w2.toFixed(2)}`);
+  await live.close();
 }
 
 console.table(results);
