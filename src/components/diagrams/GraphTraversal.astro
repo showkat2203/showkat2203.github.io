@@ -1,0 +1,34 @@
+---
+/** A bill-of-materials graph: one changed part, and the blast radius a
+    traversal returns before the change ships. */
+---
+<svg class="dg" viewBox="0 0 560 200" role="img"
+  aria-label="A bill-of-materials graph in which one changed component propagates along edges to the assemblies, products, and manufacturing sites a traversal identifies as affected.">
+  <g class="dg-line">
+    <path d="M74 100 L186 52" /><path d="M74 100 L186 100" /><path d="M74 100 L186 148" />
+    <path d="M186 52 L300 34" /><path d="M186 100 L300 82" /><path d="M186 100 L300 124" />
+    <path d="M186 148 L300 166" /><path d="M300 34 L420 58" /><path d="M300 82 L420 58" />
+    <path d="M300 124 L420 130" /><path d="M300 166 L420 130" />
+  </g>
+
+  <circle class="dg-fill" cx="74" cy="100" r="11" />
+  <text x="74" y="132" text-anchor="middle">changed part</text>
+
+  <g class="dg-soft">
+    <circle cx="186" cy="52" r="8" /><circle cx="186" cy="100" r="8" /><circle cx="186" cy="148" r="8" />
+    <circle cx="300" cy="34" r="8" /><circle cx="300" cy="82" r="8" /><circle cx="300" cy="124" r="8" /><circle cx="300" cy="166" r="8" />
+  </g>
+  <g fill="none" stroke="#1b3a6b" stroke-width="1.2">
+    <circle cx="186" cy="52" r="8" /><circle cx="186" cy="100" r="8" /><circle cx="186" cy="148" r="8" />
+    <circle cx="300" cy="34" r="8" /><circle cx="300" cy="82" r="8" /><circle cx="300" cy="124" r="8" /><circle cx="300" cy="166" r="8" />
+  </g>
+
+  <circle class="dg-box" cx="420" cy="58" r="9" />
+  <circle class="dg-box" cx="420" cy="130" r="9" />
+
+  <text x="186" y="186" text-anchor="middle">assemblies</text>
+  <text x="300" y="186" text-anchor="middle">bills of material</text>
+  <text x="452" y="58">products</text>
+  <text x="452" y="130">sites</text>
+  <text class="dg-t-sm" x="4" y="16">millions of nodes, traversed before release</text>
+</svg>

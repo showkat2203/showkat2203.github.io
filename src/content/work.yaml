@@ -1,121 +1,83 @@
-# Selected work, ordered by position on the magnitude rail (ascending).
-# `magnitude.exponent` places the entry on the axis; `magnitude.unit` names
-# what is being counted. Never put a number here that isn't measured.
+# Selected work. Keep `body` to two sentences: the card carries a diagram and
+# the figures, so the prose only has to frame the problem.
+#
+#   diagram: timing | reconcile | graph | pipeline   (src/components/diagrams/)
+#   tags:    the stack, shown as small mono chips
+#   metrics: evidence, shown as figures beneath the text
+
 mcu-timing:
   order: 1
-  title: Timing defects that only exist under a probe
+  title: Sensor streaming that cannot miss a 15 ms deadline
   org: Samsung Research, wearable platform
-  period: 2018–2021
-  magnitude:
-    exponent: 0
-    unit: one microcontroller
+  period: 2018 – 2021
+  diagram: timing
+  tags: [C, C++, FreeRTOS, BLE, GATT, JTAG]
   body: >-
-    FreeRTOS firmware and device drivers in C and C++ over SPI, UART, and I2C,
-    running heart-rate, stress, and sleep tracking across more than 90 exercise
-    modes. The memory and power budgets were fixed before the work started, so
-    each feature had to fit rather than scale. Races and timing defects at that
-    level leave nothing in a log; they were found with JTAG and Trace32 against
-    the running instruction stream.
+    Heart-rate, stress, and sleep tracking across more than 90 exercise modes,
+    on a microcontroller whose memory and power budgets were fixed before the
+    work started. Races and timing defects at that level leave nothing in a log,
+    so they were found on the running instruction stream with JTAG and Trace32.
   metrics:
     - value: 15 ms
-      label: sensor streaming cadence held
+      label: streaming cadence held
     - value: 2M+
       label: devices shipped, no known production defects
     - value: 99%
-      label: over-the-air rollout success, zero bricked devices
-  detail: >-
-    Connectivity was the harder half. The Bluetooth Low Energy and GATT control
-    and data planes — service discovery, characteristics, message framing,
-    connection stability — had to sustain real-time streaming on a 15 ms cadence
-    over a link that drops without warning. Update workflows then had to be
-    rollback-safe for devices that could not be physically retrieved, which turns
-    a failed install from a retry into a permanent loss. That path carried 95%
-    test coverage. The phone-side libraries, the Samsung Accessory Protocol
-    implementations in C and C++ for Android and iOS, were written from scratch
-    as the founding engineer on the connectivity stack.
+      label: rollback-safe update success, zero bricked devices
 
 reconciliation:
   order: 2
   title: Reconciling an event stream that drops, duplicates, and reorders
   org: Amazon Web Services, infrastructure supply chain
-  period: 2025–2026
-  magnitude:
-    exponent: 1
-    unit: integrated systems
+  period: 2025 – 2026
+  diagram: reconcile
+  tags: [Java, Spring Boot, EventBridge, SQS, AWS Batch, DynamoDB]
   body: >-
     The hardware system of record carried a 24-hour consistency commitment while
-    taking asynchronous updates from more than fifteen cross-region systems.
-    Integration at that width means updates arrive dropped, duplicated, or out of
-    order, and no individual message can be trusted on its own. An event-driven
-    reconciliation service on EventBridge, SQS, AWS Batch, and DynamoDB detected
-    divergence and replayed it safely, so the commitment was something the system
-    held rather than something the design asserted.
+    taking asynchronous updates from more than fifteen cross-region systems. An
+    event-driven reconciliation service detected divergence and replayed it
+    safely, so the commitment was something the system held rather than
+    something the design asserted.
   metrics:
     - value: 24 h
       label: consistency commitment, held
+    - value: 15+
+      label: cross-region systems integrated
     - value: 60% → 90%
       label: integration test coverage
-  detail: >-
-    A commitment like that is only meaningful if violations are visible, so the
-    platform was instrumented to make intermittent failures observable rather than
-    anecdotal: CloudWatch, real user monitoring, CodeGuru profiling, and
-    Lambda-based certificate monitoring, with integration coverage taken from 60%
-    to 90% in Cypress. The same fifteen-plus systems were then integrated against
-    a single source of product data behind versioned REST APIs, with role-based
-    access control and per-caller rate limits, so that consistency had one owner
-    instead of fifteen.
 
 change-impact-graph:
   order: 3
-  title: Change impact as a graph traversal
+  title: Change impact as a graph traversal, not a lookup
   org: Amazon Web Services, infrastructure supply chain
-  period: 2025–2026
-  magnitude:
-    exponent: 6
-    unit: components and assemblies
+  period: 2025 – 2026
+  diagram: graph
+  tags: [Amazon Neptune, DynamoDB, GraphQL, React, TypeScript]
   body: >-
-    Millions of hardware components, assemblies, and bills of materials modelled
-    as a graph in Amazon Neptune and DynamoDB. Asking what a change breaks is a
-    traversal question, not a lookup, and answering it before a change ships means
-    traversing across products, sites, and programs rather than within any one of
-    them.
+    Millions of hardware components, assemblies, and bills of material modelled
+    as a graph, so that asking what a change breaks could be answered across
+    products, sites, and programs before the change shipped. A rules engine
+    evaluated site, region, and program policy from declarative configuration.
   metrics:
     - value: 60%
       label: gain in hardware qualification efficiency
     - value: 100+
       label: manufacturing sites onboarded without per-class code
-  detail: >-
-    The platform around the graph was built end to end: a Java and Spring Boot
-    rules engine evaluating site, region, and program policy from declarative
-    configuration, reached through a GraphQL, React, and TypeScript interface.
-    Making attributes, classification, and lifecycle rules data-driven is what
-    allowed new hardware categories to onboard across more than 100 manufacturing
-    sites without an engineer writing code for each product class.
 
 emr-pipelines:
   order: 4
   title: Feature extraction across ten million transactions
   org: Baylor University, graduate research
-  period: 2022–2023
-  magnitude:
-    exponent: 7
-    unit: blockchain transactions
+  period: 2022 – 2023
+  diagram: pipeline
+  tags: [Python, PySpark, MapReduce, Amazon EMR, PyTorch]
   body: >-
-    Distributed MapReduce and PySpark pipelines on Amazon EMR, extracting opcode
-    and control-flow features from Solidity bytecode across more than 10 million
-    transactions, then training anomaly-detection models over the resulting
-    feature set. At that volume the extraction step, not the model, decides
-    whether the experiment is runnable at all.
+    Distributed pipelines extracting opcode and control-flow features from
+    Solidity bytecode, then training anomaly-detection models over the result.
+    At that volume the extraction step, not the model, decides whether the
+    experiment is runnable at all.
   metrics:
     - value: 65%
       label: improvement in analysis efficiency
     - value: 10M+
       label: transactions processed
-  detail: >-
-    A second line of work in the same period measured rather than built: a
-    controlled evaluation of four JVM message queues — Kafka, Artemis, Pulsar, and
-    RocketMQ — under varying load, recording latency, message ordering, and
-    delivery reliability under concurrency. It was published in Electronics and
-    Telecom. Alongside it, a transaction manager in Python enforced ACID guarantees
-    through strict two-phase locking and write-ahead logging, with crash recovery
-    under concurrent workloads.

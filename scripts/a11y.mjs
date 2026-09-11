@@ -7,7 +7,7 @@ const server = await serve();
 const browser = await launch(chromium);
 let failures = 0;
 
-for (const path of ['/', '/publications', '/cv']) {
+for (const path of ['/', '/publications', '/cv', '/blog', '/blog/reconciliation-is-a-feature']) {
   for (const width of [1280, 360]) {
     const context = await browser.newContext({ viewport: { width, height: 900 } });
     const page = await context.newPage();

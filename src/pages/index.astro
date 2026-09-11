@@ -1,9 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
-import Magnitude from '../components/Magnitude.astro';
-import WorkEntry from '../components/WorkEntry.astro';
+import WorkCard from '../components/WorkCard.astro';
 import Citation from '../components/Citation.astro';
+import PostCard from '../components/PostCard.astro';
 import CopyEmail from '../components/CopyEmail.astro';
+import { readingMinutes } from '../lib/reading';
 import { getCollection, getEntry } from 'astro:content';
 
 const profile = await getEntry('profile', 'main');
@@ -12,285 +13,374 @@ const p = profile.data;
 
 const domains = (await getCollection('domains')).sort((a, b) => a.data.order - b.data.order);
 const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
-// Newest first by actual start date, so the year in the rail runs monotonically.
 const experience = (await getCollection('experience')).sort(
   (a, b) => b.data.start.localeCompare(a.data.start) || a.data.order - b.data.order,
 );
 
 const headline = (await getCollection('publications'))
   .filter((pub) => pub.data.headlineOrder !== null)
-  // Newest first, so the year in the rail actually orders the list. The
-  // headlineOrder field decides *which* five appear, not their order.
   .sort((a, b) => b.data.year - a.data.year || (a.data.headlineOrder ?? 0) - (b.data.headlineOrder ?? 0));
 
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 3);
+
+const orgs = ['Amazon Web Services', 'Samsung Research', 'University of Arizona', 'Baylor University'];
+
+const figures = [
+  { v: String(p.record.publications), l: 'peer-reviewed papers' },
+  { v: String(p.record.citations), l: 'citations' },
+  { v: String(p.record.hIndex), l: 'h-index' },
+  { v: '2M+', l: 'devices shipped' },
+];
 ---
 
-<Base title={`${p.name} — systems engineer`} current="home">
-  <section class="hero shell" aria-labelledby="hero-name">
-    <h1 class="hero__name" id="hero-name">{p.name}</h1>
-    <p class="hero__sentence">{p.heroSentence}</p>
+<Base title={`${p.name} — ${p.role}`} current="home">
+  <!-- hero ------------------------------------------------------------- -->
+  <section class="shell hero">
+    <div class="hero__text">
+      <p class="kicker">{p.role} — {p.locationShort}</p>
+      <h1 class="hero__h1">{p.headline}</h1>
+      <p class="lede hero__lede">{p.positioning}</p>
+      <div class="hero__cta">
+        <a class="btn btn--primary" href={p.cv.hosted} download>Download CV</a>
+        {p.links.scholar.url && <a class="btn btn--ghost" href={p.links.scholar.url}>Google Scholar</a>}
+        <a class="btn btn--ghost" href={p.links.github.url!}>GitHub</a>
+      </div>
+    </div>
+    <figure class="hero__photo">
+      <picture>
+        <source type="image/webp" srcset="/img/portrait-480.webp 480w, /img/portrait-800.webp 800w, /img/portrait-1200.webp 1200w" sizes="(max-width: 52rem) 92vw, 34rem" />
+        <img src="/img/portrait-800.jpg" width="800" height="800" alt={`${p.name}, ${p.role} in ${p.location}`} fetchpriority="high" />
+      </picture>
+    </figure>
   </section>
-  <div class="shell"><div class="hero__stub"></div></div>
 
-  <div class="spined">
-    <!-- what I work on ------------------------------------------------- -->
-    <section class="section shell" id="range" aria-labelledby="range-title">
-      <div class="section__head measure">
-        <h2 class="section__title" id="range-title">What I work on</h2>
-        <p class="section__lede">
-          Three domains, one axis. The scale on the left is the size of the thing
-          being reasoned about, from a single microcontroller to a graph with
-          millions of nodes.
-        </p>
-      </div>
+  <!-- credibility ------------------------------------------------------ -->
+  <section class="shell orgs" aria-label="Organisations">
+    <p class="orgs__label">Built systems at</p>
+    <ul class="orgs__list">{orgs.map((o) => <li>{o}</li>)}</ul>
+  </section>
 
-      <div class="domains">
-        {
-          domains.map((d) => (
-            <article class="band domain">
-              <div class="band__rail">
-                <span class="band__figure">
-                  <Magnitude exponent={d.data.exponent} />
-                </span>
-                <span class="band__unit">{d.data.unit}</span>
-              </div>
-              <div class="band__body">
-                <h3 class="domain__label">{d.data.label}</h3>
-                <p class="measure">{d.data.body}</p>
-              </div>
-            </article>
-          ))
-        }
-      </div>
-
-      <div class="band band--nomark connective">
-        <div class="band__rail"></div>
-        <div class="band__body">
-          <p class="measure">
-            They are the same problem at three magnitudes: state that several
-            things touch at once, failure modes that appear only under load, and
-            a correctness claim that has to survive both. The tools change
-            completely between the bands. The reasoning does not.
-          </p>
+  <section class="shell figures" aria-label="Research record">
+    {
+      figures.map((f) => (
+        <div class="figure">
+          <span class="figure__v">{f.v}</span>
+          <span class="figure__l">{f.l}</span>
         </div>
-      </div>
-    </section>
+      ))
+    }
+  </section>
 
-    <!-- selected work --------------------------------------------------- -->
-    <section class="section shell" id="work" aria-labelledby="work-title">
-      <div class="section__head measure">
-        <h2 class="section__title" id="work-title">Selected work</h2>
-        <p class="section__lede">
-          Chosen for the difficulty of the problem rather than how recent it is,
-          and ordered up the same scale.
-        </p>
-      </div>
-      {work.map((entry) => <WorkEntry entry={entry.data} />)}
-    </section>
+  <!-- practice areas --------------------------------------------------- -->
+  <section class="shell section" id="about" aria-labelledby="about-t">
+    <div class="section__head"><h2 class="h2" id="about-t">What I work on</h2></div>
+    <div class="areas">
+      {
+        domains.map((d) => (
+          <article class="area">
+            <h3 class="area__t">{d.data.label}</h3>
+            <p class="area__b">{d.data.body}</p>
+          </article>
+        ))
+      }
+    </div>
+  </section>
 
-    <!-- publications ---------------------------------------------------- -->
-    <section class="section shell" id="publications" aria-labelledby="pubs-title">
-      <div class="section__head measure">
-        <h2 class="section__title" id="pubs-title">Publications</h2>
-        <p class="section__lede">
-          {p.record.publications} peer-reviewed papers, {p.record.citations} citations,
-          h-index {p.record.hIndex}. Five of them here; the rest on the
-          <a href="/publications">full publications page</a>.
-        </p>
-      </div>
+  <!-- work ------------------------------------------------------------- -->
+  <section class="shell section" id="work" aria-labelledby="work-t">
+    <div class="section__head">
+      <h2 class="h2" id="work-t">Selected work</h2>
+      <p class="section__more">Chosen for the difficulty of the problem, not how recent it is</p>
+    </div>
+    {work.map((entry) => <WorkCard entry={entry.data} />)}
+  </section>
 
-      <ol class="pubs">
-        {
-          headline.map((pub) => (
-            <li class="band pub">
-              <div class="band__rail">
-                <span class="band__figure">{pub.data.year}</span>
-                <span class="band__unit">{pub.data.venueShort}</span>
-              </div>
-              <div class="band__body">
-                <Citation pub={pub.data} selfAliases={p.selfAliases} />
-              </div>
-            </li>
-          ))
-        }
-      </ol>
-    </section>
+  <!-- publications ----------------------------------------------------- -->
+  <section class="shell section" id="publications" aria-labelledby="pubs-t">
+    <div class="section__head">
+      <h2 class="h2" id="pubs-t">Publications</h2>
+      <a class="section__more" href="/publications">All {p.record.publications} publications</a>
+    </div>
+    <ol class="pubs">
+      {
+        headline.map((pub, i) => (
+          <li>
+            <Citation pub={pub.data} selfAliases={p.selfAliases} index={i + 1} />
+          </li>
+        ))
+      }
+    </ol>
+  </section>
 
-    <!-- experience ------------------------------------------------------ -->
-    <section class="section shell" id="experience" aria-labelledby="exp-title">
-      <div class="section__head measure">
-        <h2 class="section__title" id="exp-title">Experience</h2>
-        <p class="section__lede">
-          Ordered by start date. The rail marks the year a role began; each
-          role's exact period is on its own line.
-        </p>
-      </div>
-
-      <ol class="timeline">
-        {
-          experience.map((role, i) => {
-            const previous = experience[i - 1];
-            const year = role.data.start.slice(0, 4);
-            const showYear = !previous || previous.data.start.slice(0, 4) !== year;
-            return (
-              <li class="band role">
-                <div class="band__rail">
-                  {showYear && <span class="band__figure">{year}</span>}
-                </div>
-                <div class="band__body">
-                  <h3 class="role__title">
-                    {role.data.role}
-                    {role.data.current && <span class="role__now mono">current</span>}
-                  </h3>
-                  <p class="role__org">
-                    {role.data.org}, {role.data.location}
-                    <span class="role__period mono">{role.data.period}</span>
-                  </p>
-                  {role.data.summary && <p class="role__summary measure">{role.data.summary}</p>}
-                  {role.data.concurrentWith && (
-                    <p class="role__concurrent">{role.data.concurrentWith}</p>
-                  )}
-                </div>
-              </li>
-            );
-          })
-        }
-      </ol>
-    </section>
-
-    <!-- contact --------------------------------------------------------- -->
-    <section class="section shell" id="contact" aria-labelledby="contact-title">
-      <div class="section__head measure">
-        <h2 class="section__title" id="contact-title">Contact</h2>
-      </div>
-
-      <div class="band band--nomark">
-        <div class="band__rail"></div>
-        <div class="band__body">
-          <dl class="contact">
-            <div class="contact__row">
-              <dt>Email</dt>
-              <dd><CopyEmail email={p.email} /></dd>
-            </div>
-            <div class="contact__row">
-              <dt>Code</dt>
-              <dd><a href={p.links.github.url!}>{p.links.github.label}</a></dd>
-            </div>
-            <div class="contact__row">
-              <dt>Papers</dt>
-              <dd>
-                {
-                  p.links.scholar.url ? (
-                    <a href={p.links.scholar.url}>{p.links.scholar.label}</a>
-                  ) : (
-                    <span>
-                      {p.links.scholar.label} <span class="pending mono">link pending</span>
-                    </span>
-                  )
-                }
-              </dd>
-            </div>
-            <div class="contact__row">
-              <dt>Profile</dt>
-              <dd>
-                {
-                  p.links.linkedin.url ? (
-                    <a href={p.links.linkedin.url}>{p.links.linkedin.label}</a>
-                  ) : (
-                    <span>
-                      {p.links.linkedin.label} <span class="pending mono">link pending</span>
-                    </span>
-                  )
-                }
-              </dd>
-            </div>
-            <div class="contact__row">
-              <dt>CV</dt>
-              <dd>
-                <a href="/cv">Read the CV on this site</a>, or
-                <a href="/cv.pdf">download it as a PDF</a>.
-              </dd>
-            </div>
-          </dl>
-          <p class="contact__where">
-            {p.location}. {p.residency}.
-          </p>
+  <!-- writing ---------------------------------------------------------- -->
+  {
+    posts.length > 0 && (
+      <section class="shell section" id="writing" aria-labelledby="writing-t">
+        <div class="section__head">
+          <h2 class="h2" id="writing-t">Writing</h2>
+          <a class="section__more" href="/blog">All posts</a>
         </div>
-      </div>
-    </section>
-  </div>
+        <div class="posts">
+          {posts.map((post) => (
+            <PostCard post={post} readingMinutes={readingMinutes(post.body)} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <!-- experience ------------------------------------------------------- -->
+  <section class="shell section" id="experience" aria-labelledby="exp-t">
+    <div class="section__head">
+      <h2 class="h2" id="exp-t">Experience</h2>
+      <a class="section__more" href="/cv">Full CV</a>
+    </div>
+    <ol class="tl">
+      {
+        experience.map((role) => (
+          <li class="tl__row">
+            <p class="tl__when mono">{role.data.period}</p>
+            <div class="tl__what">
+              <h3 class="tl__role">
+                {role.data.role}
+                {role.data.current && <span class="tl__now">current</span>}
+              </h3>
+              <p class="tl__org">{role.data.org}, {role.data.location}</p>
+              {role.data.summary && <p class="tl__sum">{role.data.summary}</p>}
+              {role.data.concurrentWith && <p class="tl__con">{role.data.concurrentWith}</p>}
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <!-- contact ---------------------------------------------------------- -->
+  <section class="shell section" id="contact" aria-labelledby="contact-t">
+    <div class="section__head"><h2 class="h2" id="contact-t">Contact</h2></div>
+    <div class="card contact">
+      <dl class="contact__grid">
+        <div>
+          <dt>Email</dt>
+          <dd><CopyEmail email={p.email} /></dd>
+        </div>
+        <div>
+          <dt>Code</dt>
+          <dd><a href={p.links.github.url!}>github.com/showkat2203</a></dd>
+        </div>
+        <div>
+          <dt>Papers</dt>
+          <dd>
+            {
+              p.links.scholar.url ? (
+                <a href={p.links.scholar.url}>Google Scholar profile</a>
+              ) : (
+                <span>Google Scholar <span class="pending mono">link pending</span></span>
+              )
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Profile</dt>
+          <dd>
+            {
+              p.links.linkedin.url ? (
+                <a href={p.links.linkedin.url}>LinkedIn profile</a>
+              ) : (
+                <span>LinkedIn <span class="pending mono">link pending</span></span>
+              )
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>CV</dt>
+          <dd><a href="/cv">Read on this site</a>, or <a href={p.cv.hosted} download>download the PDF</a></dd>
+        </div>
+        <div>
+          <dt>Status</dt>
+          <dd>{p.residency}</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
 </Base>
 
 <style>
   .hero {
-    padding-block: clamp(4rem, 12vw, 8.5rem) 0;
+    display: grid;
+    grid-template-columns: 1.12fr 0.88fr;
+    gap: clamp(1.75rem, 5vw, 4rem);
+    align-items: center;
+    padding-top: clamp(2.5rem, 6vw, 4.5rem);
   }
 
-  .hero__name {
-    font-size: 0.9375rem;
-    font-variation-settings: 'wght' 600, 'wdth' 100;
-    letter-spacing: 0.01em;
-    margin-bottom: clamp(1.25rem, 3vw, 2rem);
-  }
-
-  .hero__sentence {
-    font-size: var(--t-hero);
-    font-variation-settings: 'wght' 500, 'wdth' 94;
-    line-height: 1.14;
-    letter-spacing: -0.021em;
-    max-width: 22ch;
+  .hero__h1 {
+    font-family: var(--serif);
+    font-size: var(--t-display);
+    font-weight: 600;
+    line-height: 1.06;
+    letter-spacing: -0.028em;
+    margin-top: 0.6rem;
+    max-width: 19ch;
     text-wrap: balance;
   }
 
-  .section__lede {
-    margin-top: 0.75rem;
-    color: var(--graphite);
-    font-size: var(--t-lead);
-    line-height: 1.5;
-    text-wrap: pretty;
+  .hero__lede {
+    margin-top: 1.1rem;
+    max-width: 48ch;
   }
 
-  .domains .domain {
-    padding-block: 1.4rem;
+  .hero__cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.75rem;
   }
 
-  .domain__label {
-    font-size: var(--t-h3);
-    font-variation-settings: 'wght' 600, 'wdth' 100;
-    margin-bottom: 0.4rem;
+  .hero__photo {
+    position: relative;
   }
 
-  .domain p {
-    color: var(--graphite);
-    text-wrap: pretty;
+  .hero__photo img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--r);
+    filter: saturate(0.94);
   }
 
-  .connective {
-    padding-top: 1.75rem;
+  /* A thin offset rule behind the photo: the one ornamental move on the page. */
+  .hero__photo::after {
+    content: '';
+    position: absolute;
+    inset: 0.85rem -0.85rem -0.85rem 0.85rem;
+    border: 1px solid var(--navy);
+    border-radius: var(--r);
+    z-index: -1;
   }
 
-  .connective p {
-    border-top: 1px solid var(--hairline);
-    padding-top: 1.5rem;
-    text-wrap: pretty;
+  .orgs {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 1.75rem;
+    margin-top: clamp(3rem, 7vw, 5rem);
+    padding-top: 1.35rem;
+    border-top: 1px solid var(--rule);
   }
 
-  .pubs .pub {
-    padding-block: 1.5rem;
-    border-bottom: 1px solid var(--hairline);
+  .orgs__label {
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: var(--t-meta);
+    color: var(--sec);
   }
 
-  .pubs .pub:last-child {
-    border-bottom: 0;
+  .orgs__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 2rem;
   }
 
-  .timeline .role {
-    padding-block: 1.1rem;
-  }
-
-  .role__title {
+  .orgs__list li {
+    font-family: var(--serif);
     font-size: 1.0625rem;
-    font-variation-settings: 'wght' 600, 'wdth' 100;
+    font-weight: 600;
+    letter-spacing: -0.008em;
+  }
+
+  .figures {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.25rem;
+    margin-top: 2.25rem;
+  }
+
+  .figure__v {
+    display: block;
+    font-family: var(--serif);
+    font-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.25rem);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .figure__l {
+    display: block;
+    font-size: var(--t-meta);
+    color: var(--sec);
+    margin-top: 0.3rem;
+  }
+
+  .areas {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(1.25rem, 3vw, 2.25rem);
+  }
+
+  .area {
+    border-top: 2px solid var(--navy);
+    padding-top: 0.9rem;
+  }
+
+  .area__t {
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .area__b {
+    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--sec);
+    text-wrap: pretty;
+  }
+
+  .pubs li {
+    padding-block: 1.35rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .pubs li:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  .posts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: 1rem;
+  }
+
+  /* A lone post should not stretch the full page width. */
+  .posts > :only-child {
+    max-width: 34rem;
+  }
+
+  .tl__row {
+    display: grid;
+    grid-template-columns: 11rem minmax(0, 1fr);
+    gap: 0.35rem 1.5rem;
+    padding-block: 1.1rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .tl__row:first-child {
+    border-top: 0;
+  }
+
+  .tl__when {
+    font-size: var(--t-meta);
+    color: var(--sec);
+    padding-top: 0.2rem;
+  }
+
+  .tl__role {
+    font-size: 1.0625rem;
+    font-weight: 600;
     line-height: 1.35;
     display: flex;
     flex-wrap: wrap;
@@ -298,81 +388,82 @@ const headline = (await getCollection('publications'))
     gap: 0.6rem;
   }
 
-  .role__now {
-    font-size: var(--t-unit);
-    font-weight: 400;
-    color: var(--paper);
-    background: var(--ink);
-    padding: 0.1rem 0.35rem;
+  .tl__now {
+    font-size: var(--t-small);
+    font-weight: 500;
+    font-family: var(--mono);
+    color: #fff;
+    background: var(--navy);
+    border-radius: var(--r);
+    padding: 0.1rem 0.4rem;
   }
 
-  .role__org {
-    color: var(--graphite);
+  .tl__org {
     font-size: var(--t-meta);
-    margin-top: 0.2rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.15rem 0.9rem;
+    color: var(--sec);
+    margin-top: 0.15rem;
   }
 
-  .role__period {
-    color: var(--tick);
-  }
-
-  /* Stated only where two roles genuinely overlapped. */
-  .role__concurrent {
-    margin-top: 0.4rem;
-    font-size: var(--t-meta);
-    color: var(--tick);
-    border-left: 1px solid var(--hairline);
-    padding-left: 0.7rem;
-    max-width: var(--measure);
-  }
-
-  .role__summary {
-    margin-top: 0.5rem;
-    color: var(--graphite);
-    font-size: 1rem;
-    line-height: 1.55;
+  .tl__sum {
+    margin-top: 0.45rem;
+    font-size: 0.9375rem;
+    color: var(--sec);
+    max-width: 48rem;
     text-wrap: pretty;
   }
 
-  .contact {
-    display: grid;
-    gap: 0.9rem;
-  }
-
-  .contact__row {
-    display: grid;
-    grid-template-columns: 5.5rem minmax(0, 1fr);
-    gap: 0.5rem 1rem;
-    align-items: baseline;
-    border-top: 1px solid var(--hairline);
-    padding-top: 0.9rem;
-  }
-
-  .contact__row dt {
+  .tl__con {
+    margin-top: 0.35rem;
     font-size: var(--t-meta);
-    color: var(--tick);
+    color: var(--sec);
+    border-left: 2px solid var(--rule);
+    padding-left: 0.6rem;
   }
 
-  .contact__row dd {
-    margin: 0;
+  .contact {
+    padding: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .contact__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: 1.35rem 2rem;
+  }
+
+  .contact__grid dt {
+    font-size: var(--t-small);
+    color: var(--sec);
+    font-family: var(--mono);
+  }
+
+  .contact__grid dd {
+    margin-top: 0.25rem;
   }
 
   .pending {
-    font-size: var(--t-unit);
-    color: var(--tick);
+    font-size: var(--t-small);
+    color: var(--sec);
   }
 
-  .contact__where {
-    margin-top: 1.75rem;
-    color: var(--graphite);
-    font-size: var(--t-meta);
-  }
-
-  @media (max-width: 30rem) {
-    .contact__row {
+  @media (max-width: 52rem) {
+    .hero {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .hero__photo {
+      order: -1;
+      max-width: 20rem;
+    }
+    .hero__photo::after {
+      inset: 0.6rem -0.6rem -0.6rem 0.6rem;
+    }
+    .areas {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .figures {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.5rem 1rem;
+    }
+    .tl__row {
       grid-template-columns: minmax(0, 1fr);
     }
   }

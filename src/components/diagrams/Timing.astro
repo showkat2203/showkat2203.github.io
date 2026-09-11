@@ -1,0 +1,34 @@
+---
+/** A 15 ms sensor frame: sample, process, notify, and the slack that is left. */
+---
+<svg class="dg" viewBox="0 0 560 200" role="img"
+  aria-label="A repeating 15 millisecond frame in which a sensor sample is read, processed, and sent over Bluetooth Low Energy, leaving a slack margin before the next deadline.">
+  <text x="8" y="22">one 15 ms frame, repeating</text>
+
+  <line class="dg-line dg-dash" x1="8" y1="132" x2="552" y2="132" />
+
+  <!-- frame 1 -->
+  <rect class="dg-box" x="8" y="46" width="60" height="34" rx="2" />
+  <text x="38" y="67" text-anchor="middle">sample</text>
+  <rect class="dg-soft" x="72" y="46" width="112" height="34" rx="2" />
+  <text x="128" y="67" text-anchor="middle">filter, classify</text>
+  <rect class="dg-fill" x="188" y="46" width="86" height="34" rx="2" />
+  <text class="dg-t-on" x="231" y="67" text-anchor="middle">gatt notify</text>
+  <rect x="278" y="46" width="52" height="34" rx="2" fill="none" stroke="#d9d4cb" stroke-dasharray="3 3" />
+  <text class="dg-t-sm" x="304" y="67" text-anchor="middle">slack</text>
+
+  <path class="dg-line-em" d="M8 96 V112 H330 V96" />
+  <text x="169" y="128" text-anchor="middle">deadline held</text>
+
+  <!-- frame 2, abbreviated -->
+  <rect class="dg-box" x="344" y="46" width="60" height="34" rx="2" />
+  <text x="374" y="67" text-anchor="middle">sample</text>
+  <rect class="dg-soft" x="408" y="46" width="112" height="34" rx="2" />
+  <text x="464" y="67" text-anchor="middle">filter, classify</text>
+  <rect class="dg-fill" x="524" y="46" width="28" height="34" rx="2" />
+
+  <path class="dg-line" d="M344 96 V112 H552" />
+
+  <text x="8" y="160">fixed memory and power budget</text>
+  <text class="dg-t-sm" x="8" y="180">races and timing defects found on the instruction stream with JTAG and Trace32</text>
+</svg>

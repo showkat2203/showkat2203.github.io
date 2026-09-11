@@ -5,18 +5,28 @@ import { getEntry } from 'astro:content';
 interface Props {
   title: string;
   description?: string;
-  /** Set on pages whose nav should not offer a link back to itself. */
-  current?: 'home' | 'publications' | 'cv';
+  current?: 'home' | 'publications' | 'blog' | 'cv';
+  /** Social card override, for blog posts. */
+  ogImage?: string;
+  ogType?: 'website' | 'article';
 }
 
-const { title, description, current = 'home' } = Astro.props;
+const { title, description, current = 'home', ogImage, ogType = 'website' } = Astro.props;
 const profile = await getEntry('profile', 'main');
 if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
 const p = profile.data;
 
 const desc = description ?? p.metaDescription;
 const canonical = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', Astro.site);
-const ogImage = new URL('/og.png', Astro.site);
+const image = new URL(ogImage ?? '/og.png', Astro.site);
+
+const nav = [
+  { href: '/#work', label: 'Work', key: 'home' },
+  { href: '/publications', label: 'Publications', key: 'publications' },
+  { href: '/blog', label: 'Writing', key: 'blog' },
+  { href: '/cv', label: 'CV', key: 'cv' },
+  { href: '/#contact', label: 'Contact', key: 'contact' },
+];
 ---
 
 <!doctype html>
@@ -29,144 +39,151 @@ const ogImage = new URL('/og.png', Astro.site);
     <link rel="canonical" href={canonical.href} />
     <meta name="author" content={p.name} />
 
-    <link rel="preload" href="/fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/dm-mono-500.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/source-serif.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/inter-tight.woff2" as="font" type="font/woff2" crossorigin />
 
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
     <meta property="og:locale" content="en_US" />
     <meta property="og:site_name" content={p.name} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={desc} />
     <meta property="og:url" content={canonical.href} />
-    <meta property="og:image" content={ogImage.href} />
+    <meta property="og:image" content={image.href} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content={`${p.name} — ${p.heroSentence}`} />
+    <meta property="og:image:alt" content={`${p.name}, ${p.role}`} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={desc} />
-    <meta name="twitter:image" content={ogImage.href} />
+    <meta name="twitter:image" content={image.href} />
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta name="theme-color" content="#f4f5f3" />
+    <link rel="alternate" type="application/rss+xml" title={`${p.name} — writing`} href="/rss.xml" />
+    <meta name="theme-color" content="#fbfaf9" />
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
 
-    <header class="masthead">
-      <div class="shell masthead__inner">
-        {
-          current === 'home' ? (
-            <p class="masthead__name masthead__name--quiet">chy.io</p>
-          ) : (
-            <p class="masthead__name">
-              <a href="/">{p.name}</a>
-            </p>
-          )
-        }
-        <nav class="masthead__nav" aria-label="Sections">
+    <header class="mast">
+      <div class="shell mast__in">
+        <a class="mast__mark" href="/">{p.name}</a>
+        <nav aria-label="Primary">
           <ul>
-            <li><a href={current === 'home' ? '#work' : '/#work'}>Selected work</a></li>
-            <li>
-              <a href="/publications" aria-current={current === 'publications' ? 'page' : undefined}>
-                Publications
-              </a>
-            </li>
-            <li><a href={current === 'home' ? '#experience' : '/#experience'}>Experience</a></li>
-            <li><a href="/cv" aria-current={current === 'cv' ? 'page' : undefined}>CV</a></li>
+            {
+              nav.map((item) => (
+                <li>
+                  <a href={item.href} aria-current={item.key === current ? 'page' : undefined}>
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
           </ul>
         </nav>
       </div>
     </header>
 
-    <main id="main">
-      <slot />
-    </main>
+    <main id="main"><slot /></main>
 
-    <footer class="footer">
-      <div class="shell footer__inner">
-        <p>{p.name}, {p.location}.</p>
-        <p>
-          Built with Astro. <a href="https://github.com/showkat2203/showkat2203.github.io">Source on GitHub</a>.
-        </p>
+    <footer class="foot no-print">
+      <div class="shell foot__in">
+        <p>{p.name} — {p.location}</p>
+        <ul class="foot__links">
+          <li><a href={`mailto:${p.email}`}>Email</a></li>
+          {p.links.scholar.url && <li><a href={p.links.scholar.url}>Google Scholar</a></li>}
+          <li><a href={p.links.github.url!}>GitHub</a></li>
+          <li><a href="/rss.xml">RSS</a></li>
+        </ul>
       </div>
     </footer>
 
     <style>
-      .masthead {
-        padding-block: 1.5rem 0;
+      .mast {
+        border-bottom: 1px solid var(--rule);
+        background: color-mix(in srgb, var(--bg) 97%, transparent);
+        backdrop-filter: blur(10px);
+        position: sticky;
+        top: 0;
+        z-index: 10;
       }
 
-      .masthead__inner {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem 2rem;
-        align-items: baseline;
-        justify-content: space-between;
-      }
-
-      .masthead__name {
-        font-size: 0.9375rem;
-        font-variation-settings: 'wght' 600, 'wdth' 100;
-        letter-spacing: 0.005em;
-        margin: 0;
-      }
-
-      .masthead__name a {
-        text-decoration-color: transparent;
-      }
-
-      /* On the home page the name belongs to the hero, not the masthead. */
-      .masthead__name--quiet {
-        font-variation-settings: 'wght' 500, 'wdth' 100;
-        color: var(--tick);
-      }
-
-      .masthead__nav ul {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.25rem 1.5rem;
-        font-size: 0.9375rem;
-      }
-
-      .masthead__nav a {
-        text-decoration-color: transparent;
-      }
-
-      .masthead__nav a:hover,
-      .masthead__nav a:focus-visible,
-      .masthead__nav a[aria-current='page'] {
-        text-decoration-color: var(--ink);
-      }
-
-      .masthead__nav a[aria-current='page'] {
-        font-variation-settings: 'wght' 600, 'wdth' 100;
-      }
-
-      .footer {
-        margin-top: clamp(4rem, 9vw, 7rem);
-        border-top: 1px solid var(--hairline);
-        padding-block: 1.75rem 3rem;
-        color: var(--graphite);
-        font-size: var(--t-meta);
-      }
-
-      .footer__inner {
+      .mast__in {
         display: flex;
         flex-wrap: wrap;
         gap: 0.35rem 2rem;
+        align-items: center;
         justify-content: space-between;
+        padding-block: 0.9rem;
       }
 
-      .footer p {
-        margin: 0;
+      .mast__mark {
+        font-family: var(--serif);
+        font-size: 1.0625rem;
+        font-weight: 600;
+        letter-spacing: -0.012em;
+        color: var(--ink);
+        text-decoration: none;
+      }
+
+      .mast nav ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem 1.5rem;
+      }
+
+      .mast nav a {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--sec);
+        text-decoration: none;
+      }
+
+      .mast nav a:hover,
+      .mast nav a:focus-visible {
+        color: var(--navy);
+      }
+
+      .mast nav a[aria-current='page'] {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .foot {
+        margin-top: clamp(4rem, 8vw, 6rem);
+        border-top: 1px solid var(--rule);
+        padding-block: 1.75rem 3rem;
+      }
+
+      .foot__in {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem 2rem;
+        justify-content: space-between;
+        align-items: baseline;
+        font-size: var(--t-meta);
+        color: var(--sec);
+      }
+
+      .foot__links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem 1.4rem;
       }
 
       @media print {
-        .masthead__nav,
-        .skip,
-        .footer {
+        .mast {
+          position: static;
+          border-bottom: 0;
+          backdrop-filter: none;
+        }
+        .mast nav {
           display: none;
+        }
+        .mast__in {
+          padding-block: 0;
+        }
+        .mast__mark {
+          font-size: 15pt;
         }
       }
     </style>

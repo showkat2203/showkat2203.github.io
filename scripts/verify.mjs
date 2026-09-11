@@ -53,16 +53,11 @@ for (const width of [320, 360, 414, 768]) {
   await page.close();
 }
 
-// --- details expand and copy button --------------------------------------
+// --- copy button ---------------------------------------------------------
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, permissions: ['clipboard-read', 'clipboard-write'] });
   const page = await ctx.newPage();
   await page.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
-  const d = page.locator('.work__detail').first();
-  check('detail starts closed', !(await d.evaluate((el) => el.open)));
-  await d.locator('summary').click();
-  check('detail expands on click', await d.evaluate((el) => el.open));
-
   await page.click('.copy__btn');
   // The handler awaits the clipboard promise, so wait for the confirmation
   // rather than reading synchronously after the click.
@@ -79,14 +74,51 @@ for (const width of [320, 360, 414, 768]) {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, reducedMotion: 'reduce' });
   const page = await ctx.newPage();
   await page.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
-  const dur = await page.evaluate(() => getComputedStyle(document.querySelector('.spined'), '::before').animationDuration);
-  check('rail animation disabled under reduced motion', parseFloat(dur) < 0.01, `duration ${dur}`);
-  const drawn = await page.evaluate(() => {
-    const el = document.querySelector('.spined');
-    return el.getBoundingClientRect().height > 1000;
-  });
-  check('rail still drawn under reduced motion', drawn);
+  const behaviour = await page.evaluate(() => getComputedStyle(document.documentElement).scrollBehavior);
+  check('smooth scrolling off under reduced motion', behaviour === 'auto', behaviour);
   await ctx.close();
+}
+
+// --- images and the blog -------------------------------------------------
+{
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
+  const imgs = await page.evaluate(() =>
+    Array.from(document.images).map((i) => ({
+      alt: i.getAttribute('alt'),
+      loaded: i.complete && i.naturalWidth > 0,
+      dims: Boolean(i.getAttribute('width') && i.getAttribute('height')),
+    })),
+  );
+  check('every image has an alt attribute', imgs.every((i) => i.alt !== null), JSON.stringify(imgs.map((i) => i.alt)));
+  check('every image actually loads', imgs.every((i) => i.loaded), `${imgs.filter((i) => !i.loaded).length} broken`);
+  check('portrait declares width and height', imgs.every((i) => i.dims));
+
+  const svgTitled = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('svg.dg')).every(
+      (s) => s.getAttribute('role') === 'img' && (s.getAttribute('aria-label') ?? '').length > 30,
+    ),
+  );
+  check('each diagram carries a descriptive label', svgTitled);
+  await page.close();
+}
+
+{
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.goto('http://localhost:4321/blog', { waitUntil: 'networkidle' });
+  const cards = await page.locator('.post').count();
+  check('blog index lists posts', cards > 0, `${cards} posts`);
+  await page.locator('.post__link').first().click();
+  await page.waitForLoadState('networkidle');
+  const hasProse = await page.locator('.prose h2').count();
+  check('post page renders markdown', hasProse > 0, `${hasProse} headings`);
+  await page.close();
+
+  const rss = await browser.newPage();
+  const res = await rss.goto('http://localhost:4321/rss.xml');
+  const body = (await res.text()) ?? '';
+  check('rss feed has items', body.includes('<item>'), `${body.length} bytes`);
+  await rss.close();
 }
 
 // --- no-JS fallback ------------------------------------------------------

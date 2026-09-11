@@ -1,0 +1,39 @@
+---
+/** Bytecode fanned out across an EMR cluster, reduced to features, then trained. */
+---
+<svg class="dg" viewBox="0 0 560 200" role="img"
+  aria-label="Ten million transactions of Solidity bytecode are fanned out across cluster workers that extract opcode and control-flow features, reduced into a feature set, and used to train an anomaly-detection model.">
+  <rect class="dg-box" x="4" y="70" width="86" height="44" rx="2" />
+  <text x="47" y="88" text-anchor="middle">bytecode</text>
+  <text class="dg-t-sm" x="47" y="104" text-anchor="middle">10M+ tx</text>
+
+  <g class="dg-line">
+    <path d="M90 92 H132 V28 H166" /><path d="M90 92 H132 V60 H166" />
+    <path d="M90 92 H132 V124 H166" /><path d="M90 92 H132 V156 H166" />
+    <path d="M90 92 H166" />
+  </g>
+
+  <g>
+    <rect class="dg-soft" x="166" y="14" width="104" height="28" rx="2" />
+    <rect class="dg-soft" x="166" y="46" width="104" height="28" rx="2" />
+    <rect class="dg-soft" x="166" y="78" width="104" height="28" rx="2" />
+    <rect class="dg-soft" x="166" y="110" width="104" height="28" rx="2" />
+    <rect class="dg-soft" x="166" y="142" width="104" height="28" rx="2" />
+  </g>
+  <text x="218" y="96" text-anchor="middle">opcode, control flow</text>
+  <text class="dg-t-sm" x="218" y="186" text-anchor="middle">map across cluster workers</text>
+
+  <g class="dg-line">
+    <path d="M270 28 H306 V86 H336" /><path d="M270 60 H306 V86 H336" /><path d="M270 92 H336" />
+    <path d="M270 124 H306 V98 H336" /><path d="M270 156 H306 V98 H336" />
+  </g>
+
+  <rect class="dg-box" x="336" y="70" width="82" height="44" rx="2" />
+  <text x="377" y="96" text-anchor="middle">features</text>
+
+  <path class="dg-line-em" d="M418 92 H462" />
+
+  <rect class="dg-fill" x="462" y="70" width="94" height="44" rx="2" />
+  <text class="dg-t-on" x="509" y="88" text-anchor="middle">anomaly</text>
+  <text class="dg-t-on dg-t-sm" x="509" y="104" text-anchor="middle">detection</text>
+</svg>

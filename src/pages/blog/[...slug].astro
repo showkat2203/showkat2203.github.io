@@ -1,0 +1,234 @@
+---
+import Base from '../../layouts/Base.astro';
+import { readingMinutes } from '../../lib/reading';
+import { getCollection, getEntry, render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+};
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props as Props;
+const { Content } = await render(post);
+
+const profile = await getEntry('profile', 'main');
+if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
+const p = profile.data;
+
+const minutes = readingMinutes(post.body);
+const dateLong = post.data.date.toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+});
+---
+
+<Base title={`${post.data.title} — ${p.name}`} description={post.data.description} current="blog" ogType="article">
+  <article class="shell post">
+    <header class="post__head">
+      <p class="post__back"><a href="/blog">All posts</a></p>
+      <h1 class="post__t">{post.data.title}</h1>
+      <p class="lede post__d">{post.data.description}</p>
+      <p class="post__m mono">
+        <time datetime={post.data.date.toISOString()}>{dateLong}</time>
+        <span class="post__sep" aria-hidden="true"></span>
+        {minutes} min read
+      </p>
+      {
+        post.data.tags.length > 0 && (
+          <ul class="tags post__tags">{post.data.tags.map((t: string) => <li>{t}</li>)}</ul>
+        )
+      }
+    </header>
+
+    <div class="prose">
+      <Content />
+    </div>
+
+    <footer class="post__foot">
+      <p>
+        Written by {p.name}. <a href="/blog">More posts</a>, or
+        <a href={`mailto:${p.email}`}>send a reply by email</a>.
+      </p>
+    </footer>
+  </article>
+</Base>
+
+<style>
+  .post {
+    padding-top: clamp(2rem, 5vw, 3.25rem);
+    max-width: 48rem;
+  }
+
+  .post__back {
+    font-size: var(--t-meta);
+  }
+
+  .post__t {
+    font-family: var(--serif);
+    font-size: var(--t-page);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.12;
+    margin-top: 0.9rem;
+    text-wrap: balance;
+  }
+
+  .post__d {
+    margin-top: 0.9rem;
+  }
+
+  .post__m {
+    display: flex;
+    align-items: center;
+    margin-top: 1.1rem;
+    font-size: var(--t-small);
+    color: var(--sec);
+  }
+
+  .post__sep {
+    width: 1px;
+    height: 0.7em;
+    background: var(--rule);
+    margin-inline: 0.6rem;
+  }
+
+  .post__tags {
+    margin-top: 1rem;
+  }
+
+  .post__head {
+    padding-bottom: 1.75rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .post__foot {
+    margin-top: 2.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+    font-size: var(--t-meta);
+    color: var(--sec);
+  }
+
+  /* --- article body ---------------------------------------------------- */
+
+  .prose {
+    margin-top: 2rem;
+    font-size: 1.0625rem;
+    line-height: 1.72;
+  }
+
+  .prose :global(p),
+  .prose :global(ul),
+  .prose :global(ol),
+  .prose :global(pre),
+  .prose :global(blockquote),
+  .prose :global(table) {
+    margin-top: 1.2rem;
+  }
+
+  .prose :global(h2) {
+    font-family: var(--serif);
+    font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+    margin-top: 2.25rem;
+  }
+
+  .prose :global(h3) {
+    font-family: var(--serif);
+    font-size: 1.1875rem;
+    font-weight: 600;
+    margin-top: 1.75rem;
+  }
+
+  .prose :global(ul),
+  .prose :global(ol) {
+    padding-left: 1.2rem;
+    list-style: disc;
+  }
+
+  .prose :global(ol) {
+    list-style: decimal;
+  }
+
+  .prose :global(li) {
+    margin-top: 0.35rem;
+  }
+
+  .prose :global(li::marker) {
+    color: var(--sec);
+  }
+
+  .prose :global(blockquote) {
+    border-left: 2px solid var(--navy);
+    padding-left: 1.1rem;
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    font-style: italic;
+    color: var(--sec);
+  }
+
+  .prose :global(blockquote p) {
+    margin-top: 0;
+  }
+
+  .prose :global(pre) {
+    background: #fff !important;
+    border: 1px solid var(--rule);
+    border-radius: var(--r);
+    padding: 1rem 1.1rem;
+    overflow-x: auto;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .prose :global(code) {
+    font-family: var(--mono);
+    font-size: 0.9em;
+  }
+
+  .prose :global(:not(pre) > code) {
+    background: var(--tint);
+    border-radius: 2px;
+    padding: 0.1em 0.3em;
+  }
+
+  .prose :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+    display: block;
+    overflow-x: auto;
+  }
+
+  .prose :global(th),
+  .prose :global(td) {
+    text-align: left;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .prose :global(th) {
+    font-weight: 600;
+    background: var(--tint);
+  }
+
+  .prose :global(img) {
+    border-radius: var(--r);
+    margin-top: 1.5rem;
+  }
+
+  .prose :global(hr) {
+    border: 0;
+    border-top: 1px solid var(--rule);
+    margin-top: 2rem;
+  }
+</style>

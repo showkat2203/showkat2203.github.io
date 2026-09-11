@@ -13,12 +13,13 @@ if a required field is missing or misspelled.
 | File | Holds |
 | --- | --- |
 | `profile.yaml` | Name, email, links, hero sentence, publication record |
-| `domains.yaml` | The three bands on the magnitude rail |
-| `work.yaml` | Selected work entries, each with its position on the rail |
+| `domains.yaml` | The three practice areas under "What I work on" |
+| `work.yaml` | Selected work entries, each naming a diagram and its stack |
 | `experience.yaml` | Roles, with exact `start`/`end` dates and CV bullets |
 | `publications.yaml` | All publications, newest first |
-| `skills.yaml` | Technical range, grouped by magnitude band |
+| `skills.yaml` | Technical range, grouped |
 | `cv.yaml` | Education, service, teaching, background, languages |
+| `blog/*.md` | Blog posts, one Markdown file each |
 
 To add a publication, copy any block in `publications.yaml`. Set
 `headlineOrder` to 1–5 to surface it on the home page, or `null` to leave it on
@@ -29,6 +30,53 @@ link text names the publisher, derived from the DOI's registrant prefix in
 
 Author names print exactly as written. Any name matching
 `profile.selfAliases` is bolded automatically.
+
+## Writing a post
+
+Add a Markdown file to `src/content/blog/`. The filename becomes the URL, so
+`reconciliation.md` is served at `/blog/reconciliation`.
+
+```yaml
+---
+title: A title
+description: One or two sentences, used on the card and in meta tags.
+date: 2026-09-01
+tags: [distributed systems]
+draft: false   # true keeps it out of the build
+---
+```
+
+Reading time is computed from the word count. Posts appear newest first on
+`/blog`, the three most recent appear on the home page, and all of them go into
+`/rss.xml`. Code blocks are highlighted with the `github-light` theme, chosen
+because it clears WCAG AA on a white background.
+
+## Diagrams
+
+Each work entry names a diagram in `work.yaml` (`timing`, `reconcile`, `graph`,
+or `pipeline`). The drawings live in `src/components/diagrams/` as plain SVG
+that inherits the site's colours through CSS variables, so they restyle with the
+theme and stay legible in print. To add one, drop a new component in that
+directory, register it in the `diagrams` map in
+`src/components/WorkCard.astro`, and add its name to the `diagram` enum in
+`src/content.config.ts`. Give every drawing an `aria-label` that describes the
+mechanism in a sentence.
+
+## The CV
+
+Three ways to offer it, configured under `cv:` in `profile.yaml`:
+
+- `hosted` — the PDF committed at `public/cv.pdf`, generated from the `/cv` page
+  by `npm run cv:pdf`. This one always works, needs no third party, and cannot
+  drift from the page. It is the download button.
+- `drive` — an optional Google Drive link. Useful if you would rather update the
+  file without a commit; the tradeoff is that Drive links break when sharing
+  permissions change, and the file is one more thing to keep in sync.
+- `latex` — an optional Overleaf or repository link to the LaTeX source, for
+  people who want the typeset original.
+
+Fill either optional field and an extra button appears next to the download.
+Both are `null` today, and the CV page says so rather than showing a dead link.
 
 ## Running it
 
@@ -81,19 +129,33 @@ npm run audit        # typecheck, build, axe, behaviour, Lighthouse
 Individually: `npm run check` (types), `npm run a11y` (axe-core on every route
 at 1280px and 360px), `npm run verify` (no horizontal scroll from 320px,
 keyboard focus, the publications filter, copy-to-clipboard, reduced motion,
-and the no-JavaScript fallback), `npm run lighthouse`.
+image alt text and loading, diagram labels, the blog and its feed, and the
+no-JavaScript fallback), `npm run lighthouse`.
 
-Last run: Lighthouse performance 99–100, accessibility 100, best practices 100,
-SEO 100 across all three routes; zero axe violations; 23 of 23 behaviour checks
-passing.
+Last run: Lighthouse performance 95–100, accessibility 100, best practices 100,
+SEO 100 across all four routes; zero axe violations at 1280px and 360px on five
+routes; 27 of 27 behaviour checks passing.
+
+Lighthouse reports one failure that is not actionable here — `bf-cache`, which
+Chrome disables by command line in a headless container.
 
 `npm run shots` writes screenshots to `.shots/` for design review.
+
+## Design
+
+One light theme, deliberately made rather than inverted into a dark variant.
+Source Serif 4 carries identity and headings, Inter Tight carries anything read
+at length, and DM Mono is reserved for figures, dates, and identifiers. Deep
+navy `#1b3a6b` is the only accent; it appears on links, buttons, figures, and
+diagram emphasis, and nowhere else. All four fonts are self-hosted and
+subsetted, so the page makes no third-party requests.
 
 ## Still to fill in
 
 Search the content files for `PLACEHOLDER`:
 
 - LinkedIn URL in `profile.yaml`.
+- Optional `cv.drive` and `cv.latex` URLs in `profile.yaml`.
 - One link in `publications.yaml`: `segah-2023-bless` has no DOI or stable
   publisher page indexed, so it still renders "link pending".
 

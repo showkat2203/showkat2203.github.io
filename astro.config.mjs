@@ -10,5 +10,10 @@ export default defineConfig({
   trailingSlash: 'ignore',
   build: { inlineStylesheets: 'always' },
   compressHTML: true,
+  markdown: {
+    // github-light clears AA on white (keyword 4.57, comment 4.82) but not on
+    // the warm tint, so code blocks are painted white in global.css.
+    shikiConfig: { theme: 'github-light', wrap: false },
+  },
   integrations: [sitemap()],
 });

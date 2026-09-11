@@ -1,16 +1,13 @@
-# Technical range, grouped by the magnitude band each group belongs to so the
-# groups line up with the rail rather than forming an unordered tag cloud.
-# Deliberately prose-shaped: no ratings, no bars, no logos.
+# Technical range, written as prose rather than a tag cloud: no ratings, no
+# bars, no logo grid.
 languages:
   order: 1
   heading: Languages
-  exponent: null
   items: C, C++, Java, Python, TypeScript, JavaScript, SQL, Bash
 
 embedded:
   order: 2
   heading: Embedded and low-level
-  exponent: 0
   items: >-
     FreeRTOS, device drivers over SPI, UART, and I2C, Bluetooth Low Energy and
     GATT, JTAG and Trace32 profiling, memory- and power-constrained
@@ -19,7 +16,6 @@ embedded:
 distributed:
   order: 3
   heading: Distributed and cloud
-  exponent: 2
   items: >-
     Event-driven architecture, MapReduce, PySpark, Amazon EMR, Kafka, Pulsar,
     Artemis, RocketMQ, DynamoDB, Amazon Neptune, PostgreSQL, Redis, Docker,
@@ -29,7 +25,6 @@ distributed:
 ml:
   order: 4
   heading: Machine learning
-  exponent: 7
   items: >-
     Graph neural networks, variational autoencoders, representation learning
     over graphs, clustering, anomaly detection, PyTorch, TensorFlow
@@ -37,7 +32,6 @@ ml:
 practice:
   order: 5
   heading: Engineering practice
-  exponent: null
   items: >-
     JUnit, Cypress, integration and regression testing, coverage analysis,
     CI/CD, SonarQube, static analysis, Spring Boot, GraphQL, REST, Git, Perforce

@@ -1,0 +1,76 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+  readingMinutes: number;
+  /** h2 where the card is a top-level list item, h3 where it sits under one. */
+  level?: 'h2' | 'h3';
+}
+const { post, readingMinutes, level = 'h3' } = Astro.props;
+const Heading = level;
+const date = post.data.date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+---
+
+<article class="card post">
+  <a class="post__link" href={`/blog/${post.id}`}>
+    <Heading class="post__title">{post.data.title}</Heading>
+  </a>
+  <p class="post__desc">{post.data.description}</p>
+  <p class="post__meta mono">
+    <time datetime={post.data.date.toISOString()}>{date}</time>
+    <span class="post__dot" aria-hidden="true"></span>
+    {readingMinutes} min read
+  </p>
+</article>
+
+<style>
+  .post {
+    padding: clamp(1.1rem, 2.5vw, 1.6rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .post__link {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .post__title {
+    font-family: var(--serif);
+    font-size: 1.1875rem;
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    text-wrap: pretty;
+  }
+
+  .post__link:hover .post__title,
+  .post__link:focus-visible .post__title {
+    color: var(--navy);
+  }
+
+  .post__desc {
+    font-size: 0.9375rem;
+    color: var(--sec);
+    text-wrap: pretty;
+  }
+
+  .post__meta {
+    margin-top: auto;
+    padding-top: 0.35rem;
+    font-size: var(--t-small);
+    color: var(--sec);
+    display: flex;
+    align-items: center;
+  }
+
+  .post__dot {
+    width: 1px;
+    height: 0.7em;
+    background: var(--rule);
+    margin-inline: 0.6rem;
+  }
+</style>

@@ -1,17 +1,30 @@
 /* ---------------------------------------------------------------------------
    chy.io — design system
 
-   Six colours, two typefaces, one structural device (the magnitude rail).
-   Rules to keep: colour appears only on the rail; monospace is only ever used
-   for a quantity, an ordinal, or a date; nothing has a border-radius or a
-   shadow; motion only answers an action.
+   Editorial: Source Serif 4 carries identity and headings, Inter Tight carries
+   everything you read at length, DM Mono is reserved for figures, dates, and
+   identifiers. Deep navy is the single accent; it appears on links, buttons,
+   figures, and diagram emphasis, and nowhere else.
    ------------------------------------------------------------------------ */
 
 @font-face {
-  font-family: 'Archivo';
-  src: url('/fonts/archivo-var.woff2') format('woff2-variations');
+  font-family: 'Source Serif 4';
+  src: url('/fonts/source-serif.woff2') format('woff2-variations');
+  font-weight: 200 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  src: url('/fonts/source-serif-italic.woff2') format('woff2-variations');
+  font-weight: 200 900;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Inter Tight';
+  src: url('/fonts/inter-tight.woff2') format('woff2-variations');
   font-weight: 100 900;
-  font-stretch: 62% 125%;
   font-style: normal;
   font-display: swap;
 }
@@ -31,41 +44,39 @@
 }
 
 :root {
-  /* Palette. Contrast against --paper, measured:
-     ink 15.99  graphite 5.66  tick 4.70  plot 8.24  hairline 1.33
-     --tick carries small text, so it has to clear 4.5 rather than the 3.0
-     non-text floor; it stays distinct from --graphite by size and family,
-     not by lightness. --hairline is never load-bearing on its own. */
-  --paper: #f4f5f3;
-  --paper-sunk: #eaece8;
-  --ink: #171a1c;
-  --graphite: #5c6266;
-  --tick: #696f6a;
-  --hairline: #d3d7d2;
-  --plot: #1e3fa8;
+  /* Contrast against --bg, measured: ink 17.08, sec 6.48, navy 10.81.
+     White on navy is 11.27. --rule is decorative and never load-bearing. */
+  --bg: #fbfaf9;
+  --card: #ffffff;
+  --tint: #f2efe9;
+  --ink: #15181c;
+  --sec: #565c64;
+  --navy: #1b3a6b;
+  --navy-soft: #eaeef5;
+  --rule: #e3e0da;
 
-  --sans: 'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --mono: 'DM Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+  --serif: 'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif;
+  --sans: 'Inter Tight', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'DM Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* Type scale */
-  --t-hero: clamp(1.75rem, 1.05rem + 2.7vw, 2.875rem);
-  --t-h2: clamp(1.25rem, 1.1rem + 0.5vw, 1.375rem);
-  --t-h3: 1.125rem;
-  --t-lead: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
-  --t-body: 1.0625rem;
-  --t-meta: 0.875rem;
-  --t-figure: 0.9375rem;
-  --t-unit: 0.75rem;
+  --t-display: clamp(2rem, 1.35rem + 2.9vw, 3.25rem);
+  --t-page: clamp(1.875rem, 1.4rem + 2.2vw, 2.75rem);
+  --t-h2: clamp(1.375rem, 1.2rem + 0.7vw, 1.6875rem);
+  --t-h3: clamp(1.125rem, 1.05rem + 0.45vw, 1.5rem);
+  --t-h4: 1.1875rem;
+  --t-lede: clamp(1.0625rem, 1rem + 0.3vw, 1.125rem);
+  --t-body: 1rem;
+  --t-meta: 0.8125rem;
+  --t-small: 0.75rem;
 
   /* Layout */
-  --page-pad: clamp(1.25rem, 5vw, 4.5rem);
-  --page-max: 61rem;
-  /* Fixed, not fluid: the longest axis label ('microcontroller') must fit
-     without breaking, and the shell stops growing at --page-max anyway. */
-  --rail-w: 8.25rem;
-  --rail-gap: clamp(1.25rem, 3vw, 2.5rem);
-  --measure: 34rem;
-  --band-gap: clamp(3.5rem, 8vw, 6rem);
+  --pad: clamp(1.25rem, 4vw, 3.5rem);
+  --max: 72rem;
+  --measure: 36rem;
+  --gap-sec: clamp(3.5rem, 7vw, 5.5rem);
+  --r: 3px;
+  --r-lg: 4px;
 
   color-scheme: light;
 }
@@ -78,16 +89,22 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 body {
   margin: 0;
-  background: var(--paper);
+  background: var(--bg);
   color: var(--ink);
   font-family: var(--sans);
   font-size: var(--t-body);
-  font-variation-settings: 'wght' 400, 'wdth' 100;
-  line-height: 1.6;
+  line-height: 1.62;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -95,11 +112,13 @@ body {
 h1,
 h2,
 h3,
+h4,
 p,
 ul,
 ol,
-figure,
-dl {
+dl,
+dd,
+figure {
   margin: 0;
 }
 
@@ -109,32 +128,43 @@ ol {
   list-style: none;
 }
 
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
 a {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: var(--hairline);
+  color: var(--navy);
+  text-decoration-color: color-mix(in srgb, var(--navy) 35%, transparent);
+  text-underline-offset: 0.18em;
   text-decoration-thickness: 1px;
-  text-underline-offset: 0.22em;
-  transition: text-decoration-color 120ms linear, text-decoration-thickness 120ms linear;
+  transition: text-decoration-color 120ms linear;
 }
 
 a:hover,
 a:focus-visible {
-  text-decoration-color: var(--ink);
-  text-decoration-thickness: 2px;
+  text-decoration-color: var(--navy);
 }
 
 :focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 3px;
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
+  border-radius: 1px;
 }
 
 ::selection {
-  background: var(--plot);
-  color: var(--paper);
+  background: var(--navy);
+  color: #fff;
 }
 
 /* --- primitives --------------------------------------------------------- */
+
+.shell {
+  max-width: var(--max);
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
 
 .measure {
   max-width: var(--measure);
@@ -142,291 +172,279 @@ a:focus-visible {
 
 .mono {
   font-family: var(--mono);
-  font-feature-settings: 'tnum' 1;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+.serif {
+  font-family: var(--serif);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .skip {
   position: absolute;
   left: -9999px;
   top: 0;
+  z-index: 20;
   background: var(--ink);
-  color: var(--paper);
-  padding: 0.6rem 1rem;
-  z-index: 10;
+  color: #fff;
+  padding: 0.7rem 1.1rem;
   text-decoration: none;
 }
+
 .skip:focus {
   left: 0;
 }
 
-.shell {
-  max-width: var(--page-max);
-  margin-inline: auto;
-  padding-inline: var(--page-pad);
+/* --- headings ----------------------------------------------------------- */
+
+.h2 {
+  font-family: var(--serif);
+  font-size: var(--t-h2);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: 1.2;
 }
 
-/* --- the rail ----------------------------------------------------------- */
-
-/* A band is one row hung off the rail: the figure column on the left, the
-   content column on the right. The rail line itself sits on the boundary. */
-.band {
-  display: grid;
-  grid-template-columns: var(--rail-w) minmax(0, 1fr);
-  align-items: start;
+.kicker {
+  font-size: var(--t-meta);
+  font-weight: 600;
+  color: var(--navy);
+  letter-spacing: 0.005em;
 }
 
-.band__rail {
-  font-family: var(--mono);
-  font-variant-numeric: tabular-nums;
-  padding-right: 0.9rem;
-  text-align: right;
+.lede {
+  font-size: var(--t-lede);
+  color: var(--sec);
+  line-height: 1.65;
+  text-wrap: pretty;
 }
 
-.band__figure {
-  display: block;
-  font-size: var(--t-figure);
-  font-weight: 500;
-  color: var(--ink);
-  line-height: 1.3;
-}
-
-.band__unit {
-  display: block;
-  font-size: var(--t-unit);
-  color: var(--tick);
-  line-height: 1.35;
-  margin-top: 0.15rem;
-  /* Wrap between words only. A hyphenless break inside "microcontroller"
-     makes the axis label look like a defect. */
-  overflow-wrap: normal;
-  word-break: keep-all;
-  hyphens: none;
-}
-
-.band__body {
-  position: relative;
-  padding-left: var(--rail-gap);
-  min-width: 0;
-}
-
-/* The marker: the only chromatic mark on the page. */
-.band__body::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0.6em;
-  width: 7px;
-  height: 7px;
-  margin-left: -3px;
-  background: var(--plot);
-}
-
-.band--nomark .band__body::before {
-  display: none;
-}
-
-/* The continuous line, drawn once on load. Everything between the hero and
-   the footer lives inside .spined. */
-.spined {
-  position: relative;
-}
-
-.spined::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: calc(50% - var(--page-max) / 2 + var(--page-pad) + var(--rail-w));
-  width: 1px;
-  background: var(--hairline);
-  transform-origin: top;
-  animation: rail-draw 520ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-}
-
-@media (max-width: 63rem) {
-  .spined::before {
-    left: calc(var(--page-pad) + var(--rail-w));
-  }
-}
-
-@keyframes rail-draw {
-  from {
-    transform: scaleY(0);
-  }
-  to {
-    transform: scaleY(1);
-  }
-}
-
-.hero__stub {
-  height: clamp(2rem, 5vw, 3.25rem);
-  border-left: 1px solid var(--hairline);
-  margin-left: var(--rail-w);
-}
-
-/* --- sections ----------------------------------------------------------- */
+/* --- section scaffold --------------------------------------------------- */
 
 .section {
-  padding-block: var(--band-gap) 0;
+  padding-top: var(--gap-sec);
 }
 
 .section__head {
-  margin-bottom: 2rem;
-  margin-left: calc(var(--rail-w) + var(--rail-gap));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
 }
 
-.section__title {
-  font-size: var(--t-h2);
-  font-variation-settings: 'wght' 600, 'wdth' 100;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-}
-
-.section__note {
-  color: var(--graphite);
+.section__more {
   font-size: var(--t-meta);
-  margin-top: 0.5rem;
+  font-weight: 500;
 }
 
-.rule {
-  border: 0;
-  border-top: 1px solid var(--hairline);
-  margin: 0;
+/* --- buttons ------------------------------------------------------------ */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.15rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: var(--r);
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: background-color 120ms linear, border-color 120ms linear;
 }
 
-/* --- motion ------------------------------------------------------------- */
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
+.btn--primary {
+  background: var(--navy);
+  color: #fff;
 }
 
-/* --- narrow ------------------------------------------------------------- */
-
-@media (max-width: 48rem) {
-  .spined::before {
-    display: none;
-  }
-
-  .band {
-    grid-template-columns: minmax(0, 1fr);
-    row-gap: 0.4rem;
-  }
-
-  .band__rail {
-    text-align: left;
-    padding-right: 0;
-    display: flex;
-    align-items: baseline;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .band__unit {
-    margin-top: 0;
-  }
-
-  .band__body {
-    padding-left: 1rem;
-    border-left: 2px solid var(--hairline);
-  }
-
-  .band__body::before {
-    left: -2px;
-    top: 0.55em;
-    width: 6px;
-    height: 6px;
-    margin-left: -2px;
-  }
-
-  .hero__stub {
-    margin-left: 0;
-  }
-
-  .section__head {
-    margin-left: 0;
-  }
+.btn--primary:hover {
+  background: #16305a;
 }
 
-/* --- print (drives /cv.pdf) --------------------------------------------- */
+.btn--ghost {
+  background: var(--card);
+  border-color: var(--rule);
+  color: var(--navy);
+}
+
+.btn--ghost:hover {
+  border-color: var(--navy);
+}
+
+/* --- cards -------------------------------------------------------------- */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+}
+
+/* --- tags and badges ---------------------------------------------------- */
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.tags li {
+  font-family: var(--mono);
+  font-size: var(--t-small);
+  color: var(--sec);
+  background: var(--tint);
+  border-radius: var(--r);
+  padding: 0.2rem 0.5rem;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  background: var(--navy);
+  color: #fff;
+  border-radius: var(--r);
+  padding: 0.18rem 0.45rem;
+}
+
+/* --- figures (evidence) ------------------------------------------------- */
+
+.mx {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem 2.25rem;
+}
+
+.mx__v {
+  font-family: var(--serif);
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--navy);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.mx__l {
+  font-size: var(--t-meta);
+  color: var(--sec);
+  margin-top: 0.1rem;
+}
+
+/* --- diagrams ----------------------------------------------------------- */
+
+.dg {
+  width: 100%;
+  height: auto;
+}
+
+.dg text {
+  font-family: var(--mono);
+  font-size: 11px;
+  fill: var(--sec);
+}
+
+.dg .dg-t-sm {
+  font-size: 9.5px;
+}
+
+.dg .dg-t-on {
+  fill: #fff;
+}
+
+.dg .dg-box {
+  fill: var(--card);
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+
+.dg .dg-fill {
+  fill: var(--navy);
+}
+
+.dg .dg-soft {
+  fill: var(--navy-soft);
+  stroke: none;
+}
+
+.dg .dg-line {
+  fill: none;
+  stroke: #b8b3aa;
+  stroke-width: 1;
+}
+
+.dg .dg-line-em {
+  fill: none;
+  stroke: var(--navy);
+  stroke-width: 1.4;
+}
+
+.dg .dg-dash {
+  stroke-dasharray: 3 3;
+}
+
+/* --- print -------------------------------------------------------------- */
 
 @media print {
   :root {
-    --paper: #ffffff;
-    --page-pad: 0;
-    --page-max: 100%;
-    --rail-w: 6.5rem;
-    --rail-gap: 1.25rem;
-    --measure: 100%;
-    --band-gap: 1.25rem;
+    --bg: #fff;
+    --card: #fff;
+    --tint: #fff;
+    --ink: #000;
+    --sec: #333;
+    --pad: 0;
+    --max: 100%;
+    --gap-sec: 1rem;
     --t-body: 10pt;
     --t-meta: 8.5pt;
-    --t-unit: 8pt;
-    --t-figure: 9pt;
-    --t-h2: 12.5pt;
-    --t-h3: 10.5pt;
-    --t-lead: 10.5pt;
+    --t-small: 8pt;
   }
 
   body {
     background: #fff;
-    color: #000;
     line-height: 1.42;
   }
 
-  /* The rail is a screen device; on paper the period column carries it. */
-  .spined::before,
-  .band__body::before,
-  .hero__stub {
+  a {
+    color: #000;
+    text-decoration: none;
+  }
+
+  .card {
+    border: 0;
+  }
+
+  .no-print {
     display: none !important;
   }
 
-  .band__body {
-    padding-left: var(--rail-gap);
-    border-left: 0;
-  }
-
-  a {
-    text-decoration: none;
-    color: #000;
-  }
-
-  /* Only individual records avoid breaking. Whole sections must be allowed to
-     split, or a long one jumps to the next page and leaves half a page blank. */
-  .band,
-  .cite,
-  details {
-    break-inside: avoid;
-  }
-
-  .masthead {
-    padding-block: 0;
-  }
-
-  .masthead__name {
-    font-size: 15pt;
-    letter-spacing: -0.01em;
-  }
-
-  details > summary {
-    display: none;
-  }
-
-  details[open] > p,
-  details > p {
-    display: block;
+  .section {
+    padding-top: 1rem;
   }
 
   h1,
   h2,
-  h3 {
+  h3,
+  h4 {
     break-after: avoid;
+  }
+
+  li,
+  .card,
+  .cv-entry {
+    break-inside: avoid;
   }
 }

@@ -44,6 +44,8 @@ business signals for commercial real estate and multi-site operators.
 IEEE/ACM ASE, ECSA, CLOSER, Journal of Systems and Software, Cluster Computing,
 Electronics, and Telecom.
 
+**Writing** — [chy.io/blog](https://chy.io/blog).
+
 **Links** — [chy.io](https://chy.io) for selected work and the full
 publication list.
 [Google Scholar](https://scholar.google.com/citations?hl=en&user=Z9VUfzEAAAAJ).

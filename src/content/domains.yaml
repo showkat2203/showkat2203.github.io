@@ -1,34 +1,24 @@
-# The magnitude axis. `exponent` is the power of ten at which the work sits,
-# and it is what positions each band on the rail. Keep the list ordered by
-# ascending exponent.
+# The three practice areas, shown as a short row near the top of the home page.
 embedded:
   order: 1
-  label: embedded
-  exponent: 0
-  unit: one microcontroller
+  label: Embedded and firmware
   body: >-
-    Fixed memory and power budgets, set before the work starts, so a feature
-    has to fit rather than scale. A 15 ms deadline that does not move. Defects
-    that leave no trace in a log and have to be caught against the running
-    instruction stream.
+    FreeRTOS firmware and device drivers in C and C++ over SPI, UART, and I2C.
+    Bluetooth Low Energy and GATT control and data planes, rollback-safe
+    over-the-air updates, and profiling under fixed memory and power budgets.
 
 distributed:
   order: 2
-  label: distributed
-  exponent: 2
-  unit: sites and services
+  label: Distributed and cloud
   body: >-
-    Updates arrive dropped, duplicated, and out of order across regions, and no
-    single message can be trusted on its own. The system of record still has to
-    agree with reality inside a stated window, which makes reconciliation the
-    product rather than a repair step.
+    Event-driven services that reconcile dropped, duplicated, and out-of-order
+    updates across regions. Graph and document data modelling, versioned APIs,
+    and the observability needed to prove a consistency commitment.
 
 graph-ml:
   order: 3
-  label: graph machine learning
-  exponent: 7
-  unit: nodes and records
+  label: Graph machine learning
   body: >-
-    Structure that is real but not labelled, recovered from graphs large enough
-    that training cost rather than model design sets the limit. The result has
-    to be measured against something, which is why the benchmarks came with it.
+    Graph neural networks and variational autoencoders over large dependency
+    graphs, with clustering to recover latent structure, and reproducible
+    benchmarks to measure the result against.

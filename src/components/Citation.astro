@@ -4,169 +4,172 @@ import type { CollectionEntry } from 'astro:content';
 interface Props {
   pub: CollectionEntry<'publications'>['data'];
   selfAliases: string[];
-  /** Heading level so the component fits both the home page and /publications. */
+  index?: number;
   level?: 'h3' | 'h4';
 }
 
-const { pub, selfAliases, level = 'h3' } = Astro.props;
+const { pub, selfAliases, index, level = 'h3' } = Astro.props;
 const Heading = level;
 
 const href = pub.doi ? `https://doi.org/${pub.doi}` : pub.url;
 
-// Link text has to say where the link goes, and every DOI resolving through
-// doi.org would otherwise read "doi.org" twelve times over. A DOI's registrant
-// prefix identifies the publisher, so name that instead.
+// Link text has to say where it goes; a DOI's registrant prefix identifies the
+// publisher, so name that rather than reading "doi.org" twelve times over.
 const REGISTRANTS: Record<string, string> = {
   '10.1016': 'ScienceDirect',
-  '10.1145': 'the ACM Digital Library',
+  '10.1145': 'ACM Digital Library',
   '10.1007': 'SpringerLink',
   '10.3390': 'MDPI',
   '10.5220': 'SciTePress',
   '10.1109': 'IEEE Xplore',
 };
+const HOSTS: Record<string, string> = {
+  'ieeexplore.ieee.org': 'IEEE Xplore',
+  'dl.acm.org': 'ACM Digital Library',
+  'link.springer.com': 'SpringerLink',
+  'arxiv.org': 'arXiv',
+};
 
 let linkLabel = '';
 if (pub.doi) {
-  const publisher = REGISTRANTS[pub.doi.split('/')[0]];
-  linkLabel = publisher ? `Read on ${publisher}` : `Resolve the DOI ${pub.doi}`;
+  linkLabel = REGISTRANTS[pub.doi.split('/')[0]] ?? 'Publisher page';
 } else if (href) {
-  const HOSTS: Record<string, string> = {
-    'ieeexplore.ieee.org': 'IEEE Xplore',
-    'dl.acm.org': 'the ACM Digital Library',
-    'link.springer.com': 'SpringerLink',
-    'arxiv.org': 'arXiv',
-  };
   try {
     const host = new URL(href).hostname.replace(/^www\./, '');
-    linkLabel = `Read on ${HOSTS[host] ?? host}`;
+    linkLabel = HOSTS[host] ?? host;
   } catch {
-    linkLabel = 'Read the paper';
+    linkLabel = 'Publisher page';
   }
 }
 ---
 
 <article class="cite">
-  <Heading class="cite__title">{pub.title}</Heading>
-  <p class="cite__authors">
-    {
-      pub.authors.map((author, i) => (
-        <>
-          {i > 0 ? ', ' : ''}
-          {selfAliases.includes(author) ? <b>{author}</b> : author}
-        </>
-      ))
-    }
-  </p>
-  <p class="cite__venue">
-    {pub.venue}{pub.details && <span class="cite__details mono">{pub.details}</span>}
-  </p>
-  {
-    href ? (
-      <p class="cite__link">
-        <a href={href} rel="noopener">{linkLabel}</a>
-        {pub.doi && <span class="cite__doi mono">doi {pub.doi}</span>}
-      </p>
-    ) : (
-      <p class="cite__pending mono">link pending</p>
-    )
-  }
+  {index !== undefined && <span class="cite__i mono" aria-hidden="true">{String(index).padStart(2, '0')}</span>}
+  <div class="cite__main">
+    <Heading class="cite__title">{pub.title}</Heading>
+    <p class="cite__authors">
+      {
+        pub.authors.map((author, i) => (
+          <>
+            {i > 0 ? ', ' : ''}
+            {selfAliases.includes(author) ? <b>{author}</b> : author}
+          </>
+        ))
+      }
+    </p>
+    <p class="cite__line">
+      <span class="badge">{pub.venueShort}</span>
+      <span class="mono cite__y">{pub.year}</span>
+      {pub.details && <span class="cite__d">{pub.details}</span>}
+      {
+        href ? (
+          <a class="cite__link" href={href} rel="noopener">
+            Read on {linkLabel}
+          </a>
+        ) : (
+          <span class="cite__pending mono">link pending</span>
+        )
+      }
+    </p>
+    {pub.doi && <p class="cite__doi mono">doi {pub.doi}</p>}
+  </div>
 </article>
 
 <style>
+  .cite {
+    display: grid;
+    grid-template-columns: 2.25rem minmax(0, 1fr);
+    gap: 0.9rem;
+  }
+
+  .cite:not(:has(.cite__i)) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cite__i {
+    font-size: var(--t-meta);
+    color: var(--navy);
+    padding-top: 0.28rem;
+  }
+
   .cite__title {
-    font-size: var(--t-h3);
-    font-variation-settings: 'wght' 600, 'wdth' 100;
-    line-height: 1.35;
-    letter-spacing: -0.005em;
+    font-family: var(--serif);
+    font-size: 1.125rem;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.008em;
     text-wrap: pretty;
+    max-width: 44rem;
   }
 
   .cite__authors {
-    margin-top: 0.4rem;
-    color: var(--graphite);
-    font-size: 1rem;
+    margin-top: 0.35rem;
+    font-size: 0.9375rem;
+    color: var(--sec);
     line-height: 1.5;
+    max-width: 46rem;
   }
 
   .cite__authors b {
     color: var(--ink);
-    font-variation-settings: 'wght' 600, 'wdth' 100;
+    font-weight: 600;
   }
 
-  .cite__venue {
-    margin-top: 0.3rem;
+  .cite__line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.9rem;
+    margin-top: 0.6rem;
     font-size: var(--t-meta);
-    color: var(--tick);
+    color: var(--sec);
   }
 
-  /* Mono is for the quantities only: volume, number, pages. */
-  .cite__details::before {
-    content: ', ';
-  }
-
-  .cite__details {
-    font-variant-numeric: tabular-nums;
-  }
-
-  .cite {
-    max-width: 38rem;
-  }
-
-  @media print {
-    .cite__title {
-      font-size: 10pt;
-    }
-
-    .cite__authors {
-      margin-top: 0.15rem;
-      font-size: 9pt;
-    }
-
-    .cite__venue {
-      margin-top: 0.1rem;
-      font-size: 8.5pt;
-    }
-
-    /* On paper the DOI is the useful half; the "read on" link is not
-       clickable, so keep the identifier and drop the invitation. */
-    .cite__pending {
-      display: none;
-    }
-
-    .cite__link a {
-      display: none;
-    }
-
-    .cite__link {
-      margin-top: 0.1rem;
-    }
-
-    .cite__doi {
-      font-size: 8pt;
-    }
-  }
-
-  .cite__link,
-  .cite__pending {
-    margin-top: 0.5rem;
+  .cite__y {
     font-size: var(--t-meta);
   }
 
   .cite__link {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.15rem 1rem;
-    align-items: baseline;
-  }
-
-  .cite__doi {
-    font-size: var(--t-unit);
-    color: var(--tick);
+    font-weight: 500;
   }
 
   .cite__pending {
-    color: var(--tick);
-    border-left: 2px solid var(--hairline);
-    padding-left: 0.5rem;
+    font-size: var(--t-small);
+    color: var(--sec);
+    border: 1px dashed var(--rule);
+    border-radius: var(--r);
+    padding: 0.1rem 0.4rem;
+  }
+
+  .cite__doi {
+    margin-top: 0.3rem;
+    font-size: var(--t-small);
+    color: var(--sec);
+    opacity: 0.85;
+  }
+
+  @media print {
+    .cite__link {
+      display: none;
+    }
+    .cite__pending {
+      display: none;
+    }
+    .cite__title {
+      font-size: 10.5pt;
+    }
+    .cite__authors {
+      font-size: 9pt;
+      margin-top: 0.1rem;
+    }
+    .cite__line {
+      margin-top: 0.15rem;
+    }
+    .badge {
+      background: none;
+      color: #000;
+      border: 1px solid #999;
+      padding: 0 0.25rem;
+    }
   }
 </style>

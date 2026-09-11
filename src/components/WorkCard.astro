@@ -1,0 +1,144 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Timing from './diagrams/Timing.astro';
+import Reconcile from './diagrams/Reconcile.astro';
+import GraphTraversal from './diagrams/GraphTraversal.astro';
+import Pipeline from './diagrams/Pipeline.astro';
+
+interface Props {
+  entry: CollectionEntry<'work'>['data'];
+}
+const { entry } = Astro.props;
+
+const diagrams = { timing: Timing, reconcile: Reconcile, graph: GraphTraversal, pipeline: Pipeline };
+const Diagram = diagrams[entry.diagram];
+---
+
+<article class="card work">
+  <!-- Focusable because it scrolls horizontally on narrow screens; without a
+       tab stop the panned part of the drawing is unreachable by keyboard. -->
+  <div class="work__vis" tabindex="0" role="group" aria-label={`Diagram: ${entry.title}`}>
+    <Diagram />
+  </div>
+
+  <div class="work__body">
+    <h3 class="work__title">{entry.title}</h3>
+    <p class="work__meta">
+      {entry.org}<span class="work__dot" aria-hidden="true"></span><span class="mono">{entry.period}</span>
+    </p>
+    <p class="work__text">{entry.body}</p>
+
+    <ul class="tags">{entry.tags.map((t) => <li>{t}</li>)}</ul>
+
+    <dl class="mx">
+      {
+        entry.metrics.map((m) => (
+          <div>
+            <dt class="mx__v">{m.value}</dt>
+            <dd class="mx__l">{m.label}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+</article>
+
+<style>
+  .work {
+    display: grid;
+    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+    align-items: stretch;
+    padding: 0.55rem;
+    margin-bottom: 1.25rem;
+  }
+
+  /* Stretch the panel to the full card height and centre the drawing inside,
+     or a short diagram leaves a block of dead space beside tall text. */
+  .work__vis:focus-visible {
+    outline: 2px solid var(--navy);
+    outline-offset: -2px;
+  }
+
+  .work__vis {
+    background: var(--tint);
+    border-radius: var(--r);
+    padding: clamp(1rem, 2.5vw, 1.75rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .work__body {
+    padding: clamp(0.75rem, 2vw, 1.5rem) clamp(0.75rem, 2vw, 1.5rem) clamp(0.75rem, 2vw, 1.25rem) 0;
+    min-width: 0;
+    align-self: center;
+  }
+
+  .work__title {
+    font-family: var(--serif);
+    font-size: var(--t-h3);
+    font-weight: 600;
+    line-height: 1.22;
+    letter-spacing: -0.016em;
+    text-wrap: balance;
+  }
+
+  .work__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.1rem 0;
+    margin-top: 0.55rem;
+    font-size: var(--t-meta);
+    color: var(--sec);
+  }
+
+  .work__dot {
+    width: 1px;
+    height: 0.7em;
+    background: var(--rule);
+    margin-inline: 0.7rem;
+  }
+
+  .work__text {
+    margin-top: 0.85rem;
+    color: var(--sec);
+    text-wrap: pretty;
+  }
+
+  .work .tags {
+    margin-top: 1rem;
+  }
+
+  /* Three figures should sit on one row where there is room, rather than
+     wrapping one onto its own line and stretching the card. */
+  .work .mx {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    margin-top: 1.25rem;
+    gap: 0.9rem 1.5rem;
+  }
+
+  @media (max-width: 52rem) {
+    .work {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .work__body {
+      padding: 0 0.75rem 0.5rem;
+    }
+
+    /* Below this width the drawing would shrink until its labels are
+       unreadable, so let it keep its size and be panned instead. */
+    .work__vis {
+      overflow-x: auto;
+      justify-content: flex-start;
+      padding: 1rem;
+    }
+
+    .work__vis :global(svg) {
+      min-width: 27rem;
+    }
+  }
+</style>

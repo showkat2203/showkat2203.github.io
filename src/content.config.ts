@@ -1,5 +1,5 @@
 import { defineCollection, z } from 'astro:content';
-import { file } from 'astro/loaders';
+import { file, glob } from 'astro/loaders';
 
 const link = z.object({ label: z.string(), url: z.string().url().nullable() });
 
@@ -8,11 +8,19 @@ const profile = defineCollection({
   schema: z.object({
     name: z.string(),
     selfAliases: z.array(z.string()).min(1),
+    role: z.string(),
     location: z.string(),
+    locationShort: z.string(),
     residency: z.string(),
     email: z.string().email(),
-    heroSentence: z.string(),
+    headline: z.string(),
+    positioning: z.string(),
     metaDescription: z.string(),
+    cv: z.object({
+      hosted: z.string(),
+      drive: z.string().url().nullable(),
+      latex: z.string().url().nullable(),
+    }),
     links: z.object({ github: link, scholar: link, linkedin: link }),
     record: z.object({
       publications: z.number(),
@@ -28,8 +36,6 @@ const domains = defineCollection({
   schema: z.object({
     order: z.number(),
     label: z.string(),
-    exponent: z.number(),
-    unit: z.string(),
     body: z.string(),
   }),
 });
@@ -41,10 +47,10 @@ const work = defineCollection({
     title: z.string(),
     org: z.string(),
     period: z.string(),
-    magnitude: z.object({ exponent: z.number(), unit: z.string() }),
+    diagram: z.enum(['timing', 'reconcile', 'graph', 'pipeline']),
+    tags: z.array(z.string()),
     body: z.string(),
     metrics: z.array(z.object({ value: z.string(), label: z.string() })),
-    detail: z.string().nullable(),
   }),
 });
 
@@ -107,9 +113,20 @@ const skills = defineCollection({
   schema: z.object({
     order: z.number(),
     heading: z.string(),
-    exponent: z.number().nullable(),
     items: z.string(),
   }),
 });
 
-export const collections = { profile, domains, work, experience, publications, cv, skills };
+const blog = defineCollection({
+  loader: glob({ base: 'src/content/blog', pattern: '**/*.md' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    date: z.coerce.date(),
+    /** Omit or set false to publish. Drafts are excluded from the build. */
+    draft: z.boolean().default(false),
+    tags: z.array(z.string()).default([]),
+  }),
+});
+
+export const collections = { profile, domains, work, experience, publications, cv, skills, blog };

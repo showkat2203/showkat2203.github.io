@@ -1,9 +1,9 @@
-# Experience timeline. Entries are sorted by `start` (newest first) and the
-# rail shows the year only when it changes, so the axis stays monotonic.
-# `concurrentWith` is set only where a role genuinely overlapped another —
-# sharing a year tick does not by itself mean two roles ran at once.
+# Experience timeline, sorted by `start` (newest first).
 #
-# start / end are "YYYY-MM"; end is null for a current role.
+#   start / end    "YYYY-MM"; end is null for a current role
+#   summary        one line, shown on the home page
+#   bullets        detail, shown on /cv only
+#   concurrentWith set only where a role genuinely overlapped another
 stealth:
   order: 1
   role: Founder and engineer

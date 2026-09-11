@@ -1,0 +1,35 @@
+---
+/** Asynchronous sources, a queue, and the reconciler that replays divergence. */
+---
+<svg class="dg" viewBox="0 0 560 200" role="img"
+  aria-label="Updates from three cross-region source systems arrive through a queue; a reconciliation service detects divergence against the system of record and replays the missing or duplicated updates.">
+  <rect class="dg-box" x="4" y="18" width="96" height="28" rx="2" />
+  <text x="52" y="36" text-anchor="middle">source A</text>
+  <rect class="dg-box" x="4" y="56" width="96" height="28" rx="2" />
+  <text x="52" y="74" text-anchor="middle">source B</text>
+  <rect class="dg-box" x="4" y="94" width="96" height="28" rx="2" />
+  <text x="52" y="112" text-anchor="middle">source C</text>
+  <text class="dg-t-sm" x="4" y="142">dropped, duplicated, out of order</text>
+
+  <path class="dg-line" d="M100 32 H150 V64 H176" />
+  <path class="dg-line" d="M100 70 H176" />
+  <path class="dg-line" d="M100 108 H150 V76 H176" />
+
+  <rect class="dg-box" x="176" y="48" width="78" height="44" rx="2" />
+  <text x="215" y="75" text-anchor="middle">queue</text>
+
+  <path class="dg-line" d="M254 70 H304" />
+
+  <rect class="dg-fill" x="304" y="42" width="118" height="56" rx="2" />
+  <text class="dg-t-on" x="363" y="66" text-anchor="middle">reconciler</text>
+  <text class="dg-t-on dg-t-sm" x="363" y="84" text-anchor="middle">detect, replay</text>
+
+  <path class="dg-line-em" d="M422 70 H478" />
+
+  <rect class="dg-box" x="478" y="42" width="78" height="56" rx="2" />
+  <text x="517" y="64" text-anchor="middle">system of</text>
+  <text x="517" y="80" text-anchor="middle">record</text>
+
+  <path class="dg-line-em dg-dash" d="M517 98 V150 H363 V98" />
+  <text x="440" y="168" text-anchor="middle">divergence replayed inside 24 h</text>
+</svg>

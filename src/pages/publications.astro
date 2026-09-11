@@ -7,10 +7,9 @@ const profile = await getEntry('profile', 'main');
 if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
 const p = profile.data;
 
-const pubs = (await getCollection('publications')).sort((a, b) => {
-  if (b.data.year !== a.data.year) return b.data.year - a.data.year;
-  return a.data.title.localeCompare(b.data.title);
-});
+const pubs = (await getCollection('publications')).sort(
+  (a, b) => b.data.year - a.data.year || a.data.title.localeCompare(b.data.title),
+);
 
 const counts = {
   all: pubs.length,
@@ -25,96 +24,83 @@ const counts = {
   current="publications"
 >
   <div class="shell head">
-    <h1 class="page__title">Publications</h1>
-    <p class="page__lede measure">
-      {counts.all} peer-reviewed papers, {p.record.citations} citations, h-index
-      {p.record.hIndex}. Work on graph learning over dependency graphs, microservice
-      architecture, and measured comparisons of concurrent systems.
+    <h1 class="page__t">Publications</h1>
+    <p class="lede measure">
+      Graph learning over dependency graphs, microservice architecture, and
+      measured comparisons of concurrent systems.
+      {p.links.scholar.url && <a href={p.links.scholar.url}>Citation counts on Google Scholar</a>}.
     </p>
-    {
-      !p.links.scholar.url && (
-        <p class="page__pending mono">
-          Google Scholar profile: link pending. Citation counts are current as of the
-          most recent update to this site.
-        </p>
-      )
-    }
+
+    <dl class="rec">
+      <div><dt>{counts.all}</dt><dd>peer-reviewed papers</dd></div>
+      <div><dt>{p.record.citations}</dt><dd>citations</dd></div>
+      <div><dt>{p.record.hIndex}</dt><dd>h-index</dd></div>
+    </dl>
   </div>
 
-  <div class="spined">
-    <section class="section shell" aria-labelledby="list-title">
-      <h2 class="sr-only" id="list-title">All publications</h2>
+  <div class="shell section">
+    <h2 class="sr-only">All publications</h2>
 
-      <div class="filter" data-filter>
-        <span class="filter__label mono" id="filter-label">Show</span>
-        <div class="filter__group" role="group" aria-labelledby="filter-label">
-          <button type="button" data-type="all" aria-pressed="true">
-            All <span class="mono">{counts.all}</span>
-          </button>
-          <button type="button" data-type="journal" aria-pressed="false">
-            Journal articles <span class="mono">{counts.journal}</span>
-          </button>
-          <button type="button" data-type="conference" aria-pressed="false">
-            Conference papers <span class="mono">{counts.conference}</span>
-          </button>
-        </div>
+    <div class="filter" data-filter>
+      <span class="filter__l mono" id="filter-label">Show</span>
+      <div class="filter__g" role="group" aria-labelledby="filter-label">
+        <button type="button" data-type="all" aria-pressed="true">All <span class="mono">{counts.all}</span></button>
+        <button type="button" data-type="journal" aria-pressed="false">Journal articles <span class="mono">{counts.journal}</span></button>
+        <button type="button" data-type="conference" aria-pressed="false">Conference papers <span class="mono">{counts.conference}</span></button>
       </div>
+    </div>
 
-      <ol class="pubs" data-list>
-        {
-          pubs.map((pub) => (
-            <li class="band pub" data-type={pub.data.type}>
-              <div class="band__rail">
-                <span class="band__figure">{pub.data.year}</span>
-                <span class="band__unit">{pub.data.venueShort}</span>
-              </div>
-              <div class="band__body">
-                <Citation pub={pub.data} selfAliases={p.selfAliases} />
-              </div>
-            </li>
-          ))
-        }
-      </ol>
-    </section>
+    <ol class="pubs" data-list>
+      {
+        pubs.map((pub, i) => (
+          <li class="pub" data-type={pub.data.type}>
+            <Citation pub={pub.data} selfAliases={p.selfAliases} index={i + 1} />
+          </li>
+        ))
+      }
+    </ol>
   </div>
 </Base>
 
 <style>
   .head {
-    padding-block: clamp(2.5rem, 7vw, 4.5rem) 0;
+    padding-top: clamp(2.25rem, 5vw, 3.5rem);
   }
 
-  .page__title {
-    font-size: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
-    font-variation-settings: 'wght' 500, 'wdth' 94;
+  .page__t {
+    font-family: var(--serif);
+    font-size: var(--t-page);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+  }
+
+  .head .lede {
+    margin-top: 0.85rem;
+  }
+
+  .rec {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 2.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .rec dt {
+    font-family: var(--serif);
+    font-size: 1.75rem;
+    font-weight: 600;
+    line-height: 1;
     letter-spacing: -0.02em;
-    line-height: 1.15;
+    font-variant-numeric: tabular-nums;
   }
 
-  .page__lede {
-    margin-top: 1rem;
-    color: var(--graphite);
-    font-size: var(--t-lead);
-    text-wrap: pretty;
-  }
-
-  .page__pending {
-    margin-top: 1rem;
+  .rec dd {
     font-size: var(--t-meta);
-    color: var(--tick);
-    border-left: 2px solid var(--hairline);
-    padding-left: 0.75rem;
-    max-width: var(--measure);
-  }
-
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
+    color: var(--sec);
+    margin-top: 0.2rem;
   }
 
   .filter {
@@ -122,54 +108,53 @@ const counts = {
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0.5rem 1rem;
-    padding-bottom: 1.25rem;
-    border-bottom: 1px solid var(--hairline);
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid var(--rule);
   }
 
-  .filter__label {
-    font-size: var(--t-unit);
-    color: var(--tick);
+  .filter__l {
+    font-size: var(--t-small);
+    color: var(--sec);
   }
 
-  .filter__group {
+  .filter__g {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem 1.25rem;
+    gap: 0.35rem 0.5rem;
   }
 
   .filter button {
     font: inherit;
     font-size: var(--t-meta);
-    color: var(--graphite);
+    font-weight: 500;
+    color: var(--sec);
     background: none;
-    border: 0;
-    border-bottom: 1px solid transparent;
-    padding: 0 0 2px;
+    border: 1px solid transparent;
+    border-radius: var(--r);
+    padding: 0.3rem 0.6rem;
     cursor: pointer;
   }
 
   .filter button:hover {
-    color: var(--ink);
+    color: var(--navy);
   }
 
   .filter button[aria-pressed='true'] {
-    color: var(--ink);
-    font-variation-settings: 'wght' 600, 'wdth' 100;
-    border-bottom-color: var(--ink);
+    color: #fff;
+    background: var(--navy);
+  }
+
+  .filter button[aria-pressed='true'] .mono {
+    color: color-mix(in srgb, #fff 72%, transparent);
   }
 
   .filter button .mono {
-    color: var(--tick);
-    font-size: var(--t-unit);
+    font-size: var(--t-small);
   }
 
   .pubs .pub {
-    padding-block: 1.5rem;
-    border-bottom: 1px solid var(--hairline);
-  }
-
-  .pubs .pub:last-child {
-    border-bottom: 0;
+    padding-block: 1.35rem;
+    border-bottom: 1px solid var(--rule);
   }
 
   .pubs .pub[hidden] {
