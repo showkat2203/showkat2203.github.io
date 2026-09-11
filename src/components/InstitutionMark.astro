@@ -1,5 +1,6 @@
 ---
 import { existsSync, readFileSync } from 'node:fs';
+import { sanitiseSvg } from '../../scripts/logo-lib.mjs';
 
 /**
  * Purely decorative: every caller prints the institution's name as real text
@@ -16,19 +17,19 @@ interface Props {
 const { slug, monogram, size = 'md' } = Astro.props;
 
 // A supplied logo wins; the monogram is the designed fallback. The SVG is
-// inlined rather than used through <img> so that fill="currentColor" resolves
-// against the theme — a flat brand colour would disappear in dark mode.
+// inlined rather than used through <img> so it can inherit type colour when it
+// is drawn with currentColor. Sanitised again here, not only on fetch, so a
+// file dropped in by hand cannot inject script into the page.
 const path = `public/img/logos/${slug}.svg`;
 const hasLogo = existsSync(path);
-const svg = hasLogo
-  ? readFileSync(path, 'utf8')
-      .replace(/<\?xml[^>]*\?>/g, '')
-      .replace(/<!--[\s\S]*?-->/g, '')
-      .replace(/\s(width|height)="[^"]*"/g, '')
-      .replace(/<title>[\s\S]*?<\/title>/g, '')
-      .replace(/<svg/, '<svg aria-hidden="true" focusable="false"')
-      .trim()
-  : '';
+let svg = '';
+if (hasLogo) {
+  try {
+    svg = sanitiseSvg(readFileSync(path, 'utf8'));
+  } catch (err) {
+    throw new Error(`public/img/logos/${slug}.svg is not usable as an inline SVG: ${err}`);
+  }
+}
 ---
 
 <span class:list={['mark', `mark--${size}`, hasLogo && 'mark--logo']} aria-hidden="true">
@@ -49,6 +50,7 @@ const svg = hasLogo
     font-weight: 600;
     letter-spacing: -0.01em;
     font-variant-numeric: tabular-nums;
+    overflow: hidden;
   }
 
   .mark--md {
@@ -65,22 +67,29 @@ const svg = hasLogo
     font-size: 0.75rem;
   }
 
-  /* Real marks are wordmarks, so they need width rather than a square box. */
+  /* Brand marks are drawn for a light ground, and most of these carry their own
+     colours. A white tile in both themes keeps them correct instead of turning
+     a dark wordmark invisible on the dark palette. */
   .mark--logo {
-    color: var(--ink);
+    background: #fff;
+    border-color: color-mix(in srgb, var(--rule) 70%, #8a8a8a);
+    color: #15181c;
   }
 
   .mark :global(svg) {
     display: block;
     width: auto;
-    fill: currentColor;
   }
 
+  /* Wordmarks vary wildly in aspect; cap the width so one wide mark cannot
+     stretch the row. */
   .mark--md :global(svg) {
     height: 1.05rem;
+    max-width: 6.5rem;
   }
 
   .mark--sm :global(svg) {
     height: 0.8rem;
+    max-width: 5rem;
   }
 </style>

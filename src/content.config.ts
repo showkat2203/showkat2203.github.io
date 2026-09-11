@@ -130,6 +130,8 @@ const institutions = defineCollection({
     monogram: z.string().min(1).max(4),
     /** Shown in the credibility row under the hero. */
     featured: z.boolean(),
+    /** Where the logo SVG came from; used by `npm run logos:fetch`. */
+    logoSource: z.string().url().nullable().default(null),
   }),
 });
 

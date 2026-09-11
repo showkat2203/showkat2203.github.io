@@ -60,26 +60,40 @@ tiles in the site's own typography — uniform height, monochrome, one visual
 system — in the credibility row under the hero and beside each role in the
 timeline.
 
-Real marks ship for **AWS** and **Samsung**, sourced from the `devicon` and
-`simple-icons` packages and stored as single-colour SVGs painted with
-`currentColor`, so they invert with the theme instead of vanishing on the dark
-palette. The other seven institutions have no vector mark in any freely
-licensed set — no university in this list is, and neither is ICPC, Tyson, or
-Divine IT — so they render as monograms.
+Real marks ship for **AWS** and **Samsung**. The other seven have their source
+URL recorded in `institutions.yaml` under `logoSource`, but the files are not in
+the repo yet — the sandbox this was built in has no outbound network, so they
+could not be downloaded here.
 
-To add one, drop an SVG at `public/img/logos/<key>.svg`, where the key is the
-top-level key in the YAML, and it replaces that monogram with no code change.
-Two things matter:
+To fetch them all, on a machine with network access:
 
-- Make it **single-colour** with `fill="currentColor"`, or it will not theme.
-- Run `npm run logos` afterwards. Icon sets store marks in a square viewBox
-  regardless of shape, so a wide wordmark arrives as a thin band inside a lot
-  of empty space and gets shrunk to nothing when sized by height. That script
-  measures each SVG's real ink bounds in a browser and rewrites the viewBox to
-  fit. Samsung needed it: its glyph occupies 4.6 of 24 vertical units.
+```bash
+npm run logos:fetch
+```
 
-Only add marks you are licensed to use. Naming a past employer factually is
-ordinary use; redistributing a logo for anything else is not.
+That reads every `logoSource`, downloads the SVG, sanitises it, refits its
+viewBox to the mark's ink bounds, and writes `public/img/logos/<key>.svg`. Add
+`--mono` to flatten the marks to `currentColor` instead of keeping brand
+colours. Anything that fails is named in the output, with its URL, so you can
+save it by hand and run `npm run logos` to refit just that one.
+
+Logos sit on a **white tile in both themes**, which is the ground brand marks
+are drawn for; a dark wordmark would otherwise vanish on the dark palette.
+Colours are kept as published. Institutions with no logo file render a monogram
+in the site's own typography instead, so the row stays complete either way.
+
+### Why the SVGs are sanitised
+
+These files come from outside the repo and are inlined into the page, so
+`scripts/logo-lib.mjs` strips `<script>`, inline `on*` handlers, remote
+`href`/`src` references, animation elements, and `<title>`. It also removes
+`width`/`height` **from the root element only** — stripping them everywhere
+blanks out any logo drawn with `<rect>`, which is most institutional marks.
+`npm run verify` asserts that contract directly, because a partly-stripped
+logo still paints something and so renders without looking broken.
+
+Only use marks you are entitled to use. Naming a past employer factually is
+ordinary; redistributing a logo for other purposes is not.
 
 ## Latest news
 
@@ -163,7 +177,8 @@ npm run build
 npm run cv:pdf       # renders /cv through its print styles to public/cv.pdf
 npm run og           # redraws public/og.png from the design tokens
 npm run portrait     # rebuilds the hero portrait from assets/
-npm run logos        # refits logo viewBoxes after adding one
+npm run logos:fetch  # downloads every logoSource and normalises it
+npm run logos        # refits logo viewBoxes after adding one by hand
 ```
 
 The PDF is generated from the `/cv` page itself, so the two cannot drift apart.
@@ -183,7 +198,7 @@ fallback), `npm run lighthouse`.
 
 Last run: Lighthouse performance 95–100, accessibility 100, best practices 100,
 SEO 100 across all four routes; zero axe violations across five routes, two
-widths, and both themes (20 combinations); 38 of 38 behaviour checks passing.
+widths, and both themes (20 combinations); 48 of 48 behaviour checks passing.
 
 Lighthouse reports one failure that is not actionable here — `bf-cache`, which
 Chrome disables by command line in a headless container.

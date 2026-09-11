@@ -1,11 +1,46 @@
 /** Behavioural and responsive checks that a11y/Lighthouse do not cover. */
 import { chromium } from 'playwright';
 import { serve, launch } from './lib.mjs';
+import { sanitiseSvg } from './logo-lib.mjs';
 
 const server = await serve();
 const browser = await launch(chromium);
 const results = [];
 const check = (name, pass, detail = '') => results.push({ check: name, pass: pass ? 'ok' : 'FAIL', detail });
+
+// --- svg sanitiser contract ----------------------------------------------
+// Checked directly rather than through the page: a partly-stripped logo can
+// still paint something, so rendering alone does not prove the rules hold.
+{
+  const fixture = `<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60">
+    <title>Example</title>
+    <script>alert(1)</script>
+    <rect x="0" y="0" width="200" height="60" fill="#0c234b" onclick="steal()"/>
+    <image href="https://example.com/x.png" width="10" height="10"/>
+    <text x="10" y="40" fill="#fff">Mark</text>
+  </svg>`;
+  const out = sanitiseSvg(fixture);
+  const root = out.slice(0, out.indexOf('>'));
+
+  check('sanitiser drops root width and height', !/\s(width|height)=/.test(root), root);
+  check(
+    'sanitiser keeps inner width and height',
+    /<rect[^>]*\swidth="200"[^>]*\sheight="60"/.test(out),
+    'rect dimensions must survive or rect-based logos render blank',
+  );
+  check('sanitiser keeps the viewBox', /viewBox="0 0 200 60"/.test(out));
+  check('sanitiser removes script elements', !/<script/i.test(out));
+  check('sanitiser removes inline event handlers', !/\sonclick=/i.test(out));
+  // xmlns is legitimately an http URI, so test for remote href/src specifically.
+  check(
+    'sanitiser removes remote references',
+    !/(?:xlink:)?(?:href|src)\s*=\s*"(?:https?:)?\/\//i.test(out),
+    out.slice(0, 120),
+  );
+  check('sanitiser removes the title', !/<title>/i.test(out));
+  check('sanitiser marks the root decorative', /aria-hidden="true"/.test(root));
+  check('sanitiser keeps fills', /fill="#0c234b"/.test(out));
+}
 
 // --- no horizontal overflow at narrow widths -----------------------------
 for (const width of [320, 360, 414, 768]) {
@@ -196,6 +231,26 @@ for (const width of [320, 360, 414, 768]) {
     ),
   );
   check('marks are decorative with the name as real text', marksDecorative);
+  // A logo that sanitises to nothing still renders as an empty tile, so assert
+  // painted geometry rather than presence. Stripping width/height globally
+  // once blanked every rect-based mark this way.
+  const logos = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('.mark--logo')).map((tile) => {
+      const svg = tile.querySelector('svg');
+      const box = svg?.getBBox?.();
+      const rect = svg?.getBoundingClientRect();
+      return {
+        ink: box ? box.width * box.height : 0,
+        drawn: rect ? rect.width * rect.height : 0,
+      };
+    }),
+  );
+  check(
+    'every logo has painted geometry',
+    logos.length > 0 && logos.every((l) => l.ink > 0 && l.drawn > 16),
+    `${logos.length} logos: ${JSON.stringify(logos)}`,
+  );
+
   const newsRows = await page.locator('.news__row').count();
   check('news section lists entries', newsRows > 0, `${newsRows} entries`);
   await page.close();

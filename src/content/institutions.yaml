@@ -1,16 +1,22 @@
 # Institutions, used for the credibility row and the experience timeline.
 #
-# Each entry renders as a monogram tile in the site's own typography. To use an
-# official logo instead, drop an SVG at public/img/logos/<key>.svg and it is
-# picked up automatically — the monogram is the fallback, not a placeholder.
-# Only add a logo you are licensed to use; most company marks are trademarks,
-# and a single-colour SVG works best because the tile is monochrome.
+# Each entry renders a logo from public/img/logos/<key>.svg when one is there,
+# and a monogram in the site's own typography when it is not.
+#
+# `logoSource` records where the SVG came from, so `npm run logos:fetch` can
+# download and normalise all of them in one step and the provenance stays in
+# the repo. Logos sit on a white tile in both themes, which is how brand marks
+# are designed to be seen, so full-colour marks are kept as drawn.
+#
+# Only use marks you are entitled to use. Naming a past employer factually is
+# ordinary; redistributing a logo for other purposes is not.
 aws:
   order: 1
   name: Amazon Web Services
   short: AWS
   monogram: AWS
   featured: true
+  logoSource: https://upload.wikimedia.org/wikipedia/commons/f/fc/Amazon_Web_Services_2025.svg
 
 samsung:
   order: 2
@@ -18,6 +24,7 @@ samsung:
   short: Samsung
   monogram: SR
   featured: true
+  logoSource: https://upload.wikimedia.org/wikipedia/commons/9/9c/Samsung_logo_wordmark.svg
 
 arizona:
   order: 3
@@ -25,6 +32,7 @@ arizona:
   short: U. Arizona
   monogram: UA
   featured: true
+  logoSource: https://upload.wikimedia.org/wikipedia/commons/b/b6/University_of_Arizona_logo.svg
 
 baylor:
   order: 4
@@ -32,6 +40,7 @@ baylor:
   short: Baylor
   monogram: BU
   featured: true
+  logoSource: https://upload.wikimedia.org/wikipedia/commons/f/fe/Baylor_University_logo.svg
 
 icpc:
   order: 5
@@ -39,6 +48,7 @@ icpc:
   short: ICPC
   monogram: ICPC
   featured: false
+  logoSource: https://codeforces.com/predownloaded/43/08/43086529a28ccb5c9f2f2eec560ffa85e09c6881.svg
 
 tyson:
   order: 6
@@ -46,6 +56,7 @@ tyson:
   short: Tyson
   monogram: TF
   featured: false
+  logoSource: https://upload.wikimedia.org/wikipedia/commons/4/40/Tyson_Foods_corporate_logo_%282024%29.svg
 
 divine-it:
   order: 7
@@ -53,6 +64,7 @@ divine-it:
   short: Divine IT
   monogram: DIT
   featured: false
+  logoSource: https://www.divineit.net/documents/81/Divine_IT.svg
 
 stealth:
   order: 8
@@ -60,6 +72,7 @@ stealth:
   short: Stealth
   monogram: AI
   featured: false
+  logoSource: null
 
 daffodil:
   order: 9
@@ -67,3 +80,5 @@ daffodil:
   short: Daffodil
   monogram: DIU
   featured: false
+  logoSource: https://static.cdnlogo.com/logos/d/13/daffodil-international-university.svg
+
