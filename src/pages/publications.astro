@@ -140,12 +140,14 @@ const counts = {
   }
 
   .filter button[aria-pressed='true'] {
-    color: #fff;
+    color: var(--on-accent);
     background: var(--navy);
   }
 
+  /* Opaque rather than a translucent white: on the light-blue dark-mode accent
+     a faded white drops below AA. */
   .filter button[aria-pressed='true'] .mono {
-    color: color-mix(in srgb, #fff 72%, transparent);
+    color: color-mix(in srgb, var(--on-accent) 74%, var(--navy));
   }
 
   .filter button .mono {

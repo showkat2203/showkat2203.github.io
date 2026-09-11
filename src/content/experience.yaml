@@ -6,6 +6,7 @@
 #   concurrentWith set only where a role genuinely overlapped another
 stealth:
   order: 1
+  institution: stealth
   role: Founder and engineer
   org: Stealth AI startup
   location: Seattle, Washington
@@ -23,6 +24,7 @@ stealth:
 
 aws:
   order: 2
+  institution: aws
   role: Software development engineer, AWS infrastructure supply chain
   org: Amazon Web Services
   location: Seattle, Washington
@@ -44,6 +46,7 @@ aws:
 
 cloudhubs:
   order: 3
+  institution: arizona
   role: Research associate II, software engineering
   org: CloudHubs Lab, University of Arizona
   location: Tucson, Arizona
@@ -64,6 +67,7 @@ cloudhubs:
 
 icpc:
   order: 4
+  institution: icpc
   role: Full-stack developer
   org: ICPC Foundation, University of Arizona
   location: Tucson, Arizona
@@ -83,6 +87,7 @@ icpc:
 
 baylor:
   order: 5
+  institution: baylor
   role: Graduate research and teaching assistant
   org: Baylor University
   location: Waco, Texas
@@ -103,6 +108,7 @@ baylor:
 
 tyson:
   order: 6
+  institution: tyson
   role: Software engineer intern
   org: Tyson Foods
   location: Springdale, Arkansas
@@ -121,6 +127,7 @@ tyson:
 
 samsung:
   order: 7
+  institution: samsung
   role: Software engineer, wearable platform
   org: Samsung Research
   location: Dhaka, Bangladesh
@@ -141,6 +148,7 @@ samsung:
 
 divine-it:
   order: 8
+  institution: divine-it
   role: Software engineer
   org: Divine IT Limited
   location: Dhaka, Bangladesh

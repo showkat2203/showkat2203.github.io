@@ -54,6 +54,9 @@
   --navy: #1b3a6b;
   --navy-soft: #eaeef5;
   --rule: #e3e0da;
+  --rule-strong: #b8b3aa;
+  --on-accent: #ffffff;
+  --shadow: 0 1px 2px rgb(21 24 28 / 0.04);
 
   --serif: 'Source Serif 4', ui-serif, Georgia, 'Times New Roman', serif;
   --sans: 'Inter Tight', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -79,6 +82,45 @@
   --r-lg: 4px;
 
   color-scheme: light;
+}
+
+/* --- dark theme ---------------------------------------------------------
+   A designed palette, not an inversion. Contrast against --bg, measured:
+   ink 15.73, sec 8.22, accent 8.85; --bg on --accent (button text) 8.85.
+   Three states: an explicit choice stamps data-theme, and the default
+   "system" setting stamps nothing, so prefers-color-scheme decides.
+   --------------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0f1419;
+    --card: #161d24;
+    --tint: #1c242d;
+    --ink: #e9edf1;
+    --sec: #a3aeba;
+    --navy: #8fb5f0;
+    --navy-soft: #1d2b41;
+    --rule: #27313c;
+    --rule-strong: #46525f;
+    --on-accent: #0f1419;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0f1419;
+  --card: #161d24;
+  --tint: #1c242d;
+  --ink: #e9edf1;
+  --sec: #a3aeba;
+  --navy: #8fb5f0;
+  --navy-soft: #1d2b41;
+  --rule: #27313c;
+  --rule-strong: #46525f;
+  --on-accent: #0f1419;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  color-scheme: dark;
 }
 
 *,
@@ -155,7 +197,7 @@ a:focus-visible {
 
 ::selection {
   background: var(--navy);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 /* --- primitives --------------------------------------------------------- */
@@ -198,7 +240,7 @@ a:focus-visible {
   top: 0;
   z-index: 20;
   background: var(--ink);
-  color: #fff;
+  color: var(--bg);
   padding: 0.7rem 1.1rem;
   text-decoration: none;
 }
@@ -268,11 +310,11 @@ a:focus-visible {
 
 .btn--primary {
   background: var(--navy);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .btn--primary:hover {
-  background: #16305a;
+  background: color-mix(in srgb, var(--navy) 86%, var(--ink));
 }
 
 .btn--ghost {
@@ -291,6 +333,7 @@ a:focus-visible {
   background: var(--card);
   border: 1px solid var(--rule);
   border-radius: var(--r-lg);
+  box-shadow: var(--shadow);
 }
 
 /* --- tags and badges ---------------------------------------------------- */
@@ -316,7 +359,7 @@ a:focus-visible {
   font-weight: 600;
   letter-spacing: 0.005em;
   background: var(--navy);
-  color: #fff;
+  color: var(--on-accent);
   border-radius: var(--r);
   padding: 0.18rem 0.45rem;
 }
@@ -362,7 +405,7 @@ a:focus-visible {
 }
 
 .dg .dg-t-on {
-  fill: #fff;
+  fill: var(--on-accent);
 }
 
 .dg .dg-box {
@@ -382,7 +425,7 @@ a:focus-visible {
 
 .dg .dg-line {
   fill: none;
-  stroke: #b8b3aa;
+  stroke: var(--rule-strong);
   stroke-width: 1;
 }
 
@@ -393,6 +436,19 @@ a:focus-visible {
 }
 
 .dg .dg-dash {
+  stroke-dasharray: 3 3;
+}
+
+/* Ring round a soft-filled node, drawn in the accent. */
+.dg .dg-ring {
+  fill: none;
+  stroke: var(--navy);
+  stroke-width: 1.2;
+}
+
+.dg .dg-ghost {
+  fill: none;
+  stroke: var(--rule);
   stroke-dasharray: 3 3;
 }
 

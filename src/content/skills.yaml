@@ -6,7 +6,7 @@ languages:
   items: C, C++, Java, Python, TypeScript, JavaScript, SQL, Bash
 
 embedded:
-  order: 2
+  order: 4
   heading: Embedded and low-level
   items: >-
     FreeRTOS, device drivers over SPI, UART, and I2C, Bluetooth Low Energy and
@@ -14,7 +14,7 @@ embedded:
     optimisation, rollback-safe over-the-air updates
 
 distributed:
-  order: 3
+  order: 2
   heading: Distributed and cloud
   items: >-
     Event-driven architecture, MapReduce, PySpark, Amazon EMR, Kafka, Pulsar,
@@ -23,7 +23,7 @@ distributed:
     CloudFormation, CDK)
 
 ml:
-  order: 4
+  order: 3
   heading: Machine learning
   items: >-
     Graph neural networks, variational autoencoders, representation learning

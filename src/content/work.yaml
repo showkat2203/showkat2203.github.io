@@ -1,12 +1,13 @@
-# Selected work. Keep `body` to two sentences: the card carries a diagram and
-# the figures, so the prose only has to frame the problem.
+# Selected work, ordered by `order`. Distributed systems and machine learning
+# lead; embedded follows. Keep `body` to two sentences: the card carries a
+# diagram and the figures, so the prose only has to frame the problem.
 #
 #   diagram: timing | reconcile | graph | pipeline   (src/components/diagrams/)
 #   tags:    the stack, shown as small mono chips
 #   metrics: evidence, shown as figures beneath the text
 
 mcu-timing:
-  order: 1
+  order: 4
   title: Sensor streaming that cannot miss a 15 ms deadline
   org: Samsung Research, wearable platform
   period: 2018 – 2021
@@ -26,7 +27,7 @@ mcu-timing:
       label: rollback-safe update success, zero bricked devices
 
 reconciliation:
-  order: 2
+  order: 1
   title: Reconciling an event stream that drops, duplicates, and reorders
   org: Amazon Web Services, infrastructure supply chain
   period: 2025 – 2026
@@ -47,7 +48,7 @@ reconciliation:
       label: integration test coverage
 
 change-impact-graph:
-  order: 3
+  order: 2
   title: Change impact as a graph traversal, not a lookup
   org: Amazon Web Services, infrastructure supply chain
   period: 2025 – 2026
@@ -65,7 +66,7 @@ change-impact-graph:
       label: manufacturing sites onboarded without per-class code
 
 emr-pipelines:
-  order: 4
+  order: 3
   title: Feature extraction across ten million transactions
   org: Baylor University, graduate research
   period: 2022 – 2023

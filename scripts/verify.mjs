@@ -121,6 +121,82 @@ for (const width of [320, 360, 414, 768]) {
   await rss.close();
 }
 
+// --- theme toggle --------------------------------------------------------
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'light' });
+  const page = await ctx.newPage();
+  await page.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
+
+  const read = () =>
+    page.evaluate(() => ({
+      attr: document.documentElement.dataset.theme ?? null,
+      bg: getComputedStyle(document.body).backgroundColor,
+      pressed: document.querySelector('[data-theme-toggle]')?.getAttribute('aria-pressed'),
+      label: document.querySelector('.theme__label')?.textContent?.trim(),
+      stored: (() => {
+        try {
+          return localStorage.getItem('theme');
+        } catch {
+          return 'unavailable';
+        }
+      })(),
+    }));
+
+  const start = await read();
+  check('follows the light system preference', start.attr === null && start.pressed === 'false', JSON.stringify(start));
+
+  await page.click('[data-theme-toggle]');
+  const dark = await read();
+  check('toggle switches to dark', dark.attr === 'dark' && dark.pressed === 'true', JSON.stringify(dark));
+  check('dark repaints the page', dark.bg !== start.bg, `${start.bg} -> ${dark.bg}`);
+  check('choice is persisted', dark.stored === 'dark', String(dark.stored));
+  check('button label names the next state', dark.label === 'Switch to light mode', String(dark.label));
+
+  await page.reload({ waitUntil: 'networkidle' });
+  const afterReload = await read();
+  check('choice survives a reload', afterReload.attr === 'dark', JSON.stringify(afterReload));
+
+  await page.click('[data-theme-toggle]');
+  const back = await read();
+  check('toggle switches back to light', back.attr === 'light' && back.stored === 'light', JSON.stringify(back));
+  await ctx.close();
+}
+
+// A dark system preference should render dark with no stored choice.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, colorScheme: 'dark' });
+  const page = await ctx.newPage();
+  await page.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
+  const state = await page.evaluate(() => ({
+    attr: document.documentElement.dataset.theme ?? null,
+    bg: getComputedStyle(document.body).backgroundColor,
+    pressed: document.querySelector('[data-theme-toggle]')?.getAttribute('aria-pressed'),
+  }));
+  check(
+    'dark system preference renders dark without a stored choice',
+    state.attr === null && state.pressed === 'true' && state.bg === 'rgb(15, 20, 25)',
+    JSON.stringify(state),
+  );
+  await ctx.close();
+}
+
+// --- institution marks and news -----------------------------------------
+{
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
+  const marks = await page.locator('.mark').count();
+  check('institution marks render', marks >= 12, `${marks} marks`);
+  const namedMarks = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('.mark')).every(
+      (m) => m.nextElementSibling?.classList.contains('sr-only') && (m.nextElementSibling.textContent ?? '').length > 2,
+    ),
+  );
+  check('each mark has an accessible name beside it', namedMarks);
+  const newsRows = await page.locator('.news__row').count();
+  check('news section lists entries', newsRows > 0, `${newsRows} entries`);
+  await page.close();
+}
+
 // --- no-JS fallback ------------------------------------------------------
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 }, javaScriptEnabled: false });

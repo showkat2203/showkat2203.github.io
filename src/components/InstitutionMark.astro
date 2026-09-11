@@ -1,0 +1,64 @@
+---
+import { existsSync } from 'node:fs';
+
+interface Props {
+  /** Key from institutions.yaml, also the logo filename. */
+  slug: string;
+  name: string;
+  monogram: string;
+  size?: 'sm' | 'md';
+}
+
+const { slug, name, monogram, size = 'md' } = Astro.props;
+
+// An official SVG wins where one has been supplied; the monogram is the
+// designed fallback. Checked at build time, so there is no runtime cost.
+const logo = `/img/logos/${slug}.svg`;
+const hasLogo = existsSync(`public${logo}`);
+---
+
+<span class:list={['mark', `mark--${size}`]} aria-hidden="true">
+  {hasLogo ? <img src={logo} alt="" width="24" height="24" /> : <span class="mark__m">{monogram}</span>}
+</span>
+<span class="sr-only">{name}</span>
+
+<style>
+  .mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: var(--r);
+    color: var(--navy);
+    font-family: var(--serif);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mark--md {
+    height: 2.25rem;
+    min-width: 2.25rem;
+    padding-inline: 0.4rem;
+    font-size: 0.875rem;
+  }
+
+  .mark--sm {
+    height: 1.75rem;
+    min-width: 1.75rem;
+    padding-inline: 0.32rem;
+    font-size: 0.75rem;
+  }
+
+  .mark img {
+    height: 1.125rem;
+    width: auto;
+  }
+
+  /* A supplied logo is flattened to the accent so it joins the same system. */
+  .mark--sm img {
+    height: 0.875rem;
+  }
+</style>

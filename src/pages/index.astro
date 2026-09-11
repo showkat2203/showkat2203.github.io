@@ -4,6 +4,7 @@ import WorkCard from '../components/WorkCard.astro';
 import Citation from '../components/Citation.astro';
 import PostCard from '../components/PostCard.astro';
 import CopyEmail from '../components/CopyEmail.astro';
+import InstitutionMark from '../components/InstitutionMark.astro';
 import { readingMinutes } from '../lib/reading';
 import { getCollection, getEntry } from 'astro:content';
 
@@ -25,7 +26,15 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
   .slice(0, 3);
 
-const orgs = ['Amazon Web Services', 'Samsung Research', 'University of Arizona', 'Baylor University'];
+const institutions = await getCollection('institutions');
+const byKey = new Map(institutions.map((i) => [i.id, i.data]));
+const featured = institutions
+  .filter((i) => i.data.featured)
+  .sort((a, b) => a.data.order - b.data.order);
+
+const news = (await getCollection('news'))
+  .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
+  .slice(0, 4);
 
 const figures = [
   { v: String(p.record.publications), l: 'peer-reviewed papers' },
@@ -59,7 +68,16 @@ const figures = [
   <!-- credibility ------------------------------------------------------ -->
   <section class="shell orgs" aria-label="Organisations">
     <p class="orgs__label">Built systems at</p>
-    <ul class="orgs__list">{orgs.map((o) => <li>{o}</li>)}</ul>
+    <ul class="orgs__list">
+      {
+        featured.map((i) => (
+          <li>
+            <InstitutionMark slug={i.id} name={i.data.name} monogram={i.data.monogram} />
+            <span aria-hidden="true">{i.data.name}</span>
+          </li>
+        ))
+      }
+    </ul>
   </section>
 
   <section class="shell figures" aria-label="Research record">
@@ -72,6 +90,39 @@ const figures = [
       ))
     }
   </section>
+
+  <!-- latest ----------------------------------------------------------- -->
+  {
+    news.length > 0 && (
+      <section class="shell section" id="news" aria-labelledby="news-t">
+        <div class="section__head">
+          <h2 class="h2" id="news-t">Latest</h2>
+        </div>
+        <ol class="news">
+          {news.map((n) => (
+            <li class="news__row">
+              <p class="news__when mono">
+                <time datetime={n.data.date.toISOString()}>
+                  {n.data.date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                </time>
+              </p>
+              <p class="news__what">
+                {n.data.text}
+                {n.data.href && n.data.linkLabel && (
+                  <>
+                    {' '}
+                    <a href={n.data.href} rel="noopener">
+                      {n.data.linkLabel}
+                    </a>
+                  </>
+                )}
+              </p>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )
+  }
 
   <!-- practice areas --------------------------------------------------- -->
   <section class="shell section" id="about" aria-labelledby="about-t">
@@ -147,7 +198,15 @@ const figures = [
                 {role.data.role}
                 {role.data.current && <span class="tl__now">current</span>}
               </h3>
-              <p class="tl__org">{role.data.org}, {role.data.location}</p>
+              <p class="tl__org">
+                <InstitutionMark
+                  slug={role.data.institution}
+                  name={byKey.get(role.data.institution)?.name ?? role.data.org}
+                  monogram={byKey.get(role.data.institution)?.monogram ?? '—'}
+                  size="sm"
+                />
+                <span aria-hidden="true">{role.data.org}, {role.data.location}</span>
+              </p>
               {role.data.summary && <p class="tl__sum">{role.data.summary}</p>}
               {role.data.concurrentWith && <p class="tl__con">{role.data.concurrentWith}</p>}
             </div>
@@ -280,14 +339,41 @@ const figures = [
   .orgs__list {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem 2rem;
+    gap: 0.75rem 1.75rem;
   }
 
   .orgs__list li {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
     font-family: var(--serif);
     font-size: 1.0625rem;
     font-weight: 600;
     letter-spacing: -0.008em;
+  }
+
+  .news {
+    border-top: 1px solid var(--rule);
+  }
+
+  .news__row {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    gap: 0.2rem 1.5rem;
+    padding-block: 0.85rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .news__when {
+    font-size: var(--t-meta);
+    color: var(--sec);
+    padding-top: 0.12rem;
+  }
+
+  .news__what {
+    font-size: 0.9375rem;
+    max-width: 52rem;
+    text-wrap: pretty;
   }
 
   .figures {
@@ -392,16 +478,19 @@ const figures = [
     font-size: var(--t-small);
     font-weight: 500;
     font-family: var(--mono);
-    color: #fff;
+    color: var(--on-accent);
     background: var(--navy);
     border-radius: var(--r);
     padding: 0.1rem 0.4rem;
   }
 
   .tl__org {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
     font-size: var(--t-meta);
     color: var(--sec);
-    margin-top: 0.15rem;
+    margin-top: 0.35rem;
   }
 
   .tl__sum {
@@ -463,7 +552,8 @@ const figures = [
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 1.5rem 1rem;
     }
-    .tl__row {
+    .tl__row,
+    .news__row {
       grid-template-columns: minmax(0, 1fr);
     }
   }

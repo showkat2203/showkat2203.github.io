@@ -1,0 +1,41 @@
+# Latest news, newest first. The home page shows the four most recent; add an
+# entry by copying a block. `href` and `linkLabel` are optional — set both to
+# turn the entry into a link, or leave them null for a plain line.
+n-2026-05-startup:
+  date: 2026-05-01
+  text: >-
+    Started as founder and engineer at a stealth AI startup in Seattle, building
+    an agentic platform over municipal records and permit filings.
+  href: null
+  linkLabel: null
+
+n-2026-04-aws:
+  date: 2026-04-30
+  text: >-
+    Wrapped up at AWS Infrastructure Supply Chain after shipping the hardware
+    system of record and its event-driven reconciliation service.
+  href: null
+  linkLabel: null
+
+n-2025-jss:
+  date: 2025-01-15
+  text: >-
+    "Multivocal Study on Microservice Dependencies" published in the Journal of
+    Systems and Software.
+  href: https://doi.org/10.1016/j.jss.2025.112334
+  linkLabel: Read on ScienceDirect
+
+n-2024-ase:
+  date: 2024-10-27
+  text: >-
+    Paper on tuning fuzzy c-means in a VAE-based GNN approach presented at
+    IEEE/ACM ASE 2024.
+  href: https://doi.org/10.1145/3691621.3694933
+  linkLabel: Read on the ACM Digital Library
+
+n-2024-cluster:
+  date: 2024-05-01
+  text: >-
+    "Benchmarking Micro2Micro Transformation" published in Cluster Computing.
+  href: https://doi.org/10.1007/s10586-024-04526-z
+  linkLabel: Read on SpringerLink

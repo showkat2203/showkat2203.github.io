@@ -1,0 +1,69 @@
+# Institutions, used for the credibility row and the experience timeline.
+#
+# Each entry renders as a monogram tile in the site's own typography. To use an
+# official logo instead, drop an SVG at public/img/logos/<key>.svg and it is
+# picked up automatically — the monogram is the fallback, not a placeholder.
+# Only add a logo you are licensed to use; most company marks are trademarks,
+# and a single-colour SVG works best because the tile is monochrome.
+aws:
+  order: 1
+  name: Amazon Web Services
+  short: AWS
+  monogram: AWS
+  featured: true
+
+samsung:
+  order: 2
+  name: Samsung Research
+  short: Samsung
+  monogram: SR
+  featured: true
+
+arizona:
+  order: 3
+  name: University of Arizona
+  short: U. Arizona
+  monogram: UA
+  featured: true
+
+baylor:
+  order: 4
+  name: Baylor University
+  short: Baylor
+  monogram: BU
+  featured: true
+
+icpc:
+  order: 5
+  name: ICPC Foundation
+  short: ICPC
+  monogram: ICPC
+  featured: false
+
+tyson:
+  order: 6
+  name: Tyson Foods
+  short: Tyson
+  monogram: TF
+  featured: false
+
+divine-it:
+  order: 7
+  name: Divine IT Limited
+  short: Divine IT
+  monogram: DIT
+  featured: false
+
+stealth:
+  order: 8
+  name: Stealth AI startup
+  short: Stealth
+  monogram: AI
+  featured: false
+
+daffodil:
+  order: 9
+  name: Daffodil International University
+  short: Daffodil
+  monogram: DIU
+  featured: false

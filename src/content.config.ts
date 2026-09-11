@@ -66,6 +66,8 @@ const experience = defineCollection({
     period: z.string(),
     current: z.boolean(),
     concurrentWith: z.string().nullable().default(null),
+    /** Key from institutions.yaml, for the timeline's monogram. */
+    institution: z.string(),
     summary: z.string().nullable(),
     /** Detailed bullets, used on /cv only. */
     bullets: z.array(z.string()).default([]),
@@ -117,6 +119,28 @@ const skills = defineCollection({
   }),
 });
 
+const institutions = defineCollection({
+  loader: file('src/content/institutions.yaml'),
+  schema: z.object({
+    order: z.number(),
+    name: z.string(),
+    short: z.string(),
+    monogram: z.string().min(1).max(4),
+    /** Shown in the credibility row under the hero. */
+    featured: z.boolean(),
+  }),
+});
+
+const news = defineCollection({
+  loader: file('src/content/news.yaml'),
+  schema: z.object({
+    date: z.coerce.date(),
+    text: z.string(),
+    href: z.string().nullable().default(null),
+    linkLabel: z.string().nullable().default(null),
+  }),
+});
+
 const blog = defineCollection({
   loader: glob({ base: 'src/content/blog', pattern: '**/*.md' }),
   schema: z.object({
@@ -129,4 +153,15 @@ const blog = defineCollection({
   }),
 });
 
-export const collections = { profile, domains, work, experience, publications, cv, skills, blog };
+export const collections = {
+  profile,
+  domains,
+  work,
+  experience,
+  publications,
+  cv,
+  skills,
+  institutions,
+  news,
+  blog,
+};

@@ -9,13 +9,14 @@ let failures = 0;
 
 for (const path of ['/', '/publications', '/cv', '/blog', '/blog/reconciliation-is-a-feature']) {
   for (const width of [1280, 360]) {
-    const context = await browser.newContext({ viewport: { width, height: 900 } });
+    for (const scheme of ['light', 'dark']) {
+    const context = await browser.newContext({ viewport: { width, height: 900 }, colorScheme: scheme });
     const page = await context.newPage();
     await page.goto(`http://localhost:4321${path}`, { waitUntil: 'networkidle' });
     const { violations } = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
       .analyze();
-    const label = `${path} @ ${width}`;
+    const label = `${path} @ ${width} ${scheme}`;
     if (violations.length === 0) {
       console.log(`ok    ${label}`);
     } else {
@@ -27,6 +28,7 @@ for (const path of ['/', '/publications', '/cv', '/blog', '/blog/reconciliation-
       }
     }
     await context.close();
+    }
   }
 }
 

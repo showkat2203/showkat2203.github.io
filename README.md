@@ -19,6 +19,8 @@ if a required field is missing or misspelled.
 | `publications.yaml` | All publications, newest first |
 | `skills.yaml` | Technical range, grouped |
 | `cv.yaml` | Education, service, teaching, background, languages |
+| `institutions.yaml` | Employers and universities, with their monograms |
+| `news.yaml` | The "Latest" entries on the home page |
 | `blog/*.md` | Blog posts, one Markdown file each |
 
 To add a publication, copy any block in `publications.yaml`. Set
@@ -50,6 +52,27 @@ Reading time is computed from the word count. Posts appear newest first on
 `/blog`, the three most recent appear on the home page, and all of them go into
 `/rss.xml`. Code blocks are highlighted with the `github-light` theme, chosen
 because it clears WCAG AA on a white background.
+
+## Institution marks
+
+`institutions.yaml` holds each employer and university. They render as monogram
+tiles in the site's own typography — uniform height, monochrome, one visual
+system — in the credibility row under the hero and beside each role in the
+timeline.
+
+Official logos are a slot, not an absence: drop a single-colour SVG at
+`public/img/logos/<key>.svg` and it replaces that monogram automatically, with
+no code change. The key is the top-level key in the YAML. Monograms are the
+shipped default on purpose: AWS is not in any freely licensed icon set (Amazon
+had its marks removed from them), no university in this list is either, and a
+row mixing one real logo with seven substitutes looks scraped rather than
+designed. Only add marks you are licensed to use.
+
+## Latest news
+
+`news.yaml`, newest first. The home page shows the four most recent. Set `href`
+and `linkLabel` together to make an entry link somewhere, or leave both `null`
+for a plain dated line.
 
 ## Diagrams
 
@@ -129,12 +152,13 @@ npm run audit        # typecheck, build, axe, behaviour, Lighthouse
 Individually: `npm run check` (types), `npm run a11y` (axe-core on every route
 at 1280px and 360px), `npm run verify` (no horizontal scroll from 320px,
 keyboard focus, the publications filter, copy-to-clipboard, reduced motion,
-image alt text and loading, diagram labels, the blog and its feed, and the
-no-JavaScript fallback), `npm run lighthouse`.
+image alt text and loading, diagram labels, the blog and its feed, the theme
+toggle and its persistence, institution marks, and the no-JavaScript
+fallback), `npm run lighthouse`.
 
-Last run: Lighthouse performance 95–100, accessibility 100, best practices 100,
-SEO 100 across all four routes; zero axe violations at 1280px and 360px on five
-routes; 27 of 27 behaviour checks passing.
+Last run: Lighthouse performance 96–100, accessibility 100, best practices 100,
+SEO 100 across all four routes; zero axe violations across five routes, two
+widths, and both themes (20 combinations); 38 of 38 behaviour checks passing.
 
 Lighthouse reports one failure that is not actionable here — `bf-cache`, which
 Chrome disables by command line in a headless container.
@@ -143,12 +167,24 @@ Chrome disables by command line in a headless container.
 
 ## Design
 
-One light theme, deliberately made rather than inverted into a dark variant.
 Source Serif 4 carries identity and headings, Inter Tight carries anything read
-at length, and DM Mono is reserved for figures, dates, and identifiers. Deep
-navy `#1b3a6b` is the only accent; it appears on links, buttons, figures, and
-diagram emphasis, and nowhere else. All four fonts are self-hosted and
-subsetted, so the page makes no third-party requests.
+at length, and DM Mono is reserved for figures, dates, and identifiers. One
+accent colour appears on links, buttons, figures, and diagram emphasis, and
+nowhere else. All fonts are self-hosted and subsetted, so the page makes no
+third-party requests.
+
+Both themes are designed rather than inverted, and every colour is a token in
+`src/styles/global.css`, including the ones the diagrams use. Three states: an
+explicit choice stamps `data-theme` on the root element and persists in
+`localStorage`; with nothing stored the page follows `prefers-color-scheme`. An
+inline script in `<head>` applies a stored choice before first paint, so the
+page never flashes the wrong palette. Measured contrast is recorded beside each
+palette in the stylesheet.
+
+Code blocks use `github-light` and `catppuccin-mocha`. Two dark themes were
+rejected on measurement: `github-dark`, whose comment colour is 3.05:1, and
+`vitesse-dark`, which looks fine at 4.79:1 until you notice its colours carry
+alpha suffixes that blend down below AA.
 
 ## Still to fill in
 

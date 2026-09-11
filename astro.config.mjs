@@ -11,9 +11,16 @@ export default defineConfig({
   build: { inlineStylesheets: 'always' },
   compressHTML: true,
   markdown: {
-    // github-light clears AA on white (keyword 4.57, comment 4.82) but not on
-    // the warm tint, so code blocks are painted white in global.css.
-    shikiConfig: { theme: 'github-light', wrap: false },
+    // Both themes were measured against their own backgrounds, as rendered.
+    // github-light clears AA at 4.57 (keyword). For dark: github-dark's
+    // comment is 3.05, and vitesse-dark looks fine on paper at 4.79 but ships
+    // alpha-suffixed colours (#758575DD) that blend down below AA, so
+    // catppuccin-mocha is used instead — opaque, and 5.81 at its worst.
+    shikiConfig: {
+      themes: { light: 'github-light', dark: 'catppuccin-mocha' },
+      defaultColor: false,
+      wrap: false,
+    },
   },
   integrations: [sitemap()],
 });

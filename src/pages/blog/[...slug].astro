@@ -180,14 +180,41 @@ const dateLong = post.data.date.toLocaleDateString('en-US', {
     margin-top: 0;
   }
 
+  /* Shiki emits both palettes as custom properties per token; pick one by
+     theme rather than letting it hardcode a colour. */
   .prose :global(pre) {
-    background: #fff !important;
+    background: var(--shiki-light-bg);
+    color: var(--shiki-light);
     border: 1px solid var(--rule);
     border-radius: var(--r);
     padding: 1rem 1.1rem;
     overflow-x: auto;
     font-size: 0.875rem;
     line-height: 1.6;
+  }
+
+  .prose :global(pre span) {
+    color: var(--shiki-light);
+  }
+
+  :global(:root[data-theme='dark']) .prose :global(pre) {
+    background: var(--shiki-dark-bg);
+    color: var(--shiki-dark);
+  }
+
+  :global(:root[data-theme='dark']) .prose :global(pre span) {
+    color: var(--shiki-dark);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :global(:root:not([data-theme='light'])) .prose :global(pre) {
+      background: var(--shiki-dark-bg);
+      color: var(--shiki-dark);
+    }
+
+    :global(:root:not([data-theme='light'])) .prose :global(pre span) {
+      color: var(--shiki-dark);
+    }
   }
 
   .prose :global(code) {

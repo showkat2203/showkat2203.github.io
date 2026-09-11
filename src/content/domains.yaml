@@ -1,6 +1,6 @@
 # The three practice areas, shown as a short row near the top of the home page.
 embedded:
-  order: 1
+  order: 3
   label: Embedded and firmware
   body: >-
     FreeRTOS firmware and device drivers in C and C++ over SPI, UART, and I2C.
@@ -8,7 +8,7 @@ embedded:
     over-the-air updates, and profiling under fixed memory and power budgets.
 
 distributed:
-  order: 2
+  order: 1
   label: Distributed and cloud
   body: >-
     Event-driven services that reconcile dropped, duplicated, and out-of-order
@@ -16,7 +16,7 @@ distributed:
     and the observability needed to prove a consistency commitment.
 
 graph-ml:
-  order: 3
+  order: 2
   label: Graph machine learning
   body: >-
     Graph neural networks and variational autoencoders over large dependency

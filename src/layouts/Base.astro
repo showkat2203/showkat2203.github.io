@@ -59,7 +59,23 @@ const nav = [
 
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="alternate" type="application/rss+xml" title={`${p.name} — writing`} href="/rss.xml" />
-    <meta name="theme-color" content="#fbfaf9" />
+    <meta name="theme-color" content="#fbfaf9" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0f1419" media="(prefers-color-scheme: dark)" />
+
+    <script is:inline>
+      // Runs before first paint: without it the page renders in the system
+      // theme for a frame before a stored choice is applied.
+      (() => {
+        try {
+          const stored = localStorage.getItem('theme');
+          if (stored === 'light' || stored === 'dark') {
+            document.documentElement.dataset.theme = stored;
+          }
+        } catch {
+          /* private mode: fall through to the system preference */
+        }
+      })();
+    </script>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
@@ -67,19 +83,40 @@ const nav = [
     <header class="mast">
       <div class="shell mast__in">
         <a class="mast__mark" href="/">{p.name}</a>
-        <nav aria-label="Primary">
-          <ul>
-            {
-              nav.map((item) => (
-                <li>
-                  <a href={item.href} aria-current={item.key === current ? 'page' : undefined}>
-                    {item.label}
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
-        </nav>
+        <div class="mast__right">
+          <nav aria-label="Primary">
+            <ul>
+              {
+                nav.map((item) => (
+                  <li>
+                    <a href={item.href} aria-current={item.key === current ? 'page' : undefined}>
+                      {item.label}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </nav>
+
+          <button
+            type="button"
+            class="theme no-print"
+            data-theme-toggle
+            aria-pressed="false"
+            title="Switch between light and dark"
+          >
+            <svg class="theme__i theme__i--sun" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <circle cx="10" cy="10" r="3.6" />
+              <g stroke-linecap="round">
+                <path d="M10 1.6v2.2M10 16.2v2.2M1.6 10h2.2M16.2 10h2.2M4.1 4.1l1.6 1.6M14.3 14.3l1.6 1.6M15.9 4.1l-1.6 1.6M5.7 14.3l-1.6 1.6" />
+              </g>
+            </svg>
+            <svg class="theme__i theme__i--moon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <path d="M16.3 12.6A7 7 0 0 1 7.4 3.7a7 7 0 1 0 8.9 8.9z" />
+            </svg>
+            <span class="theme__label">Dark mode</span>
+          </button>
+        </div>
       </div>
     </header>
 
@@ -123,6 +160,82 @@ const nav = [
         letter-spacing: -0.012em;
         color: var(--ink);
         text-decoration: none;
+      }
+
+      .mast__right {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.35rem 1.25rem;
+      }
+
+      .theme {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        background: none;
+        border: 1px solid var(--rule);
+        border-radius: var(--r);
+        color: var(--sec);
+        cursor: pointer;
+      }
+
+      .theme:hover {
+        color: var(--navy);
+        border-color: var(--navy);
+      }
+
+      .theme__label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+      }
+
+      .theme__i {
+        width: 1.0625rem;
+        height: 1.0625rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+      }
+
+      .theme__i--sun circle {
+        fill: currentColor;
+        stroke: none;
+      }
+
+      .theme__i--moon {
+        fill: currentColor;
+        stroke: none;
+      }
+
+      /* Show the icon for the theme the button switches *to*. */
+      .theme__i--sun {
+        display: none;
+      }
+
+      :root[data-theme='dark'] .theme__i--sun {
+        display: block;
+      }
+
+      :root[data-theme='dark'] .theme__i--moon {
+        display: none;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme='light']) .theme__i--sun {
+          display: block;
+        }
+        :root:not([data-theme='light']) .theme__i--moon {
+          display: none;
+        }
       }
 
       .mast nav ul {
@@ -171,6 +284,9 @@ const nav = [
       }
 
       @media print {
+        .theme {
+          display: none;
+        }
         .mast {
           position: static;
           border-bottom: 0;
@@ -187,5 +303,38 @@ const nav = [
         }
       }
     </style>
+    <script>
+      const btn = document.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+      const label = btn?.querySelector<HTMLElement>('.theme__label');
+      const root = document.documentElement;
+      const systemDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+      const isDark = () =>
+        root.dataset.theme === 'dark' || (!root.dataset.theme && systemDark.matches);
+
+      const sync = () => {
+        const dark = isDark();
+        btn?.setAttribute('aria-pressed', String(dark));
+        if (label) label.textContent = dark ? 'Switch to light mode' : 'Switch to dark mode';
+      };
+
+      btn?.addEventListener('click', () => {
+        const next = isDark() ? 'light' : 'dark';
+        root.dataset.theme = next;
+        try {
+          localStorage.setItem('theme', next);
+        } catch {
+          /* private mode: the choice just will not persist */
+        }
+        sync();
+      });
+
+      // Follow the system while no explicit choice is stored.
+      systemDark.addEventListener('change', () => {
+        if (!root.dataset.theme) sync();
+      });
+
+      sync();
+    </script>
   </body>
 </html>
