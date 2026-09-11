@@ -1,71 +1,99 @@
-# Personal Portfolio ⚡️ 
-*A digital canvas for software artistry.*
+# chy.io
 
-Welcome to my personal portfolio—a pristine playground where I paint my journey as a Software Developer. Explore the artistry at [https://showkat2203.github.io](https://showkat2203.github.io).
+Personal site for Md Showkat Hossain Chy. Astro, TypeScript, static output, no
+client framework. Deployed to GitHub Pages at [chy.io](https://chy.io).
 
-![GitHub stars](https://img.shields.io/github/stars/showkat2203/chy.github.io) 
-![GitHub forks](https://img.shields.io/github/forks/showkat2203/chy.github.io)
-[![Maintenance](https://img.shields.io/badge/maintained-yes-green.svg)](https://github.com/showkat2203/chy.github.io/commits/master)
-[![Website shields.io](https://img.shields.io/badge/website-up-yellow)](https://chy.github.io/)
-[![Ask Me Anything !](https://img.shields.io/badge/ask%20me-linkedin-1abc9c.svg)](https://www.linkedin.com/in/sonnet-n/)
-[![License](https://img.shields.io/:license-mit-blue.svg?style=flat-square)](https://badges.mit-license.org)
+## Editing content
 
-## A Glimpse 🖼️
-<p align="center"> 
-  <kbd>
-    <a href="https://showkat2203.github.io" target="_blank"><img src="examples/preview.gif">
-  </a>
-  </kbd>
-</p>
+All content lives in `src/content/` as YAML. Components read it through typed
+collections, so adding a publication or a role means editing one file and
+nothing else. The schemas are in `src/content.config.ts`; a build fails loudly
+if a required field is missing or misspelled.
 
-:star: Show your appreciation—star this repository on GitHub!
+| File | Holds |
+| --- | --- |
+| `profile.yaml` | Name, email, links, hero sentence, publication record |
+| `domains.yaml` | The three bands on the magnitude rail |
+| `work.yaml` | Selected work entries, each with its position on the rail |
+| `experience.yaml` | Roles, with exact `start`/`end` dates and CV bullets |
+| `publications.yaml` | All publications, newest first |
+| `skills.yaml` | Technical range, grouped by magnitude band |
+| `cv.yaml` | Education, service, teaching, background, languages |
 
-## Features 📋
-- ⚡️ Fully Responsive
-- ⚡️ Valid HTML5 & CSS3
-- ⚡️ Spellbinding Typing Animation with `Typed.js`
-- ⚡️ Easily Customizable
+To add a publication, copy any block in `publications.yaml`. Set
+`headlineOrder` to 1–5 to surface it on the home page, or `null` to leave it on
+`/publications` only. Fill `doi` or `url` and the entry links itself; while both
+are `null` it renders a visible "link pending" note rather than a dead link.
 
-## Setting Up & Launch 🚀
-- Clone this repository and mold the content of <b>index.html</b> to your liking.
-- Customize the images in the `chy.github.io/assets/img/` directory.
-- For seamless deployment, embrace the magic of [Github Pages](https://create-react-app.dev/docs/deployment/#github-pages).
-- Deploy your creation by naming the GitHub repository `<your-github-username>.github.io`.
-- Push your masterpiece to the `master` branch of this repository.
-- **P.S.:** Don't forget to infuse your Google Analytics `analyticsId` for personalization if you choose to utilize your own Google Analytics account.
+Author names print exactly as written. Any name matching
+`profile.selfAliases` is bolded automatically.
 
-## The Chapters 📚
-- About me
-- Experience
-- Projects 
-- Skills 
-- Education
-- Contact Info
-- Resume
+## Running it
 
-For a live tour, journey here: **[click me](https://showkat2203.github.io/)**
+```bash
+npm install
+npm run dev          # http://localhost:4321
+```
 
-## Tools of the Trade 🛠️
-- [**GitHub Pages**](https://create-react-app.dev/docs/deployment/#github-pages) - A magical realm for hosting static websites (HTML, CSS, JS).
-- [**Materialize**](https://materializecss.com/) - The spellbook for Google's Material Design elements.
-- [**Typed.js**](https://mattboldt.com/demos/typed-js/) - The wand for enchanting typing animations.
+```bash
+npm run build        # static output in dist/
+npm run preview      # serve the built site
+```
 
-## Contributions 💡
-#### Step 1
+## Deploying
 
-- **Option 1**
-    - 🍴 Fork this realm!
+Push to `main`. `.github/workflows/deploy.yml` builds the site and publishes it
+to GitHub Pages.
 
-- **Option 2**
-    - 👯 Clone this realm to your sacred machine.
+```bash
+git push origin main
+```
 
-#### Step 2
+One-time setup in the repository settings: set **Pages → Build and deployment →
+Source** to **GitHub Actions**, and point `chy.io`'s DNS at GitHub Pages.
+`public/CNAME` already claims the domain, and GitHub redirects
+`showkat2203.github.io` to it.
 
-- **Craft your magic** 🔨🔨🔨
+For Netlify or Vercel instead: build command `npm run build`, publish
+directory `dist`, no other configuration.
 
-#### Step 3
+## Regenerating the CV PDF and the social card
 
-- 🔃 Unleash a new spell in the form of a pull request.
+Both are committed to `public/` and are only rebuilt when their source changes.
+They need a Chromium — `npx playwright install chromium`, or set `CHROME_PATH`.
 
-## License 📄
-This masterpiece is licensed under the MIT License - discover the [LICENSE.md](./LICENSE) incantation for details.
+```bash
+npm run build
+npm run cv:pdf       # renders /cv through its print styles to public/cv.pdf
+npm run og           # redraws public/og.png from the design tokens
+```
+
+The PDF is generated from the `/cv` page itself, so the two cannot drift apart.
+
+## Checks
+
+```bash
+npm run audit        # typecheck, build, axe, behaviour, Lighthouse
+```
+
+Individually: `npm run check` (types), `npm run a11y` (axe-core on every route
+at 1280px and 360px), `npm run verify` (no horizontal scroll from 320px,
+keyboard focus, the publications filter, copy-to-clipboard, reduced motion,
+and the no-JavaScript fallback), `npm run lighthouse`.
+
+Last run: Lighthouse performance 99–100, accessibility 100, best practices 100,
+SEO 100 across all three routes; zero axe violations; 23 of 23 behaviour checks
+passing.
+
+`npm run shots` writes screenshots to `.shots/` for design review.
+
+## Still to fill in
+
+Search the content files for `PLACEHOLDER`:
+
+- Google Scholar and LinkedIn URLs in `profile.yaml`.
+- DOIs or publisher links in `publications.yaml` (all twelve are `null`).
+- A one-line description of the current role in `experience.yaml`.
+
+`PROFILE-README.md` in this repo is the rewritten GitHub profile README; it
+belongs in the `showkat2203/showkat2203` repository, not this one.

@@ -1,0 +1,53 @@
+# Single profile record. Edit freely; nothing here is referenced by name in
+# components except the keys themselves.
+main:
+  name: Md Showkat Hossain Chy
+  # Aliases that mark authorship in publication author lists. Any author string
+  # matching one of these exactly is rendered in bold.
+  selfAliases:
+    - M. S. H. Chy
+  location: Seattle, Washington, USA
+  residency: U.S. Permanent Resident
+  email: mdshowkathossainchy@gmail.com
+
+  # The hero sentence. One sentence, nothing else on the screen with it.
+  heroSentence: >-
+    Builds systems where correctness under concurrency, failure, and scale
+    is the hard part.
+
+  metaDescription: >-
+    Md Showkat Hossain Chy builds systems where correctness under concurrency,
+    failure, and scale is the hard part: MCU firmware under fixed memory and
+    power budgets, distributed services that reconcile out-of-order events, and
+    machine learning over graphs with millions of nodes. Twelve peer-reviewed
+    publications, 148 citations.
+
+  links:
+    github:
+      label: github.com/showkat2203
+      url: https://github.com/showkat2203
+    # PLACEHOLDER: replace url with the real Google Scholar profile URL.
+    # While url is null the site renders the label with a "link pending" note
+    # instead of a dead link.
+    scholar:
+      label: Google Scholar profile
+      url: null
+    # PLACEHOLDER: replace url with the real LinkedIn profile URL.
+    linkedin:
+      label: LinkedIn profile
+      url: null
+
+  record:
+    publications: 12
+    citations: 148
+    hIndex: 8
+    venues:
+      - IEEE/ACM ASE
+      - ECSA
+      - CLOSER
+      - Journal of Systems and Software
+      - Cluster Computing
+      - Electronics
+      - Telecom
+      - SeGAH
+      - ICSEC

@@ -1,0 +1,144 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Magnitude from './Magnitude.astro';
+
+interface Props {
+  entry: CollectionEntry<'work'>['data'];
+}
+const { entry } = Astro.props;
+---
+
+<article class="band work">
+  <div class="band__rail">
+    <span class="band__figure"><Magnitude exponent={entry.magnitude.exponent} /></span>
+    <span class="band__unit">{entry.magnitude.unit}</span>
+  </div>
+
+  <div class="band__body">
+    <h3 class="work__title">{entry.title}</h3>
+    <p class="work__org">{entry.org}<span class="work__period mono">{entry.period}</span></p>
+    <p class="work__lede measure">{entry.body}</p>
+
+    <dl class="work__metrics">
+      {
+        entry.metrics.map((m) => (
+          <div class="work__metric">
+            <dt class="mono">{m.value}</dt>
+            <dd>{m.label}</dd>
+          </div>
+        ))
+      }
+    </dl>
+
+    {
+      entry.detail && (
+        <details class="work__detail">
+          <summary>What made it hard</summary>
+          <p class="measure">{entry.detail}</p>
+        </details>
+      )
+    }
+  </div>
+</article>
+
+<style>
+  .work {
+    padding-block: 2.25rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .work:last-of-type {
+    border-bottom: 0;
+  }
+
+  .work__title {
+    max-width: 34rem;
+    font-size: clamp(1.125rem, 1rem + 0.6vw, 1.375rem);
+    font-variation-settings: 'wght' 600, 'wdth' 98;
+    line-height: 1.25;
+    letter-spacing: -0.012em;
+    text-wrap: balance;
+  }
+
+  .work__org {
+    font-size: var(--t-meta);
+    color: var(--tick);
+    margin-top: 0.4rem;
+  }
+
+  .work__period::before {
+    content: ', ';
+  }
+
+  .work__period {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .work__lede {
+    margin-top: 0.9rem;
+    text-wrap: pretty;
+  }
+
+  .work__metrics {
+    margin-top: 1.25rem;
+    display: grid;
+    gap: 0.4rem;
+  }
+
+  .work__metric {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    gap: 0.75rem;
+    align-items: baseline;
+    font-size: var(--t-meta);
+  }
+
+  .work__metric dt {
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .work__metric dd {
+    margin: 0;
+    color: var(--graphite);
+  }
+
+  .work__detail {
+    margin-top: 1.25rem;
+    font-size: var(--t-meta);
+  }
+
+  .work__detail summary {
+    cursor: pointer;
+    color: var(--graphite);
+    width: fit-content;
+    padding: 0.1rem 0;
+    list-style-position: outside;
+  }
+
+  .work__detail summary::marker {
+    color: var(--tick);
+  }
+
+  .work__detail summary:hover {
+    color: var(--ink);
+  }
+
+  .work__detail p {
+    margin-top: 0.75rem;
+    color: var(--graphite);
+    font-size: var(--t-body);
+    line-height: 1.55;
+    border-left: 1px solid var(--hairline);
+    padding-left: 1rem;
+  }
+
+  @media (max-width: 30rem) {
+    .work__metric {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
+  }
+</style>

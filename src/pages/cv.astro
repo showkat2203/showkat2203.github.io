@@ -1,0 +1,370 @@
+---
+import Base from '../layouts/Base.astro';
+import Citation from '../components/Citation.astro';
+import Magnitude from '../components/Magnitude.astro';
+import { getCollection, getEntry } from 'astro:content';
+
+const profile = await getEntry('profile', 'main');
+if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
+const p = profile.data;
+
+const experience = (await getCollection('experience')).sort(
+  (a, b) => b.data.start.localeCompare(a.data.start) || a.data.order - b.data.order,
+);
+const skills = (await getCollection('skills')).sort((a, b) => a.data.order - b.data.order);
+const sections = (await getCollection('cv')).sort((a, b) => a.data.order - b.data.order);
+const education = sections.find((s) => s.id === 'education');
+const otherSections = sections.filter((s) => s.id !== 'education');
+
+const pubs = (await getCollection('publications')).sort((a, b) => b.data.year - a.data.year);
+const journals = pubs.filter((x) => x.data.type === 'journal');
+const conferences = pubs.filter((x) => x.data.type === 'conference');
+---
+
+<Base
+  title={`CV — ${p.name}`}
+  description={`Curriculum vitae of ${p.name}: seven years across embedded firmware, distributed cloud infrastructure, and graph machine learning research, with ${p.record.publications} peer-reviewed publications.`}
+  current="cv"
+>
+  <div class="shell head">
+    <h1 class="page__title">Curriculum vitae</h1>
+    <p class="page__lede measure">{p.heroSentence}</p>
+    <p class="head__meta">
+      {p.location}. {p.residency}. <a href={`mailto:${p.email}`}>{p.email}</a>
+    </p>
+    <p class="head__pdf">
+      <a href="/cv.pdf" download>Download this CV as a PDF</a>
+    </p>
+  </div>
+
+  <div class="spined">
+    <section class="section shell cv-section" aria-labelledby="cv-record">
+      <div class="band band--nomark">
+        <div class="band__rail">
+          <span class="band__figure">{p.record.publications}</span>
+          <span class="band__unit">publications</span>
+        </div>
+        <div class="band__body">
+          <h2 class="section__title" id="cv-record">Record</h2>
+          <p class="measure cv-note">
+            {p.record.publications} peer-reviewed publications, {p.record.citations} citations,
+            h-index {p.record.hIndex}. Venues include {p.record.venues.slice(0, -1).join(', ')},
+            and {p.record.venues.at(-1)}. The full list is on the
+            <a href="/publications">publications page</a> and repeated below.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    {
+      education && (
+        <section class="section shell cv-section" aria-labelledby="cv-education">
+          <div class="band band--nomark">
+            <div class="band__rail" />
+            <div class="band__body">
+              <h2 class="section__title" id="cv-education">
+                {education.data.heading}
+              </h2>
+            </div>
+          </div>
+          {education.data.entries?.map((e) => (
+            <article class="band cv-entry">
+              <div class="band__rail">
+                <span class="band__unit">{e.period}</span>
+              </div>
+              <div class="band__body">
+                <h3 class="cv-entry__title">{e.institution}</h3>
+                <p class="cv-entry__sub">
+                  {e.qualification}, {e.location}
+                </p>
+                {e.notes.length > 0 && (
+                  <ul class="cv-bullets measure">
+                    {e.notes.map((n) => (
+                      <li>{n}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </article>
+          ))}
+        </section>
+      )
+    }
+
+    <section class="section shell cv-section" aria-labelledby="cv-experience">
+      <div class="band band--nomark">
+        <div class="band__rail"></div>
+        <div class="band__body">
+          <h2 class="section__title" id="cv-experience">Experience</h2>
+        </div>
+      </div>
+      {
+        experience.map((role) => (
+          <article class="band cv-entry">
+            <div class="band__rail">
+              <span class="band__unit">{role.data.period}</span>
+            </div>
+            <div class="band__body">
+              <h3 class="cv-entry__title">{role.data.role}</h3>
+              <p class="cv-entry__sub">
+                {role.data.org}, {role.data.location}
+              </p>
+              {role.data.bullets.length > 0 ? (
+                <ul class="cv-bullets measure">
+                  {role.data.bullets.map((b) => (
+                    <li>{b}</li>
+                  ))}
+                </ul>
+              ) : (
+                role.data.summary && <p class="measure cv-note">{role.data.summary}</p>
+              )}
+            </div>
+          </article>
+        ))
+      }
+    </section>
+
+    <section class="section shell cv-section" aria-labelledby="cv-skills">
+      <div class="band band--nomark">
+        <div class="band__rail"></div>
+        <div class="band__body">
+          <h2 class="section__title" id="cv-skills">Technical range</h2>
+        </div>
+      </div>
+      {
+        skills.map((group) => (
+          <div class="band cv-entry">
+            <div class="band__rail">
+              {group.data.exponent !== null && (
+                <span class="band__figure">
+                  <Magnitude exponent={group.data.exponent} />
+                </span>
+              )}
+            </div>
+            <div class="band__body">
+              <h3 class="cv-entry__title">{group.data.heading}</h3>
+              <p class="measure cv-note">{group.data.items}</p>
+            </div>
+          </div>
+        ))
+      }
+    </section>
+
+    <section class="section shell cv-section" aria-labelledby="cv-pubs">
+      <div class="band band--nomark">
+        <div class="band__rail"></div>
+        <div class="band__body">
+          <h2 class="section__title" id="cv-pubs">Publications</h2>
+        </div>
+      </div>
+
+      <div class="band band--nomark">
+        <div class="band__rail">
+          <span class="band__unit">journal</span>
+        </div>
+        <div class="band__body">
+          <ol class="cv-pubs">
+            {
+              journals.map((pub) => (
+                <li>
+                  <Citation pub={pub.data} selfAliases={p.selfAliases} level="h3" />
+                </li>
+              ))
+            }
+          </ol>
+        </div>
+      </div>
+
+      <div class="band band--nomark cv-pubgroup">
+        <div class="band__rail">
+          <span class="band__unit">conference</span>
+        </div>
+        <div class="band__body">
+          <ol class="cv-pubs">
+            {
+              conferences.map((pub) => (
+                <li>
+                  <Citation pub={pub.data} selfAliases={p.selfAliases} level="h3" />
+                </li>
+              ))
+            }
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    {
+      otherSections.map((s) => (
+        <section class="section shell cv-section" aria-labelledby={`cv-${s.id}`}>
+          <div class="band band--nomark">
+            <div class="band__rail" />
+            <div class="band__body">
+              <h2 class="section__title" id={`cv-${s.id}`}>
+                {s.data.heading}
+              </h2>
+              <ul class="cv-bullets measure cv-bullets--loose">
+                {s.data.items?.map((item) => (
+                  <li>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+      ))
+    }
+  </div>
+</Base>
+
+<style>
+  .head {
+    padding-block: clamp(2.5rem, 7vw, 4.5rem) 0;
+  }
+
+  .page__title {
+    font-size: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
+    font-variation-settings: 'wght' 500, 'wdth' 94;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  .page__lede {
+    margin-top: 1rem;
+    color: var(--graphite);
+    font-size: var(--t-lead);
+    text-wrap: pretty;
+  }
+
+  .head__meta {
+    margin-top: 1rem;
+    font-size: var(--t-meta);
+    color: var(--tick);
+  }
+
+  .head__pdf {
+    margin-top: 0.75rem;
+    font-size: var(--t-meta);
+  }
+
+  .cv-section {
+    padding-block: clamp(2.25rem, 5vw, 3.25rem) 0;
+  }
+
+  .cv-entry {
+    padding-block: 1.1rem;
+  }
+
+  .cv-entry__title {
+    font-size: 1.0625rem;
+    font-variation-settings: 'wght' 600, 'wdth' 100;
+    line-height: 1.35;
+  }
+
+  .cv-entry__sub {
+    color: var(--graphite);
+    font-size: var(--t-meta);
+    margin-top: 0.15rem;
+  }
+
+  .cv-note {
+    margin-top: 0.5rem;
+    color: var(--graphite);
+    font-size: 1rem;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  .cv-bullets {
+    margin-top: 0.6rem;
+    display: grid;
+    gap: 0.45rem;
+    color: var(--graphite);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .cv-bullets--loose {
+    margin-top: 1rem;
+  }
+
+  .cv-bullets li {
+    position: relative;
+    padding-left: 1rem;
+    text-wrap: pretty;
+  }
+
+  .cv-bullets li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 5px;
+    height: 1px;
+    background: var(--tick);
+  }
+
+  .cv-pubs {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .cv-pubgroup {
+    margin-top: 2rem;
+  }
+
+  /* Print overrides live here rather than in global.css: Astro's scoped
+     selectors outrank an unscoped class of the same name. */
+  @media print {
+    .head {
+      padding-block: 0.25rem 0;
+    }
+
+    .page__title {
+      font-size: 10.5pt;
+      font-variation-settings: 'wght' 500, 'wdth' 100;
+      letter-spacing: 0;
+      color: var(--tick);
+    }
+
+    .page__lede {
+      margin-top: 0.35rem;
+      font-size: 10pt;
+    }
+
+    .head__meta {
+      margin-top: 0.3rem;
+      font-size: 8.5pt;
+    }
+
+    .head__pdf {
+      display: none;
+    }
+
+    .cv-section {
+      padding-block: 0.75rem 0;
+    }
+
+    .cv-entry {
+      padding-block: 0.35rem;
+      break-inside: avoid;
+    }
+
+    .cv-entry__title {
+      font-size: 10.5pt;
+    }
+
+    .cv-note,
+    .cv-bullets {
+      margin-top: 0.25rem;
+      font-size: 9.5pt;
+      gap: 0.2rem;
+    }
+
+    .cv-pubs {
+      gap: 0.55rem;
+    }
+
+    .cv-pubgroup {
+      margin-top: 0.75rem;
+    }
+  }
+</style>

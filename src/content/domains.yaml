@@ -1,0 +1,34 @@
+# The magnitude axis. `exponent` is the power of ten at which the work sits,
+# and it is what positions each band on the rail. Keep the list ordered by
+# ascending exponent.
+embedded:
+  order: 1
+  label: embedded
+  exponent: 0
+  unit: one microcontroller
+  body: >-
+    Fixed memory and power budgets, set before the work starts, so a feature
+    has to fit rather than scale. A 15 ms deadline that does not move. Defects
+    that leave no trace in a log and have to be caught against the running
+    instruction stream.
+
+distributed:
+  order: 2
+  label: distributed
+  exponent: 2
+  unit: sites and services
+  body: >-
+    Updates arrive dropped, duplicated, and out of order across regions, and no
+    single message can be trusted on its own. The system of record still has to
+    agree with reality inside a stated window, which makes reconciliation the
+    product rather than a repair step.
+
+graph-ml:
+  order: 3
+  label: graph machine learning
+  exponent: 7
+  unit: nodes and records
+  body: >-
+    Structure that is real but not labelled, recovered from graphs large enough
+    that training cost rather than model design sets the limit. The result has
+    to be measured against something, which is why the benchmarks came with it.

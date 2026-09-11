@@ -1,0 +1,36 @@
+---
+interface Props {
+  exponent: number;
+}
+const { exponent } = Astro.props;
+const superscripts: Record<string, string> = {
+  '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+  '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+};
+const glyph = String(exponent)
+  .split('')
+  .map((d) => superscripts[d] ?? d)
+  .join('');
+---
+
+<span class="mag">
+  <span aria-hidden="true">10{glyph}</span>
+  <span class="sr">of the order of ten to the power {exponent}</span>
+</span>
+
+<style>
+  .mag {
+    white-space: nowrap;
+  }
+  .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+</style>

@@ -1,0 +1,125 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  pub: CollectionEntry<'publications'>['data'];
+  selfAliases: string[];
+  /** Heading level so the component fits both the home page and /publications. */
+  level?: 'h3' | 'h4';
+}
+
+const { pub, selfAliases, level = 'h3' } = Astro.props;
+const Heading = level;
+
+const href = pub.doi ? `https://doi.org/${pub.doi}` : pub.url;
+let linkLabel = '';
+if (href) {
+  try {
+    linkLabel = `Read on ${new URL(href).hostname.replace(/^www\./, '')}`;
+  } catch {
+    linkLabel = 'Read the paper';
+  }
+}
+---
+
+<article class="cite">
+  <Heading class="cite__title">{pub.title}</Heading>
+  <p class="cite__authors">
+    {
+      pub.authors.map((author, i) => (
+        <>
+          {i > 0 ? ', ' : ''}
+          {selfAliases.includes(author) ? <b>{author}</b> : author}
+        </>
+      ))
+    }
+  </p>
+  <p class="cite__venue">
+    {pub.venue}{pub.details && <span class="cite__details mono">{pub.details}</span>}
+  </p>
+  {
+    href ? (
+      <p class="cite__link">
+        <a href={href} rel="noopener">
+          {linkLabel}
+        </a>
+      </p>
+    ) : (
+      <p class="cite__pending mono">link pending</p>
+    )
+  }
+</article>
+
+<style>
+  .cite__title {
+    font-size: var(--t-h3);
+    font-variation-settings: 'wght' 600, 'wdth' 100;
+    line-height: 1.35;
+    letter-spacing: -0.005em;
+    text-wrap: pretty;
+  }
+
+  .cite__authors {
+    margin-top: 0.4rem;
+    color: var(--graphite);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .cite__authors b {
+    color: var(--ink);
+    font-variation-settings: 'wght' 600, 'wdth' 100;
+  }
+
+  .cite__venue {
+    margin-top: 0.3rem;
+    font-size: var(--t-meta);
+    color: var(--tick);
+  }
+
+  /* Mono is for the quantities only: volume, number, pages. */
+  .cite__details::before {
+    content: ', ';
+  }
+
+  .cite__details {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .cite {
+    max-width: 38rem;
+  }
+
+  @media print {
+    .cite__title {
+      font-size: 10pt;
+    }
+
+    .cite__authors {
+      margin-top: 0.15rem;
+      font-size: 9pt;
+    }
+
+    .cite__venue {
+      margin-top: 0.1rem;
+      font-size: 8.5pt;
+    }
+
+    .cite__link,
+    .cite__pending {
+      display: none;
+    }
+  }
+
+  .cite__link,
+  .cite__pending {
+    margin-top: 0.5rem;
+    font-size: var(--t-meta);
+  }
+
+  .cite__pending {
+    color: var(--tick);
+    border-left: 2px solid var(--hairline);
+    padding-left: 0.5rem;
+  }
+</style>

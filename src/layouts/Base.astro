@@ -1,0 +1,174 @@
+---
+import '../styles/global.css';
+import { getEntry } from 'astro:content';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** Set on pages whose nav should not offer a link back to itself. */
+  current?: 'home' | 'publications' | 'cv';
+}
+
+const { title, description, current = 'home' } = Astro.props;
+const profile = await getEntry('profile', 'main');
+if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
+const p = profile.data;
+
+const desc = description ?? p.metaDescription;
+const canonical = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', Astro.site);
+const ogImage = new URL('/og.png', Astro.site);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={desc} />
+    <link rel="canonical" href={canonical.href} />
+    <meta name="author" content={p.name} />
+
+    <link rel="preload" href="/fonts/archivo-var.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/dm-mono-500.woff2" as="font" type="font/woff2" crossorigin />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:site_name" content={p.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={desc} />
+    <meta property="og:url" content={canonical.href} />
+    <meta property="og:image" content={ogImage.href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${p.name} — ${p.heroSentence}`} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={desc} />
+    <meta name="twitter:image" content={ogImage.href} />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta name="theme-color" content="#f4f5f3" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+
+    <header class="masthead">
+      <div class="shell masthead__inner">
+        {
+          current === 'home' ? (
+            <p class="masthead__name masthead__name--quiet">chy.io</p>
+          ) : (
+            <p class="masthead__name">
+              <a href="/">{p.name}</a>
+            </p>
+          )
+        }
+        <nav class="masthead__nav" aria-label="Sections">
+          <ul>
+            <li><a href={current === 'home' ? '#work' : '/#work'}>Selected work</a></li>
+            <li>
+              <a href="/publications" aria-current={current === 'publications' ? 'page' : undefined}>
+                Publications
+              </a>
+            </li>
+            <li><a href={current === 'home' ? '#experience' : '/#experience'}>Experience</a></li>
+            <li><a href="/cv" aria-current={current === 'cv' ? 'page' : undefined}>CV</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="footer">
+      <div class="shell footer__inner">
+        <p>{p.name}, {p.location}.</p>
+        <p>
+          Built with Astro. <a href="https://github.com/showkat2203/showkat2203.github.io">Source on GitHub</a>.
+        </p>
+      </div>
+    </footer>
+
+    <style>
+      .masthead {
+        padding-block: 1.5rem 0;
+      }
+
+      .masthead__inner {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem 2rem;
+        align-items: baseline;
+        justify-content: space-between;
+      }
+
+      .masthead__name {
+        font-size: 0.9375rem;
+        font-variation-settings: 'wght' 600, 'wdth' 100;
+        letter-spacing: 0.005em;
+        margin: 0;
+      }
+
+      .masthead__name a {
+        text-decoration-color: transparent;
+      }
+
+      /* On the home page the name belongs to the hero, not the masthead. */
+      .masthead__name--quiet {
+        font-variation-settings: 'wght' 500, 'wdth' 100;
+        color: var(--tick);
+      }
+
+      .masthead__nav ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem 1.5rem;
+        font-size: 0.9375rem;
+      }
+
+      .masthead__nav a {
+        text-decoration-color: transparent;
+      }
+
+      .masthead__nav a:hover,
+      .masthead__nav a:focus-visible,
+      .masthead__nav a[aria-current='page'] {
+        text-decoration-color: var(--ink);
+      }
+
+      .masthead__nav a[aria-current='page'] {
+        font-variation-settings: 'wght' 600, 'wdth' 100;
+      }
+
+      .footer {
+        margin-top: clamp(4rem, 9vw, 7rem);
+        border-top: 1px solid var(--hairline);
+        padding-block: 1.75rem 3rem;
+        color: var(--graphite);
+        font-size: var(--t-meta);
+      }
+
+      .footer__inner {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem 2rem;
+        justify-content: space-between;
+      }
+
+      .footer p {
+        margin: 0;
+      }
+
+      @media print {
+        .masthead__nav,
+        .skip,
+        .footer {
+          display: none;
+        }
+      }
+    </style>
+  </body>
+</html>

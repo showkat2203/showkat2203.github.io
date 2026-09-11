@@ -1,0 +1,231 @@
+# Twelve peer-reviewed publications, newest first. To add one, copy a block.
+#
+#   headlineOrder: 1-5 puts it in the five shown on the home page, in that
+#                  order. Omit or set null to leave it on /publications only.
+#   type:          conference | journal  (drives the filter on /publications)
+#   doi / url:     PLACEHOLDER — every entry is currently null, which renders
+#                  as a visible "link pending" note rather than a dead link.
+#                  Fill either field and the entry links itself.
+#
+# Author names are printed exactly as written here. Any name matching
+# profile.selfAliases is bolded automatically.
+
+jss-2025-dependencies:
+  headlineOrder: 3
+  type: journal
+  year: 2025
+  title: Multivocal Study on Microservice Dependencies
+  authors:
+    - A. S. Abdelfattah
+    - T. Cerny
+    - M. S. H. Chy
+    - M. A. Uddin
+    - S. Perry
+    - C. Brown
+    - J. Yero
+    - K. Sooksatra
+  venue: Journal of Systems and Software
+  venueShort: JSS
+  details: volume 222, article 112334
+  doi: null
+  url: null
+
+ase-2024-fuzzy-cmeans:
+  headlineOrder: 1
+  type: conference
+  year: 2024
+  title: >-
+    Using Static Analysis to Aid Monolith to Microservice System
+    Transformation: Tuning Fuzzy c-Means in a VAE-Based GNN Approach
+  authors:
+    - K. Sooksatra
+    - M. S. H. Chy
+    - M. A. R. Arju
+    - T. Cerny
+    - P. Rivas
+  venue: 39th IEEE/ACM International Conference on Automated Software Engineering
+  venueShort: IEEE/ACM ASE
+  details: null
+  doi: null
+  url: null
+
+cluster-2024-micro2micro:
+  headlineOrder: 2
+  type: journal
+  year: 2024
+  title: >-
+    Benchmarking Micro2Micro Transformation: An Approach with Graph Neural
+    Networks and Variational Autoencoders
+  authors:
+    - M. S. H. Chy
+    - K. Sooksatra
+    - J. Yero
+    - T. Cerny
+  venue: Cluster Computing
+  venueShort: Cluster Computing
+  details: volume 27, number 4, pages 4171–4185
+  doi: null
+  url: null
+
+ecsa-2024-benchmark:
+  headlineOrder: 4
+  type: conference
+  year: 2024
+  title: >-
+    A Multi-variant Benchmark for Microservice Systems in Software Engineering
+    Research
+  authors:
+    - T. Cerny
+    - M. S. H. Chy
+    - M. A. R. Arju
+    - K. Sooksatra
+    - A. S. Abdelfattah
+    - V. Lenarduzzi
+  venue: European Conference on Software Architecture
+  venueShort: ECSA
+  details: pages 21–29
+  doi: null
+  url: null
+
+closer-2024-propagation:
+  headlineOrder: null
+  type: conference
+  year: 2024
+  title: >-
+    On Maintainability and Microservice Dependencies: How Do Changes Propagate?
+  authors:
+    - T. Cerny
+    - M. S. H. Chy
+    - A. S. Abdelfattah
+    - J. Soldani
+    - J. Bogner
+  venue: 14th International Conference on Cloud Computing and Services Science
+  venueShort: CLOSER
+  details: null
+  doi: null
+  url: null
+
+ccis-2024-dependencies:
+  headlineOrder: null
+  type: conference
+  year: 2024
+  title: >-
+    On Dependencies in Microservices: Dependency Management and Maintainability
+  authors:
+    - T. Cerny
+    - M. S. H. Chy
+    - M. A. Uddin
+    - A. S. Abdelfattah
+    - J. Soldani
+    - J. Bogner
+  venue: Cloud Computing and Services Science, Springer CCIS
+  venueShort: Springer CCIS
+  details: pages 29–52
+  doi: null
+  url: null
+
+electronics-2023-queues:
+  headlineOrder: 5
+  type: journal
+  year: 2023
+  title: >-
+    Comparative Evaluation of Java Virtual Machine-Based Message Queue
+    Services: A Study on Kafka, Artemis, Pulsar, and RocketMQ
+  authors:
+    - M. S. H. Chy
+    - M. A. R. Arju
+    - S. M. Tella
+    - T. Cerny
+  venue: Electronics
+  venueShort: Electronics
+  details: volume 12, article 4792
+  doi: null
+  url: null
+
+telecom-2023-benchmarking:
+  headlineOrder: null
+  type: journal
+  year: 2023
+  title: Benchmarking Message Queues
+  authors:
+    - R. Maharjan
+    - M. S. H. Chy
+    - M. A. R. Arju
+    - T. Cerny
+  venue: Telecom
+  venueShort: Telecom
+  details: volume 4, number 2, pages 298–312
+  doi: null
+  url: null
+
+ecsa-2023-microprospect:
+  headlineOrder: null
+  type: conference
+  year: 2023
+  title: >-
+    Evolution and Anti-patterns Visualized: MicroProspect in Microservice
+    Architecture
+  authors:
+    - L. Adams
+    - A. Elsayed
+    - M. S. H. Chy
+    - S. Perry
+    - P. Harris
+    - T. Cerny
+    - D. Amoroso d'Aragona
+    - D. Taibi
+  venue: European Conference on Software Architecture
+  venueShort: ECSA
+  details: pages 309–325
+  doi: null
+  url: null
+
+segah-2023-design-patterns:
+  headlineOrder: null
+  type: conference
+  year: 2023
+  title: A Systematic Review on Software Design Patterns in Today's Perspective
+  authors:
+    - M. Rahman
+    - M. S. H. Chy
+    - S. Saha
+  venue: IEEE 11th International Conference on Serious Games and Applications for Health
+  venueShort: IEEE SeGAH
+  details: Athens, Greece, pages 1–8
+  doi: null
+  url: null
+
+segah-2023-bless:
+  headlineOrder: null
+  type: conference
+  year: 2023
+  title: "Bless: An Interactive Application to Show Gratitude towards Doctors"
+  authors:
+    - M. Rahman
+    - M. S. Rahaman
+    - M. S. H. Chy
+  venue: IEEE 11th International Conference on Serious Games and Applications for Health
+  venueShort: IEEE SeGAH
+  details: Athens, Greece, pages 1–7
+  doi: null
+  url: null
+
+icsec-2023-chromatin:
+  headlineOrder: null
+  type: conference
+  year: 2023
+  title: >-
+    Exploring Chromatin Interaction Between Two Human Cell Types and Different
+    Normalization Techniques for Hi-C Data
+  authors:
+    - M. Rahman
+    - M. S. H. Chy
+    - A. Rahman
+    - S. Ahmed
+    - T. Sharmin
+    - M. S. Rahaman
+  venue: 27th International Computer Science and Engineering Conference
+  venueShort: ICSEC
+  details: Thailand, pages 53–59
+  doi: null
+  url: null

@@ -1,0 +1,155 @@
+# Experience timeline. Entries are sorted by `start` (newest first) and the
+# rail shows the year only when it changes, so the axis stays monotonic.
+# `concurrentWith` is set only where a role genuinely overlapped another —
+# sharing a year tick does not by itself mean two roles ran at once.
+#
+# start / end are "YYYY-MM"; end is null for a current role.
+stealth:
+  order: 1
+  role: Founder and engineer
+  org: Stealth AI startup
+  location: Seattle, Washington
+  start: "2026-05"
+  end: null
+  period: May 2026 – present
+  current: true
+  concurrentWith: null
+  # PLACEHOLDER: one sentence, in your words, on what this builds.
+  # Left empty deliberately — the timeline renders correctly without it.
+  summary: null
+  bullets: []
+
+aws:
+  order: 2
+  role: Software development engineer, AWS infrastructure supply chain
+  org: Amazon Web Services
+  location: Seattle, Washington
+  start: "2025-01"
+  end: "2026-04"
+  period: Jan 2025 – Apr 2026
+  current: false
+  concurrentWith: null
+  summary: >-
+    Hardware system of record for AWS data centres and device manufacturing:
+    graph modelling in Neptune, event-driven reconciliation, and a
+    configuration-driven rules engine behind a GraphQL interface.
+  bullets:
+    - "Modelled millions of hardware components, assemblies, and bills of materials as a graph in Amazon Neptune and DynamoDB, supporting change-impact traversal across products, sites, and programs."
+    - "Held the system of record to a 24-hour consistency commitment with an event-driven reconciliation service on EventBridge, SQS, AWS Batch, and DynamoDB that detected and safely replayed dropped, duplicated, and out-of-order updates."
+    - "Built the platform end to end: a Java and Spring Boot rules engine evaluating site, region, and program policy from declarative configuration, through a GraphQL, React, and TypeScript interface. 60% gain in hardware qualification efficiency, with new categories onboarded across 100+ manufacturing sites without per-class code."
+    - "Integrated 15+ cross-region systems behind versioned REST APIs with role-based access control and per-caller rate limits."
+    - "Raised integration test coverage from 60% to 90% with Cypress, and instrumented the platform with CloudWatch, real user monitoring, CodeGuru profiling, and Lambda-based certificate monitoring."
+
+cloudhubs:
+  order: 3
+  role: Research associate II, software engineering
+  org: CloudHubs Lab, University of Arizona
+  location: Tucson, Arizona
+  start: "2024-03"
+  end: "2024-12"
+  period: Mar – Dec 2024
+  current: false
+  concurrentWith: null
+  summary: >-
+    Led the lab's graph-learning line — graph neural networks and variational
+    autoencoders over static-analysis dependency graphs — and released a
+    multi-variant benchmark suite for architecture research.
+  bullets:
+    - "Led the lab's graph-learning line: graph neural networks and variational autoencoders with fuzzy c-means clustering over large static-analysis dependency graphs, recovering latent structure automatically. Published at IEEE/ACM ASE 2024 and in Cluster Computing."
+    - "Designed and released a multi-variant benchmark suite giving controlled, reproducible subjects for architecture research."
+    - "Characterised how changes propagate across service boundaries."
+    - "Mentored 15 graduate and undergraduate students in experimental design and empirical evaluation."
+
+icpc:
+  order: 4
+  role: Full-stack developer
+  org: ICPC Foundation, University of Arizona
+  location: Tucson, Arizona
+  start: "2024-03"
+  end: "2024-12"
+  period: Mar – Dec 2024
+  current: false
+  concurrentWith: "Held alongside the CloudHubs research appointment."
+  summary: >-
+    Contest-management platform in Spring Boot, React, and PostgreSQL serving
+    more than 50,000 students a year across 50+ regions, made multi-tenant so
+    regional managers publish independently.
+  bullets:
+    - "Built contest-management workflows in Spring Boot, React, PostgreSQL, and REST covering registration, scheduling, and logistics for 50,000+ students annually across 50+ regions."
+    - "Designed a multi-tenant, configuration-driven platform letting regional managers publish events independently. 45% reduction in administrative time, $12K saved annually."
+    - "Ran static analysis with SonarQube, resolving 1,600+ defects and security issues."
+
+baylor:
+  order: 5
+  role: Graduate research and teaching assistant
+  org: Baylor University
+  location: Waco, Texas
+  start: "2022-01"
+  end: "2023-12"
+  period: Jan 2022 – Dec 2023
+  current: false
+  concurrentWith: null
+  summary: >-
+    Distributed pipelines on Amazon EMR, a controlled evaluation of four JVM
+    message queues, and an ACID transaction manager; taught software engineering
+    and C++ to 125 students across five sections.
+  bullets:
+    - "Built distributed MapReduce and PySpark pipelines on Amazon EMR over 10M+ blockchain transactions, extracting opcode and control-flow features from Solidity bytecode and training anomaly-detection models. 65% improvement in analysis efficiency."
+    - "Ran a controlled empirical evaluation of four JVM message queues (Kafka, Artemis, Pulsar, RocketMQ), measuring latency, message ordering, and delivery reliability under concurrency."
+    - "Implemented a transaction manager in Python enforcing ACID guarantees through strict two-phase locking and write-ahead logging, with crash recovery under concurrent workloads."
+    - "Taught software engineering (Java) and C++ programming: 125 students across five sections."
+
+tyson:
+  order: 6
+  role: Software engineer intern
+  org: Tyson Foods
+  location: Springdale, Arkansas
+  start: "2023-05"
+  end: "2023-08"
+  period: May – Aug 2023
+  current: false
+  concurrentWith: "A summer internship during the Baylor appointment."
+  summary: >-
+    Unreal Engine virtual-reality quality-inspection training for 200+
+    manufacturing personnel, with 3D asset generation automated from two weeks
+    to ten minutes.
+  bullets:
+    - "Delivered Unreal Engine virtual-reality quality-inspection training for 200+ manufacturing personnel, worth $233K in annual savings."
+    - "Automated 3D asset generation, cutting a two-week manual process to 10 minutes on an AWS EC2 and Perforce pipeline."
+
+samsung:
+  order: 7
+  role: Software engineer, wearable platform
+  org: Samsung Research
+  location: Dhaka, Bangladesh
+  start: "2018-07"
+  end: "2021-12"
+  period: Jul 2018 – Dec 2021
+  current: false
+  concurrentWith: null
+  summary: >-
+    FreeRTOS firmware and drivers, the Bluetooth Low Energy and GATT planes, and
+    rollback-safe over-the-air updates for wearables shipped to more than two
+    million devices.
+  bullets:
+    - "Developed FreeRTOS firmware and device drivers in C and C++ over SPI, UART, and I2C for heart-rate, stress, and sleep tracking across 90+ exercise modes. Profiled and debugged races and timing defects at the microcontroller level with JTAG and Trace32 under fixed memory and power budgets."
+    - "Designed the Bluetooth Low Energy and GATT control and data planes — service discovery, characteristics, message framing, connection stability — sustaining real-time sensor streaming on a 15 ms cadence."
+    - "Founding engineer on phone-to-wearable connectivity shipped to 2M+ devices with no known production defects. Authored the Samsung Accessory Protocol libraries in C and C++ for Android and iOS."
+    - "Built rollback-safe over-the-air update workflows with recovery paths for devices that could not be physically retrieved: 95% test coverage, 99% rollout success, zero bricked devices."
+
+divine-it:
+  order: 8
+  role: Software engineer
+  org: Divine IT Limited
+  location: Dhaka, Bangladesh
+  start: "2018-01"
+  end: "2018-06"
+  period: Jan – Jun 2018
+  current: false
+  concurrentWith: null
+  summary: >-
+    Django, DRF, and PostgreSQL enterprise resource planning modules across
+    payroll, HR, inventory, sales, and procurement for 5,000+ daily users.
+  bullets:
+    - "Built Django, DRF, and PostgreSQL ERP modules across payroll, HR, inventory, sales, and procurement for 5,000+ daily users, improving throughput by 30%."
+

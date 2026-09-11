@@ -1,0 +1,72 @@
+---
+interface Props {
+  email: string;
+}
+const { email } = Astro.props;
+---
+
+<span class="copy">
+  <a href={`mailto:${email}`}>{email}</a>
+  <button type="button" class="copy__btn" data-copy={email}>
+    <span class="copy__label">Copy address</span>
+  </button>
+  <span class="copy__said mono" role="status" aria-live="polite"></span>
+</span>
+
+<style>
+  .copy {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+
+  .copy__btn {
+    font: inherit;
+    font-size: var(--t-meta);
+    color: var(--graphite);
+    background: none;
+    border: 0;
+    border-bottom: 1px solid var(--hairline);
+    padding: 0 0 1px;
+    cursor: pointer;
+  }
+
+  .copy__btn:hover {
+    color: var(--ink);
+    border-bottom-color: var(--ink);
+  }
+
+  .copy__said {
+    font-size: var(--t-unit);
+    color: var(--tick);
+    opacity: 0;
+    transition: opacity 140ms linear;
+  }
+
+  .copy__said[data-shown] {
+    opacity: 1;
+  }
+</style>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('.copy__btn').forEach((btn) => {
+    const said = btn.parentElement?.querySelector<HTMLElement>('.copy__said');
+    btn.addEventListener('click', async () => {
+      const value = btn.dataset.copy ?? '';
+      try {
+        await navigator.clipboard.writeText(value);
+        if (said) {
+          said.textContent = 'copied';
+          said.setAttribute('data-shown', '');
+          window.setTimeout(() => said.removeAttribute('data-shown'), 2000);
+        }
+      } catch {
+        if (said) {
+          said.textContent = 'press ctrl+c';
+          said.setAttribute('data-shown', '');
+        }
+      }
+    });
+  });
+</script>
