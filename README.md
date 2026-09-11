@@ -60,13 +60,26 @@ tiles in the site's own typography — uniform height, monochrome, one visual
 system — in the credibility row under the hero and beside each role in the
 timeline.
 
-Official logos are a slot, not an absence: drop a single-colour SVG at
-`public/img/logos/<key>.svg` and it replaces that monogram automatically, with
-no code change. The key is the top-level key in the YAML. Monograms are the
-shipped default on purpose: AWS is not in any freely licensed icon set (Amazon
-had its marks removed from them), no university in this list is either, and a
-row mixing one real logo with seven substitutes looks scraped rather than
-designed. Only add marks you are licensed to use.
+Real marks ship for **AWS** and **Samsung**, sourced from the `devicon` and
+`simple-icons` packages and stored as single-colour SVGs painted with
+`currentColor`, so they invert with the theme instead of vanishing on the dark
+palette. The other seven institutions have no vector mark in any freely
+licensed set — no university in this list is, and neither is ICPC, Tyson, or
+Divine IT — so they render as monograms.
+
+To add one, drop an SVG at `public/img/logos/<key>.svg`, where the key is the
+top-level key in the YAML, and it replaces that monogram with no code change.
+Two things matter:
+
+- Make it **single-colour** with `fill="currentColor"`, or it will not theme.
+- Run `npm run logos` afterwards. Icon sets store marks in a square viewBox
+  regardless of shape, so a wide wordmark arrives as a thin band inside a lot
+  of empty space and gets shrunk to nothing when sized by height. That script
+  measures each SVG's real ink bounds in a browser and rewrites the viewBox to
+  fit. Samsung needed it: its glyph occupies 4.6 of 24 vertical units.
+
+Only add marks you are licensed to use. Naming a past employer factually is
+ordinary use; redistributing a logo for anything else is not.
 
 ## Latest news
 
@@ -130,6 +143,20 @@ Source** to **GitHub Actions**, and point `chy.io`'s DNS at GitHub Pages.
 For Netlify or Vercel instead: build command `npm run build`, publish
 directory `dist`, no other configuration.
 
+## The portrait
+
+`assets/portrait-source.png` is the original; `npm run portrait` rebuilds every
+derivative from it. The background is **removed** rather than replaced with a
+fixed colour, so the backdrop comes from a theme token and reads correctly in
+both themes — a baked cream rectangle glows against the dark palette. The
+studio wash behind the subject is the CSS gradient in `src/pages/index.astro`.
+
+Background removal runs locally through `@imgly/background-removal-node`, whose
+model weights ship inside the package. Use the `medium` model: `small` leaves
+sky and shingle in the mask and punches holes in a dark jacket. The committed
+`.jpg` is a flattened fallback for clients without webp alpha and bakes in the
+light-mode tint.
+
 ## Regenerating the CV PDF and the social card
 
 Both are committed to `public/` and are only rebuilt when their source changes.
@@ -139,6 +166,8 @@ They need a Chromium — `npx playwright install chromium`, or set `CHROME_PATH`
 npm run build
 npm run cv:pdf       # renders /cv through its print styles to public/cv.pdf
 npm run og           # redraws public/og.png from the design tokens
+npm run portrait     # rebuilds the hero portrait from assets/
+npm run logos        # refits logo viewBoxes after adding one
 ```
 
 The PDF is generated from the `/cv` page itself, so the two cannot drift apart.
@@ -156,7 +185,7 @@ image alt text and loading, diagram labels, the blog and its feed, the theme
 toggle and its persistence, institution marks, and the no-JavaScript
 fallback), `npm run lighthouse`.
 
-Last run: Lighthouse performance 96–100, accessibility 100, best practices 100,
+Last run: Lighthouse performance 95–100, accessibility 100, best practices 100,
 SEO 100 across all four routes; zero axe violations across five routes, two
 widths, and both themes (20 combinations); 38 of 38 behaviour checks passing.
 
@@ -186,11 +215,17 @@ rejected on measurement: `github-dark`, whose comment colour is 3.05:1, and
 `vitesse-dark`, which looks fine at 4.79:1 until you notice its colours carry
 alpha suffixes that blend down below AA.
 
+## Case conventions
+
+Position titles are Title Case, matching the résumé: "Software Development
+Engineer, AWS Infrastructure Supply Chain". Everything else — section
+headings, prose, link text — stays sentence case. Publication titles keep
+whatever capitalisation the publisher used, because they are citations.
+
 ## Still to fill in
 
 Search the content files for `PLACEHOLDER`:
 
-- LinkedIn URL in `profile.yaml`.
 - Optional `cv.drive` and `cv.latex` URLs in `profile.yaml`.
 - One link in `publications.yaml`: `segah-2023-bless` has no DOI or stable
   publisher page indexed, so it still renders "link pending".

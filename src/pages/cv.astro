@@ -87,6 +87,7 @@ const conferences = pubs.filter((x) => x.data.type === 'conference');
             <div>
               <h3 class="cv-t">{role.data.role}</h3>
               <p class="cv-sub">{role.data.org}, {role.data.location}</p>
+              {role.data.context && <p class="cv-context">{role.data.context}</p>}
               {role.data.bullets.length > 0 ? (
                 <ul class="bullets">{role.data.bullets.map((b) => <li>{b}</li>)}</ul>
               ) : (
@@ -231,6 +232,17 @@ const conferences = pubs.filter((x) => x.data.type === 'conference');
     margin-top: 0.1rem;
   }
 
+  /* One line on the system, so the bullets can be about the contribution. */
+  .cv-context {
+    margin-top: 0.3rem;
+    font-family: var(--serif);
+    font-style: italic;
+    font-size: 0.9375rem;
+    color: var(--sec);
+    max-width: 52rem;
+    text-wrap: pretty;
+  }
+
   .cv-note {
     margin-top: 0.4rem;
     font-size: 0.9375rem;
@@ -308,6 +320,11 @@ const conferences = pubs.filter((x) => x.data.type === 'conference');
     .cv-t {
       font-size: 10.5pt;
     }
+    .cv-context {
+      font-size: 9pt;
+      margin-top: 0.15rem;
+    }
+
     .cv-note,
     .bullets {
       font-size: 9.5pt;

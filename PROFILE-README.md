@@ -5,7 +5,7 @@
   as that repo's README.md. Copy the content below the line into it. It is
   kept here so the site and the profile stay in sync when the content changes.
 
-  Before publishing, fill in the one placeholder marked TODO (LinkedIn).
+  Every link in it is filled in; copy it across as-is.
 -->
 
 ---
@@ -49,5 +49,5 @@ Electronics, and Telecom.
 **Links** — [chy.io](https://chy.io) for selected work and the full
 publication list.
 [Google Scholar](https://scholar.google.com/citations?hl=en&user=Z9VUfzEAAAAJ).
-<!-- TODO: replace with the real LinkedIn URL --> LinkedIn: link pending.
+[LinkedIn](https://www.linkedin.com/in/sonnet-n).
 Email: mdshowkathossainchy@gmail.com

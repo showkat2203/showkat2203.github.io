@@ -1,26 +1,39 @@
 ---
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
+/**
+ * Purely decorative: every caller prints the institution's name as real text
+ * beside it, so the mark is hidden from assistive tech rather than repeating
+ * that name — or, worse, replacing a longer line and dropping the location.
+ */
 interface Props {
   /** Key from institutions.yaml, also the logo filename. */
   slug: string;
-  name: string;
   monogram: string;
   size?: 'sm' | 'md';
 }
 
-const { slug, name, monogram, size = 'md' } = Astro.props;
+const { slug, monogram, size = 'md' } = Astro.props;
 
-// An official SVG wins where one has been supplied; the monogram is the
-// designed fallback. Checked at build time, so there is no runtime cost.
-const logo = `/img/logos/${slug}.svg`;
-const hasLogo = existsSync(`public${logo}`);
+// A supplied logo wins; the monogram is the designed fallback. The SVG is
+// inlined rather than used through <img> so that fill="currentColor" resolves
+// against the theme — a flat brand colour would disappear in dark mode.
+const path = `public/img/logos/${slug}.svg`;
+const hasLogo = existsSync(path);
+const svg = hasLogo
+  ? readFileSync(path, 'utf8')
+      .replace(/<\?xml[^>]*\?>/g, '')
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/\s(width|height)="[^"]*"/g, '')
+      .replace(/<title>[\s\S]*?<\/title>/g, '')
+      .replace(/<svg/, '<svg aria-hidden="true" focusable="false"')
+      .trim()
+  : '';
 ---
 
-<span class:list={['mark', `mark--${size}`]} aria-hidden="true">
-  {hasLogo ? <img src={logo} alt="" width="24" height="24" /> : <span class="mark__m">{monogram}</span>}
+<span class:list={['mark', `mark--${size}`, hasLogo && 'mark--logo']} aria-hidden="true">
+  {hasLogo ? <Fragment set:html={svg} /> : monogram}
 </span>
-<span class="sr-only">{name}</span>
 
 <style>
   .mark {
@@ -41,24 +54,33 @@ const hasLogo = existsSync(`public${logo}`);
   .mark--md {
     height: 2.25rem;
     min-width: 2.25rem;
-    padding-inline: 0.4rem;
+    padding-inline: 0.45rem;
     font-size: 0.875rem;
   }
 
   .mark--sm {
     height: 1.75rem;
     min-width: 1.75rem;
-    padding-inline: 0.32rem;
+    padding-inline: 0.35rem;
     font-size: 0.75rem;
   }
 
-  .mark img {
-    height: 1.125rem;
-    width: auto;
+  /* Real marks are wordmarks, so they need width rather than a square box. */
+  .mark--logo {
+    color: var(--ink);
   }
 
-  /* A supplied logo is flattened to the accent so it joins the same system. */
-  .mark--sm img {
-    height: 0.875rem;
+  .mark :global(svg) {
+    display: block;
+    width: auto;
+    fill: currentColor;
+  }
+
+  .mark--md :global(svg) {
+    height: 1.05rem;
+  }
+
+  .mark--sm :global(svg) {
+    height: 0.8rem;
   }
 </style>

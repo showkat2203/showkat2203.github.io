@@ -7,7 +7,7 @@
 stealth:
   order: 1
   institution: stealth
-  role: Founder and engineer
+  role: Founder and Engineer
   org: Stealth AI startup
   location: Seattle, Washington
   start: "2026-05"
@@ -25,7 +25,7 @@ stealth:
 aws:
   order: 2
   institution: aws
-  role: Software development engineer, AWS infrastructure supply chain
+  role: Software Development Engineer, AWS Infrastructure Supply Chain
   org: Amazon Web Services
   location: Seattle, Washington
   start: "2025-01"
@@ -33,21 +33,26 @@ aws:
   period: Jan 2025 – Apr 2026
   current: false
   concurrentWith: null
+  context: >-
+    Product lifecycle management system governing hardware parts and engineering
+    changes across AWS data centres and device manufacturing.
   summary: >-
     Hardware system of record for AWS data centres and device manufacturing:
     graph modelling in Neptune, event-driven reconciliation, and a
     configuration-driven rules engine behind a GraphQL interface.
   bullets:
     - "Modelled millions of hardware components, assemblies, and bills of materials as a graph in Amazon Neptune and DynamoDB, supporting change-impact traversal across products, sites, and programs."
-    - "Held the system of record to a 24-hour consistency commitment with an event-driven reconciliation service on EventBridge, SQS, AWS Batch, and DynamoDB that detected and safely replayed dropped, duplicated, and out-of-order updates."
+    - "Held the hardware system of record to a 24-hour data-freshness SLA with an event-driven reconciliation service on EventBridge, SQS, AWS Batch, and DynamoDB that detected and safely replayed dropped, duplicated, and out-of-order updates."
     - "Built the platform end to end: a Java and Spring Boot rules engine evaluating site, region, and program policy from declarative configuration, through a GraphQL, React, and TypeScript interface. 60% gain in hardware qualification efficiency, with new categories onboarded across 100+ manufacturing sites without per-class code."
-    - "Integrated 15+ cross-region systems behind versioned REST APIs with role-based access control and per-caller rate limits."
-    - "Raised integration test coverage from 60% to 90% with Cypress, and instrumented the platform with CloudWatch, real user monitoring, CodeGuru profiling, and Lambda-based certificate monitoring."
+    - "Integrated 15+ cross-region systems against a single source of product data behind versioned Spring Boot REST APIs and events, with role-based access control, fine-grained access control, and per-caller rate limits."
+    - "Raised integration test coverage from 60% to 90% with Cypress, and instrumented the platform with CloudWatch, real user monitoring, CodeGuru profiling, and Lambda-based TLS certificate monitoring."
+    - "Made attributes, classification, and lifecycle rules data-driven, so new hardware categories onboarded across 100+ manufacturing sites with no engineering work and no custom code per product class."
+    - "Established team-wide AI-assisted development workflows using Claude Code and Amazon Q."
 
 cloudhubs:
   order: 3
   institution: arizona
-  role: Research associate II, software engineering
+  role: Research Associate II, Software Engineering
   org: CloudHubs Lab, University of Arizona
   location: Tucson, Arizona
   start: "2024-03"
@@ -68,7 +73,7 @@ cloudhubs:
 icpc:
   order: 4
   institution: icpc
-  role: Full-stack developer
+  role: Full-Stack Developer, International Collegiate Programming Contest
   org: ICPC Foundation, University of Arizona
   location: Tucson, Arizona
   start: "2024-03"
@@ -76,6 +81,8 @@ icpc:
   period: Mar – Dec 2024
   current: false
   concurrentWith: "Held alongside the CloudHubs research appointment."
+  context: >-
+    Contest platform for the world’s largest collegiate programming competition.
   summary: >-
     Contest-management platform in Spring Boot, React, and PostgreSQL serving
     more than 50,000 students a year across 50+ regions, made multi-tenant so
@@ -84,11 +91,12 @@ icpc:
     - "Built contest-management workflows in Spring Boot, React, PostgreSQL, and REST covering registration, scheduling, and logistics for 50,000+ students annually across 50+ regions."
     - "Designed a multi-tenant, configuration-driven platform letting regional managers publish events independently. 45% reduction in administrative time, $12K saved annually."
     - "Ran static analysis with SonarQube, resolving 1,600+ defects and security issues."
+    - "Covered team registration, contest scheduling, hotel logistics, and event administration, replacing the one-off websites each region had been maintaining."
 
 baylor:
   order: 5
   institution: baylor
-  role: Graduate research and teaching assistant
+  role: Graduate Research and Teaching Assistant, Computer Science
   org: Baylor University
   location: Waco, Texas
   start: "2022-01"
@@ -109,7 +117,7 @@ baylor:
 tyson:
   order: 6
   institution: tyson
-  role: Software engineer intern
+  role: Software Engineer, Summer Intern
   org: Tyson Foods
   location: Springdale, Arkansas
   start: "2023-05"
@@ -128,7 +136,7 @@ tyson:
 samsung:
   order: 7
   institution: samsung
-  role: Software engineer, wearable platform
+  role: Software Engineer, Wearable Platform
   org: Samsung Research
   location: Dhaka, Bangladesh
   start: "2018-07"
@@ -136,6 +144,9 @@ samsung:
   period: Jul 2018 – Dec 2021
   current: false
   concurrentWith: null
+  context: >-
+    Wearable connectivity and firmware for Galaxy Watches, fitness bands, Samsung
+    Health, and the Smart Ring program.
   summary: >-
     FreeRTOS firmware and drivers, the Bluetooth Low Energy and GATT planes, and
     rollback-safe over-the-air updates for wearables shipped to more than two
@@ -145,11 +156,12 @@ samsung:
     - "Designed the Bluetooth Low Energy and GATT control and data planes — service discovery, characteristics, message framing, connection stability — sustaining real-time sensor streaming on a 15 ms cadence."
     - "Founding engineer on phone-to-wearable connectivity shipped to 2M+ devices with no known production defects. Authored the Samsung Accessory Protocol libraries in C and C++ for Android and iOS."
     - "Built rollback-safe over-the-air update workflows with recovery paths for devices that could not be physically retrieved: 95% test coverage, 99% rollout success, zero bricked devices."
+    - "Defined the latency and throughput targets the connectivity stack was held to, and worked against a Linux toolchain with emWin on the display side."
 
 divine-it:
   order: 8
   institution: divine-it
-  role: Software engineer
+  role: Software Engineer
   org: Divine IT Limited
   location: Dhaka, Bangladesh
   start: "2018-01"

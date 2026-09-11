@@ -186,12 +186,16 @@ for (const width of [320, 360, 414, 768]) {
   await page.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
   const marks = await page.locator('.mark').count();
   check('institution marks render', marks >= 12, `${marks} marks`);
-  const namedMarks = await page.evaluate(() =>
+  // The mark is decorative; the institution's name must be real text beside it.
+  const marksDecorative = await page.evaluate(() =>
     Array.from(document.querySelectorAll('.mark')).every(
-      (m) => m.nextElementSibling?.classList.contains('sr-only') && (m.nextElementSibling.textContent ?? '').length > 2,
+      (m) =>
+        m.getAttribute('aria-hidden') === 'true' &&
+        (m.nextElementSibling?.textContent ?? '').trim().length > 2 &&
+        m.nextElementSibling?.getAttribute('aria-hidden') === null,
     ),
   );
-  check('each mark has an accessible name beside it', namedMarks);
+  check('marks are decorative with the name as real text', marksDecorative);
   const newsRows = await page.locator('.news__row').count();
   check('news section lists entries', newsRows > 0, `${newsRows} entries`);
   await page.close();

@@ -28,8 +28,9 @@ const html = `<!doctype html><html><head><meta charset="utf-8"><style>
   .fig b{font-family:'SS',serif;font-size:30px;font-weight:600;color:#1b3a6b;display:block;line-height:1}
   .fig span{font-size:13.5px;color:#565c64}
   .photo{position:relative}
-  .photo img{width:100%;border-radius:3px;filter:saturate(.94)}
-  .photo::after{content:'';position:absolute;inset:14px -14px -14px 14px;border:1px solid #1b3a6b;border-radius:3px;z-index:-1}
+  .photo{background:radial-gradient(118% 88% at 50% 8%, #f7f4ee 0%, #f2efe9 62%, #e8e4dc 100%);
+         border:1px solid #e3e0da;border-radius:3px;overflow:hidden}
+  .photo img{width:100%;display:block}
 </style></head><body>
   <div>
     <p class="kick">${p.name} &mdash; ${p.role}, ${p.locationShort}</p>

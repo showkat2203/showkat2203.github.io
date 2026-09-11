@@ -68,6 +68,8 @@ const experience = defineCollection({
     concurrentWith: z.string().nullable().default(null),
     /** Key from institutions.yaml, for the timeline's monogram. */
     institution: z.string(),
+    /** One line on the system itself, so bullets can be about the work. */
+    context: z.string().nullable().default(null),
     summary: z.string().nullable(),
     /** Detailed bullets, used on /cv only. */
     bullets: z.array(z.string()).default([]),

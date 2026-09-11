@@ -1,37 +1,43 @@
 # Technical range, written as prose rather than a tag cloud: no ratings, no
-# bars, no logo grid.
+# bars, no logo grid. Order matches the site's emphasis — distributed systems
+# and machine learning first.
 languages:
   order: 1
   heading: Languages
   items: C, C++, Java, Python, TypeScript, JavaScript, SQL, Bash
 
-embedded:
-  order: 4
-  heading: Embedded and low-level
-  items: >-
-    FreeRTOS, device drivers over SPI, UART, and I2C, Bluetooth Low Energy and
-    GATT, JTAG and Trace32 profiling, memory- and power-constrained
-    optimisation, rollback-safe over-the-air updates
-
 distributed:
   order: 2
   heading: Distributed and cloud
   items: >-
-    Event-driven architecture, MapReduce, PySpark, Amazon EMR, Kafka, Pulsar,
-    Artemis, RocketMQ, DynamoDB, Amazon Neptune, PostgreSQL, Redis, Docker,
-    Kubernetes, and AWS (Lambda, EventBridge, SQS, SNS, Batch, EC2, S3, IAM,
-    CloudFormation, CDK)
+    Event-driven architecture, microservices, data modelling, MapReduce,
+    PySpark, Amazon EMR, Kafka, Pulsar, Artemis, RocketMQ, DynamoDB, Amazon
+    Neptune, PostgreSQL, MySQL, Redis, Docker, Kubernetes, and AWS (Lambda,
+    EventBridge, SQS, SNS, Batch, EC2, S3, IAM, API Gateway, CloudFormation,
+    CDK)
 
 ml:
   order: 3
   heading: Machine learning
   items: >-
     Graph neural networks, variational autoencoders, representation learning
-    over graphs, clustering, anomaly detection, PyTorch, TensorFlow
+    over graphs, clustering, anomaly detection, feature engineering, PyTorch,
+    TensorFlow
+
+embedded:
+  order: 4
+  heading: Embedded and firmware
+  items: >-
+    FreeRTOS, microcontroller firmware, device drivers over SPI, UART, and I2C,
+    Bluetooth Low Energy and GATT, rollback-safe over-the-air updates, JTAG and
+    Trace32 profiling, emWin, memory debugging, low-power systems, wireless
+    protocol design
 
 practice:
   order: 5
   heading: Engineering practice
   items: >-
     JUnit, Cypress, integration and regression testing, coverage analysis,
-    CI/CD, SonarQube, static analysis, Spring Boot, GraphQL, REST, Git, Perforce
+    test-driven development, CI/CD, SonarQube, static analysis, Spring Boot,
+    GraphQL, REST, observability with CloudWatch, Grafana, and CodeGuru, Git,
+    Perforce

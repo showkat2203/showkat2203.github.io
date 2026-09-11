@@ -14,7 +14,9 @@
     "audit": "npm run check && npm run build && npm run a11y && npm run verify && npm run lighthouse",
     "cv:pdf": "node scripts/cv-pdf.mjs",
     "og": "node scripts/og-image.mjs",
-    "shots": "node scripts/shots.mjs"
+    "shots": "node scripts/shots.mjs",
+    "logos": "node scripts/fit-logos.mjs",
+    "portrait": "node scripts/portrait.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.19",
@@ -27,6 +29,7 @@
     "@fontsource-variable/inter-tight": "^5.3.0",
     "@fontsource-variable/source-serif-4": "^5.3.0",
     "@fontsource/dm-mono": "^5.3.0",
+    "@imgly/background-removal-node": "^1.4.5",
     "axe-core": "^4.13.0",
     "lighthouse": "^13.4.1",
     "playwright": "^1.63.0",
