@@ -46,6 +46,7 @@ const news = (await getCollection('news'))
       <h1 class="hero__h1">{p.headline}</h1>
       <p class="lede hero__lede">{p.positioning}</p>
       <div class="hero__cta">
+        {p.links.linkedin.url && <a class="btn btn--ghost" href={p.links.linkedin.url}>LinkedIn</a>}
         <a class="btn btn--primary" href={p.cv.hosted} download>Download CV</a>
         {p.links.scholar.url && <a class="btn btn--ghost" href={p.links.scholar.url}>Google Scholar</a>}
         <a class="btn btn--ghost" href={p.links.github.url!}>GitHub</a>
