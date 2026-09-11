@@ -24,9 +24,6 @@ const html = `<!doctype html><html><head><meta charset="utf-8"><style>
   .rule{height:1px;background:#e3e0da;margin:30px 0 22px}
   .orgs{font-family:'SS',serif;font-size:19px;font-weight:600;color:#15181c}
   .orgs i{font-family:'SSI',serif;font-weight:400;font-style:italic;font-size:15px;color:#565c64;margin-right:12px}
-  .figs{display:flex;gap:34px;margin-top:22px}
-  .fig b{font-family:'SS',serif;font-size:30px;font-weight:600;color:#1b3a6b;display:block;line-height:1}
-  .fig span{font-size:13.5px;color:#565c64}
   .photo{position:relative}
   .photo{border:1px solid #e3e0da;border-radius:3px;overflow:hidden}
   .photo img{width:100%;display:block}
@@ -36,12 +33,6 @@ const html = `<!doctype html><html><head><meta charset="utf-8"><style>
     <h1>${p.headline}</h1>
     <div class="rule"></div>
     <p class="orgs"><i>Built systems at</i> Amazon Web Services, Samsung Research, Baylor</p>
-    <div class="figs">
-      <div class="fig"><b>${p.record.publications}</b><span>peer-reviewed papers</span></div>
-      <div class="fig"><b>${p.record.citations}</b><span>citations</span></div>
-      <div class="fig"><b>${p.record.hIndex}</b><span>h-index</span></div>
-      <div class="fig"><b>2M+</b><span>devices shipped</span></div>
-    </div>
   </div>
   <figure class="photo"><img src="http://localhost:4321/img/portrait-800.webp" alt=""></figure>
 </body></html>`;

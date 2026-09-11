@@ -36,12 +36,6 @@ const news = (await getCollection('news'))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())
   .slice(0, 4);
 
-const figures = [
-  { v: String(p.record.publications), l: 'peer-reviewed papers' },
-  { v: String(p.record.citations), l: 'citations' },
-  { v: String(p.record.hIndex), l: 'h-index' },
-  { v: '2M+', l: 'devices shipped' },
-];
 ---
 
 <Base title={`${p.name} — ${p.role}`} current="home">
@@ -78,17 +72,6 @@ const figures = [
         ))
       }
     </ul>
-  </section>
-
-  <section class="shell figures" aria-label="Research record">
-    {
-      figures.map((f) => (
-        <div class="figure">
-          <span class="figure__v">{f.v}</span>
-          <span class="figure__l">{f.l}</span>
-        </div>
-      ))
-    }
   </section>
 
   <!-- latest ----------------------------------------------------------- -->
@@ -382,30 +365,6 @@ const figures = [
     text-wrap: pretty;
   }
 
-  .figures {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 1.25rem;
-    margin-top: 2.25rem;
-  }
-
-  .figure__v {
-    display: block;
-    font-family: var(--serif);
-    font-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.25rem);
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .figure__l {
-    display: block;
-    font-size: var(--t-meta);
-    color: var(--sec);
-    margin-top: 0.3rem;
-  }
-
   .areas {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -553,10 +512,6 @@ const figures = [
     }
     .areas {
       grid-template-columns: minmax(0, 1fr);
-    }
-    .figures {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 1.5rem 1rem;
     }
     .tl__row,
     .news__row {
