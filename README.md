@@ -145,17 +145,13 @@ directory `dist`, no other configuration.
 
 ## The portrait
 
-`assets/portrait-source.png` is the original; `npm run portrait` rebuilds every
-derivative from it. The background is **removed** rather than replaced with a
-fixed colour, so the backdrop comes from a theme token and reads correctly in
-both themes — a baked cream rectangle glows against the dark palette. The
-studio wash behind the subject is the CSS gradient in `src/pages/index.astro`.
+`assets/portrait-source.png` is the original; `npm run portrait` crops it square
+on the subject and writes the three webp sizes the hero's `srcset` asks for,
+plus a jpeg for the few clients without webp.
 
-Background removal runs locally through `@imgly/background-removal-node`, whose
-model weights ship inside the package. Use the `medium` model: `small` leaves
-sky and shingle in the mask and punches holes in a dark jacket. The committed
-`.jpg` is a flattened fallback for clients without webp alpha and bakes in the
-light-mode tint.
+The photograph is used as shot. Its own background serves both themes, so
+nothing about the image is theme-dependent and the hero frame is just a
+hairline border and a clip.
 
 ## Regenerating the CV PDF and the social card
 

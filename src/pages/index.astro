@@ -301,16 +301,9 @@ const figures = [
     position: relative;
   }
 
-  /* The portrait is cut out, so the backdrop is ours to set: a soft studio
-     wash from a theme token, which stays right in both themes where a baked
-     cream rectangle would glow against the dark palette. */
+  /* The photograph carries its own background, so the frame is just a hairline
+     and a clip — the same image serves both themes. */
   .hero__photo {
-    background: radial-gradient(
-      118% 88% at 50% 8%,
-      color-mix(in srgb, var(--tint) 55%, var(--card)) 0%,
-      var(--tint) 62%,
-      color-mix(in srgb, var(--tint) 82%, var(--ink)) 100%
-    );
     border: 1px solid var(--rule);
     border-radius: var(--r);
     overflow: hidden;

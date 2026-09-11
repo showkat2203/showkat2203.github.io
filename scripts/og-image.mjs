@@ -28,8 +28,7 @@ const html = `<!doctype html><html><head><meta charset="utf-8"><style>
   .fig b{font-family:'SS',serif;font-size:30px;font-weight:600;color:#1b3a6b;display:block;line-height:1}
   .fig span{font-size:13.5px;color:#565c64}
   .photo{position:relative}
-  .photo{background:radial-gradient(118% 88% at 50% 8%, #f7f4ee 0%, #f2efe9 62%, #e8e4dc 100%);
-         border:1px solid #e3e0da;border-radius:3px;overflow:hidden}
+  .photo{border:1px solid #e3e0da;border-radius:3px;overflow:hidden}
   .photo img{width:100%;display:block}
 </style></head><body>
   <div>
