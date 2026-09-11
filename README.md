@@ -95,6 +95,30 @@ are drawn for; a dark wordmark would otherwise vanish on the dark palette.
 Colours are kept as published. Institutions with no logo file render a monogram
 in the site's own typography instead, so the row stays complete either way.
 
+### How logos are sized
+
+Every tile in the credibility row has the same footprint, and each mark is
+scaled inside it by **optical area rather than by height**. Matching heights is
+the obvious approach and the wrong one: at equal height a 6:1 wordmark carries
+several times the visual weight of a square crest, which is what makes untuned
+logo rows look ragged.
+
+The scale comes from the fitted viewBox, so it is computed from the artwork and
+needs no per-logo tuning — drop a file in and it lands at the right weight. The
+exponent softens full area normalisation, which would shrink a wide wordmark
+past readability, and a floor and a width cap keep every mark legible and
+inside its box. Roughly what that yields:
+
+| Aspect | Height | Width |
+| --- | --- | --- |
+| 1:1 | 18px | 18px |
+| 2.5:1 | 12.5px | 31px |
+| 4:1 | 10.3px | 41px |
+| 6.5:1 | 10px | 65px |
+
+The row itself is a grid rather than a wrapping flex line, so with uniform
+tiles the columns align instead of leaving a ragged last row.
+
 ### Why the SVGs are sanitised
 
 These files come from outside the repo and are inlined into the page, so

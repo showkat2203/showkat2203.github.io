@@ -23,16 +23,46 @@ const { slug, monogram, size = 'md' } = Astro.props;
 const path = `public/img/logos/${slug}.svg`;
 const hasLogo = existsSync(path);
 let svg = '';
+let markHeight = 0;
+
 if (hasLogo) {
   try {
     svg = sanitiseSvg(readFileSync(path, 'utf8'));
   } catch (err) {
     throw new Error(`public/img/logos/${slug}.svg is not usable as an inline SVG: ${err}`);
   }
+
+  // The viewBox is fitted to the mark's ink bounds by `npm run logos`, so it is
+  // the true aspect ratio of the artwork.
+  const box = svg.match(/viewBox="([^"]+)"/);
+  const [, , boxW, boxH] = box ? box[1].trim().split(/[\s,]+/).map(Number) : [];
+  const aspect = boxW && boxH ? boxW / boxH : 1;
+
+  /**
+   * Logos are sized by optical area, not by height.
+   *
+   * Matching heights makes a wide wordmark enormously heavier than a square
+   * crest, which is why untuned logo rows look ragged. Scaling so that area is
+   * roughly constant equalises the weight; the 0.4 exponent softens full area
+   * normalisation, which would shrink a 6:1 wordmark past readability. The
+   * floor and the width cap then keep every mark legible and inside its box.
+   */
+  const s = size === 'md' ? 1 : 0.76;
+  const REF = 18 * s;
+  const MIN = 10 * s;
+  const MAX = 20 * s;
+  const MAX_W = (size === 'md' ? 68 : 58) * 1;
+
+  markHeight = Math.min(Math.max(REF / aspect ** 0.4, MIN), MAX);
+  if (markHeight * aspect > MAX_W) markHeight = MAX_W / aspect;
 }
 ---
 
-<span class:list={['mark', `mark--${size}`, hasLogo && 'mark--logo']} aria-hidden="true">
+<span
+  class:list={['mark', `mark--${size}`, hasLogo && 'mark--logo']}
+  aria-hidden="true"
+  style={markHeight ? `--mark-h:${markHeight.toFixed(2)}px` : undefined}
+>
   {hasLogo ? <Fragment set:html={svg} /> : monogram}
 </span>
 
@@ -67,29 +97,26 @@ if (hasLogo) {
     font-size: 0.75rem;
   }
 
-  /* Brand marks are drawn for a light ground, and most of these carry their own
-     colours. A white tile in both themes keeps them correct instead of turning
-     a dark wordmark invisible on the dark palette. */
+  /* Brand marks are drawn for a light ground, and most carry their own colours.
+     A white tile in both themes keeps them correct instead of turning a dark
+     wordmark invisible on the dark palette. */
   .mark--logo {
     background: #fff;
     border-color: color-mix(in srgb, var(--rule) 70%, #8a8a8a);
     color: #15181c;
   }
 
+  /* One tile footprint across the credibility row, whatever shape the artwork
+     is, so the row reads as a set rather than a ragged line. */
+  .mark--logo.mark--md {
+    width: 5rem;
+    padding-inline: 0.35rem;
+  }
+
   .mark :global(svg) {
     display: block;
     width: auto;
-  }
-
-  /* Wordmarks vary wildly in aspect; cap the width so one wide mark cannot
-     stretch the row. */
-  .mark--md :global(svg) {
-    height: 1.05rem;
-    max-width: 6.5rem;
-  }
-
-  .mark--sm :global(svg) {
-    height: 0.8rem;
-    max-width: 5rem;
+    height: var(--mark-h, 1rem);
+    max-width: 100%;
   }
 </style>
