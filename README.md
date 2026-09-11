@@ -23,7 +23,9 @@ if a required field is missing or misspelled.
 To add a publication, copy any block in `publications.yaml`. Set
 `headlineOrder` to 1–5 to surface it on the home page, or `null` to leave it on
 `/publications` only. Fill `doi` or `url` and the entry links itself; while both
-are `null` it renders a visible "link pending" note rather than a dead link.
+are `null` it renders a visible "link pending" note rather than a dead link. The
+link text names the publisher, derived from the DOI's registrant prefix in
+`src/components/Citation.astro` — add a prefix there if a new one appears.
 
 Author names print exactly as written. Any name matching
 `profile.selfAliases` is bolded automatically.
@@ -91,9 +93,15 @@ passing.
 
 Search the content files for `PLACEHOLDER`:
 
-- Google Scholar and LinkedIn URLs in `profile.yaml`.
-- DOIs or publisher links in `publications.yaml` (all twelve are `null`).
-- A one-line description of the current role in `experience.yaml`.
+- LinkedIn URL in `profile.yaml`.
+- One link in `publications.yaml`: `segah-2023-bless` has no DOI or stable
+  publisher page indexed, so it still renders "link pending".
+
+Four entries in `publications.yaml` carry a `VERIFY` comment where the
+publisher's record disagrees with the CV the content came from — the venue on
+the ASE paper, the published title on the Cluster Computing paper, the author
+list on the JSS paper, and the year and pages on the CCIS chapter. The CV's
+wording was kept in each case; the DOIs resolve regardless.
 
 `PROFILE-README.md` in this repo is the rewritten GitHub profile README; it
 belongs in the `showkat2203/showkat2203` repository, not this one.

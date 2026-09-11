@@ -3,14 +3,16 @@
 #   headlineOrder: 1-5 puts it in the five shown on the home page, in that
 #                  order. Omit or set null to leave it on /publications only.
 #   type:          conference | journal  (drives the filter on /publications)
-#   doi / url:     PLACEHOLDER — every entry is currently null, which renders
-#                  as a visible "link pending" note rather than a dead link.
-#                  Fill either field and the entry links itself.
+#   doi / url:     Either one makes the entry link itself; a DOI is preferred.
+#                  Both null renders a visible "link pending" note rather than
+#                  a dead link.
 #
 # Author names are printed exactly as written here. Any name matching
 # profile.selfAliases is bolded automatically.
 
 jss-2025-dependencies:
+  # VERIFY: the publisher's record lists more authors than the CV did
+  #         (adding Goodrich, Hurtado, Hassan, Cai, Kazman). CV list kept.
   headlineOrder: 3
   type: journal
   year: 2025
@@ -27,10 +29,12 @@ jss-2025-dependencies:
   venue: Journal of Systems and Software
   venueShort: JSS
   details: volume 222, article 112334
-  doi: null
+  doi: 10.1016/j.jss.2025.112334
   url: null
 
 ase-2024-fuzzy-cmeans:
+  # VERIFY: the ACM Digital Library files this under the 39th ASE
+  #         *Workshops* proceedings, not the main track. CV wording kept.
   headlineOrder: 1
   type: conference
   year: 2024
@@ -46,10 +50,12 @@ ase-2024-fuzzy-cmeans:
   venue: 39th IEEE/ACM International Conference on Automated Software Engineering
   venueShort: IEEE/ACM ASE
   details: null
-  doi: null
+  doi: 10.1145/3691621.3694933
   url: null
 
 cluster-2024-micro2micro:
+  # VERIFY: published title is shorter — "Benchmarking Micro2Micro
+  #         transformation: an approach with GNN and VAE". CV title kept.
   headlineOrder: 2
   type: journal
   year: 2024
@@ -64,7 +70,7 @@ cluster-2024-micro2micro:
   venue: Cluster Computing
   venueShort: Cluster Computing
   details: volume 27, number 4, pages 4171–4185
-  doi: null
+  doi: 10.1007/s10586-024-04526-z
   url: null
 
 ecsa-2024-benchmark:
@@ -84,7 +90,7 @@ ecsa-2024-benchmark:
   venue: European Conference on Software Architecture
   venueShort: ECSA
   details: pages 21–29
-  doi: null
+  doi: 10.1007/978-3-031-71246-3_3
   url: null
 
 closer-2024-propagation:
@@ -101,11 +107,13 @@ closer-2024-propagation:
     - J. Bogner
   venue: 14th International Conference on Cloud Computing and Services Science
   venueShort: CLOSER
-  details: null
-  doi: null
+  details: volume 1, pages 277–286
+  doi: 10.5220/0012725200003711
   url: null
 
 ccis-2024-dependencies:
+  # VERIFY: the Springer chapter DOI resolves, but its volume looks later
+  #         than the 2024 and pages 29-52 recorded in the CV. CV values kept.
   headlineOrder: null
   type: conference
   year: 2024
@@ -121,7 +129,7 @@ ccis-2024-dependencies:
   venue: Cloud Computing and Services Science, Springer CCIS
   venueShort: Springer CCIS
   details: pages 29–52
-  doi: null
+  doi: 10.1007/978-3-032-17286-0_2
   url: null
 
 electronics-2023-queues:
@@ -139,7 +147,7 @@ electronics-2023-queues:
   venue: Electronics
   venueShort: Electronics
   details: volume 12, article 4792
-  doi: null
+  doi: 10.3390/electronics12234792
   url: null
 
 telecom-2023-benchmarking:
@@ -155,7 +163,7 @@ telecom-2023-benchmarking:
   venue: Telecom
   venueShort: Telecom
   details: volume 4, number 2, pages 298–312
-  doi: null
+  doi: 10.3390/telecom4020018
   url: null
 
 ecsa-2023-microprospect:
@@ -177,7 +185,7 @@ ecsa-2023-microprospect:
   venue: European Conference on Software Architecture
   venueShort: ECSA
   details: pages 309–325
-  doi: null
+  doi: 10.1007/978-3-031-66326-0_19
   url: null
 
 segah-2023-design-patterns:
@@ -193,7 +201,7 @@ segah-2023-design-patterns:
   venueShort: IEEE SeGAH
   details: Athens, Greece, pages 1–8
   doi: null
-  url: null
+  url: https://ieeexplore.ieee.org/document/10253758/
 
 segah-2023-bless:
   headlineOrder: null
@@ -228,4 +236,4 @@ icsec-2023-chromatin:
   venueShort: ICSEC
   details: Thailand, pages 53–59
   doi: null
-  url: null
+  url: https://ieeexplore.ieee.org/document/10329650/

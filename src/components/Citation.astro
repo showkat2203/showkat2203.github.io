@@ -12,10 +12,33 @@ const { pub, selfAliases, level = 'h3' } = Astro.props;
 const Heading = level;
 
 const href = pub.doi ? `https://doi.org/${pub.doi}` : pub.url;
+
+// Link text has to say where the link goes, and every DOI resolving through
+// doi.org would otherwise read "doi.org" twelve times over. A DOI's registrant
+// prefix identifies the publisher, so name that instead.
+const REGISTRANTS: Record<string, string> = {
+  '10.1016': 'ScienceDirect',
+  '10.1145': 'the ACM Digital Library',
+  '10.1007': 'SpringerLink',
+  '10.3390': 'MDPI',
+  '10.5220': 'SciTePress',
+  '10.1109': 'IEEE Xplore',
+};
+
 let linkLabel = '';
-if (href) {
+if (pub.doi) {
+  const publisher = REGISTRANTS[pub.doi.split('/')[0]];
+  linkLabel = publisher ? `Read on ${publisher}` : `Resolve the DOI ${pub.doi}`;
+} else if (href) {
+  const HOSTS: Record<string, string> = {
+    'ieeexplore.ieee.org': 'IEEE Xplore',
+    'dl.acm.org': 'the ACM Digital Library',
+    'link.springer.com': 'SpringerLink',
+    'arxiv.org': 'arXiv',
+  };
   try {
-    linkLabel = `Read on ${new URL(href).hostname.replace(/^www\./, '')}`;
+    const host = new URL(href).hostname.replace(/^www\./, '');
+    linkLabel = `Read on ${HOSTS[host] ?? host}`;
   } catch {
     linkLabel = 'Read the paper';
   }
@@ -40,9 +63,8 @@ if (href) {
   {
     href ? (
       <p class="cite__link">
-        <a href={href} rel="noopener">
-          {linkLabel}
-        </a>
+        <a href={href} rel="noopener">{linkLabel}</a>
+        {pub.doi && <span class="cite__doi mono">doi {pub.doi}</span>}
       </p>
     ) : (
       <p class="cite__pending mono">link pending</p>
@@ -105,9 +127,22 @@ if (href) {
       font-size: 8.5pt;
     }
 
-    .cite__link,
+    /* On paper the DOI is the useful half; the "read on" link is not
+       clickable, so keep the identifier and drop the invitation. */
     .cite__pending {
       display: none;
+    }
+
+    .cite__link a {
+      display: none;
+    }
+
+    .cite__link {
+      margin-top: 0.1rem;
+    }
+
+    .cite__doi {
+      font-size: 8pt;
     }
   }
 
@@ -115,6 +150,18 @@ if (href) {
   .cite__pending {
     margin-top: 0.5rem;
     font-size: var(--t-meta);
+  }
+
+  .cite__link {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 1rem;
+    align-items: baseline;
+  }
+
+  .cite__doi {
+    font-size: var(--t-unit);
+    color: var(--tick);
   }
 
   .cite__pending {

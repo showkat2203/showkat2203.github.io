@@ -14,10 +14,12 @@ stealth:
   period: May 2026 – present
   current: true
   concurrentWith: null
-  # PLACEHOLDER: one sentence, in your words, on what this builds.
-  # Left empty deliberately — the timeline renders correctly without it.
-  summary: null
-  bullets: []
+  summary: >-
+    An agentic AI platform that monitors municipal records, council agendas,
+    zoning dockets, and permit filings across U.S. cities, converting them into
+    early business signals for commercial real estate and multi-site operators.
+  bullets:
+    - "Building an agentic AI platform that monitors municipal records, council agendas, zoning dockets, and permit filings across U.S. cities, and converts them into early business signals for commercial real estate and multi-site operators."
 
 aws:
   order: 2

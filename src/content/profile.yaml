@@ -26,12 +26,11 @@ main:
     github:
       label: github.com/showkat2203
       url: https://github.com/showkat2203
-    # PLACEHOLDER: replace url with the real Google Scholar profile URL.
-    # While url is null the site renders the label with a "link pending" note
-    # instead of a dead link.
+    # A null url renders the label with a visible "link pending" note rather
+    # than a dead link.
     scholar:
       label: Google Scholar profile
-      url: null
+      url: "https://scholar.google.com/citations?hl=en&user=Z9VUfzEAAAAJ"
     # PLACEHOLDER: replace url with the real LinkedIn profile URL.
     linkedin:
       label: LinkedIn profile
