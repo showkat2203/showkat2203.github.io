@@ -102,6 +102,8 @@ const cv = defineCollection({
       .array(
         z.object({
           institution: z.string(),
+          /** Key from institutions.yaml, for the logo. */
+          institutionKey: z.string().nullable().default(null),
           qualification: z.string(),
           location: z.string(),
           period: z.string(),
@@ -130,8 +132,12 @@ const institutions = defineCollection({
     monogram: z.string().min(1).max(4),
     /** Shown in the credibility row under the hero. */
     featured: z.boolean(),
-    /** Where the logo SVG came from; used by `npm run logos:fetch`. */
+    /** Where the logo SVG came from. Used by `npm run logos:fetch`, and as a
+     *  live fallback when no file has been downloaded yet. */
     logoSource: z.string().url().nullable().default(null),
+    /** Optional nudge for a remote logo's size, which cannot be measured at
+     *  build time the way a local file's viewBox can. 1 leaves it alone. */
+    logoScale: z.number().min(0.4).max(1.6).default(1),
   }),
 });
 

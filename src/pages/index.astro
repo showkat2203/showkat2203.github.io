@@ -67,7 +67,12 @@ const news = (await getCollection('news'))
       {
         featured.map((i) => (
           <li>
-            <InstitutionMark slug={i.id} monogram={i.data.monogram} />
+            <InstitutionMark
+              slug={i.id}
+              monogram={i.data.monogram}
+              logoSource={i.data.logoSource}
+              logoScale={i.data.logoScale}
+            />
             <span>{i.data.name}</span>
           </li>
         ))
@@ -186,6 +191,8 @@ const news = (await getCollection('news'))
                 <InstitutionMark
                   slug={role.data.institution}
                   monogram={byKey.get(role.data.institution)?.monogram ?? '—'}
+                  logoSource={byKey.get(role.data.institution)?.logoSource ?? null}
+                  logoScale={byKey.get(role.data.institution)?.logoScale ?? 1}
                   size="sm"
                 />
                 <span>{role.data.org}, {role.data.location}</span>

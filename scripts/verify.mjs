@@ -119,15 +119,23 @@ for (const width of [320, 360, 414, 768]) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await page.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
   const imgs = await page.evaluate(() =>
-    Array.from(document.images).map((i) => ({
+    Array.from(document.images).filter((i) => !i.closest('.mark')).map((i) => ({
       alt: i.getAttribute('alt'),
       loaded: i.complete && i.naturalWidth > 0,
       dims: Boolean(i.getAttribute('width') && i.getAttribute('height')),
     })),
   );
   check('every image has an alt attribute', imgs.every((i) => i.alt !== null), JSON.stringify(imgs.map((i) => i.alt)));
-  check('every image actually loads', imgs.every((i) => i.loaded), `${imgs.filter((i) => !i.loaded).length} broken`);
-  check('portrait declares width and height', imgs.every((i) => i.dims));
+  check('every local image loads', imgs.every((i) => i.loaded), `${imgs.filter((i) => !i.loaded).length} broken`);
+  check('portrait declares width and height', imgs.every((i) => i.dims), `${imgs.length} checked`);
+
+  // Logo tiles are excluded above: their images are remote, blocked by this
+  // sandbox, and intentionally carry no width/height, since the fixed tile
+  // reserves the space so there is nothing to shift.
+  const logoImgs = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('.mark img')).map((i) => i.getAttribute('alt')),
+  );
+  check('logo images are marked decorative', logoImgs.every((a) => a === ''), `${logoImgs.length} logo images`);
 
   const svgTitled = await page.evaluate(() =>
     Array.from(document.querySelectorAll('svg.dg')).every(
@@ -219,8 +227,8 @@ for (const width of [320, 360, 414, 768]) {
 {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   await page.goto('http://localhost:4321/', { waitUntil: 'networkidle' });
-  const marks = await page.locator('.mark').count();
-  check('institution marks render', marks >= 12, `${marks} marks`);
+  const markCount = await page.locator('.mark').count();
+  check('institution marks render', markCount >= 12, `${markCount} marks`);
   // The mark is decorative; the institution's name must be real text beside it.
   const marksDecorative = await page.evaluate(() =>
     Array.from(document.querySelectorAll('.mark')).every(
@@ -231,24 +239,45 @@ for (const width of [320, 360, 414, 768]) {
     ),
   );
   check('marks are decorative with the name as real text', marksDecorative);
-  // A logo that sanitises to nothing still renders as an empty tile, so assert
-  // painted geometry rather than presence. Stripping width/height globally
-  // once blanked every rect-based mark this way.
-  const logos = await page.evaluate(() =>
+  // Two tiers to check. An inlined local SVG must have painted geometry:
+  // sanitising it down to nothing still renders as an empty tile, which is how
+  // the global width/height strip once blanked every rect-based mark. A remote
+  // mark cannot be verified here at all, since this sandbox blocks those hosts,
+  // so assert the contract instead — a resolvable src, and a monogram left in
+  // the DOM to surface if the image fails.
+  const marks = await page.evaluate(() =>
     Array.from(document.querySelectorAll('.mark--logo')).map((tile) => {
       const svg = tile.querySelector('svg');
+      const img = tile.querySelector('img');
       const box = svg?.getBBox?.();
-      const rect = svg?.getBoundingClientRect();
       return {
+        kind: svg ? 'inline' : img ? 'remote' : 'none',
         ink: box ? box.width * box.height : 0,
-        drawn: rect ? rect.width * rect.height : 0,
+        drawn: svg ? svg.getBoundingClientRect().width * svg.getBoundingClientRect().height : 0,
+        src: img?.getAttribute('src') ?? null,
+        onerror: img?.getAttribute('onerror') ?? null,
+        mono: (tile.querySelector('.mark__mono')?.textContent ?? '').trim(),
       };
     }),
   );
+
+  const inline = marks.filter((m) => m.kind === 'inline');
+  const remote = marks.filter((m) => m.kind === 'remote');
+
   check(
-    'every logo has painted geometry',
-    logos.length > 0 && logos.every((l) => l.ink > 0 && l.drawn > 16),
-    `${logos.length} logos: ${JSON.stringify(logos)}`,
+    'inlined logos have painted geometry',
+    inline.every((m) => m.ink > 0 && m.drawn > 16),
+    `${inline.length} inline`,
+  );
+  check(
+    'remote logos carry an https src and an error fallback',
+    remote.every((m) => /^https:\/\//.test(m.src ?? '') && m.onerror === 'this.remove()'),
+    `${remote.length} remote`,
+  );
+  check(
+    'every logo tile keeps a monogram to fall back to',
+    marks.length > 0 && marks.every((m) => m.mono.length > 0),
+    `${marks.length} tiles`,
   );
 
   const newsRows = await page.locator('.news__row').count();

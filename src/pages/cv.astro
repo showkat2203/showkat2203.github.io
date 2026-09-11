@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Citation from '../components/Citation.astro';
+import InstitutionMark from '../components/InstitutionMark.astro';
 import { getCollection, getEntry } from 'astro:content';
 
 const profile = await getEntry('profile', 'main');
@@ -14,6 +15,9 @@ const skills = (await getCollection('skills')).sort((a, b) => a.data.order - b.d
 const sections = (await getCollection('cv')).sort((a, b) => a.data.order - b.data.order);
 const education = sections.find((s) => s.id === 'education');
 const extras = sections.filter((s) => s.id !== 'education');
+
+const institutions = await getCollection('institutions');
+const byKey = new Map(institutions.map((i) => [i.id, i.data]));
 
 const pubs = (await getCollection('publications')).sort((a, b) => b.data.year - a.data.year);
 const journals = pubs.filter((x) => x.data.type === 'journal');
@@ -66,7 +70,18 @@ const conferences = pubs.filter((x) => x.data.type === 'conference');
             <article class="cv-entry">
               <p class="cv-when mono">{e.period}</p>
               <div>
-                <h3 class="cv-t">{e.institution}</h3>
+                <h3 class="cv-t">
+                  {e.institutionKey && byKey.get(e.institutionKey) && (
+                    <InstitutionMark
+                      slug={e.institutionKey}
+                      monogram={byKey.get(e.institutionKey)!.monogram}
+                      logoSource={byKey.get(e.institutionKey)!.logoSource}
+                      logoScale={byKey.get(e.institutionKey)!.logoScale}
+                      size="sm"
+                    />
+                  )}
+                  <span>{e.institution}</span>
+                </h3>
                 <p class="cv-sub">{e.qualification}, {e.location}</p>
                 {e.notes.length > 0 && (
                   <ul class="bullets">{e.notes.map((n) => <li>{n}</li>)}</ul>
@@ -86,7 +101,18 @@ const conferences = pubs.filter((x) => x.data.type === 'conference');
             <p class="cv-when mono">{role.data.period}</p>
             <div>
               <h3 class="cv-t">{role.data.role}</h3>
-              <p class="cv-sub">{role.data.org}, {role.data.location}</p>
+              <p class="cv-sub">
+                {byKey.get(role.data.institution) && (
+                  <InstitutionMark
+                    slug={role.data.institution}
+                    monogram={byKey.get(role.data.institution)!.monogram}
+                    logoSource={byKey.get(role.data.institution)!.logoSource}
+                    logoScale={byKey.get(role.data.institution)!.logoScale}
+                    size="sm"
+                  />
+                )}
+                <span>{role.data.org}, {role.data.location}</span>
+              </p>
               {role.data.context && <p class="cv-context">{role.data.context}</p>}
               {role.data.bullets.length > 0 ? (
                 <ul class="bullets">{role.data.bullets.map((b) => <li>{b}</li>)}</ul>
@@ -224,12 +250,20 @@ const conferences = pubs.filter((x) => x.data.type === 'conference');
     font-size: 1.0625rem;
     font-weight: 600;
     line-height: 1.35;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
   }
 
   .cv-sub {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    flex-wrap: wrap;
     font-size: var(--t-meta);
     color: var(--sec);
-    margin-top: 0.1rem;
+    margin-top: 0.3rem;
   }
 
   /* One line on the system, so the bullets can be about the contribution. */

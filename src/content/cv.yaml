@@ -5,6 +5,7 @@ education:
   heading: Education
   entries:
     - institution: Baylor University
+      institutionKey: baylor
       qualification: M.S. in computer science
       location: Waco, Texas
       period: Jan 2022 – Dec 2023
@@ -12,6 +13,7 @@ education:
         - Concentration in machine learning for software systems, microservice
           architecture, and distributed data processing.
     - institution: Daffodil International University
+      institutionKey: daffodil
       qualification: B.Sc. in computer science and engineering
       location: Dhaka, Bangladesh
       period: Jan 2013 – May 2018

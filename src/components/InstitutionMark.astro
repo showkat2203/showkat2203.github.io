@@ -6,26 +6,35 @@ import { sanitiseSvg } from '../../scripts/logo-lib.mjs';
  * Purely decorative: every caller prints the institution's name as real text
  * beside it, so the mark is hidden from assistive tech rather than repeating
  * that name — or, worse, replacing a longer line and dropping the location.
+ *
+ * Three tiers, best first:
+ *   1. a downloaded file, inlined — themeable, measurable, no third-party request
+ *   2. the remote `logoSource`, loaded by the visitor's browser
+ *   3. the monogram
+ *
+ * Tier 2 exists so the row is complete before anyone runs `npm run logos:fetch`;
+ * tier 1 takes over automatically once a file lands, with no content change.
  */
 interface Props {
   /** Key from institutions.yaml, also the logo filename. */
   slug: string;
   monogram: string;
+  /** Remote SVG to fall back to when no file has been downloaded. */
+  logoSource?: string | null;
+  /** Size nudge for a remote logo, which cannot be measured at build time. */
+  logoScale?: number;
   size?: 'sm' | 'md';
 }
 
-const { slug, monogram, size = 'md' } = Astro.props;
+const { slug, monogram, logoSource = null, logoScale = 1, size = 'md' } = Astro.props;
 
-// A supplied logo wins; the monogram is the designed fallback. The SVG is
-// inlined rather than used through <img> so it can inherit type colour when it
-// is drawn with currentColor. Sanitised again here, not only on fetch, so a
-// file dropped in by hand cannot inject script into the page.
 const path = `public/img/logos/${slug}.svg`;
-const hasLogo = existsSync(path);
+const hasFile = existsSync(path);
+
 let svg = '';
 let markHeight = 0;
 
-if (hasLogo) {
+if (hasFile) {
   try {
     svg = sanitiseSvg(readFileSync(path, 'utf8'));
   } catch (err) {
@@ -39,31 +48,46 @@ if (hasLogo) {
   const aspect = boxW && boxH ? boxW / boxH : 1;
 
   /**
-   * Logos are sized by optical area, not by height.
-   *
-   * Matching heights makes a wide wordmark enormously heavier than a square
-   * crest, which is why untuned logo rows look ragged. Scaling so that area is
-   * roughly constant equalises the weight; the 0.4 exponent softens full area
-   * normalisation, which would shrink a 6:1 wordmark past readability. The
-   * floor and the width cap then keep every mark legible and inside its box.
+   * Sized by optical area, not by height. Matching heights makes a wide
+   * wordmark several times heavier than a square crest, which is what makes
+   * untuned logo rows look ragged. The 0.4 exponent softens full area
+   * normalisation, which would shrink a 6:1 wordmark past readability; the
+   * floor and width cap keep every mark legible and inside its box.
    */
   const s = size === 'md' ? 1 : 0.76;
-  const REF = 18 * s;
-  const MIN = 10 * s;
-  const MAX = 20 * s;
-  const MAX_W = (size === 'md' ? 68 : 58) * 1;
-
-  markHeight = Math.min(Math.max(REF / aspect ** 0.4, MIN), MAX);
-  if (markHeight * aspect > MAX_W) markHeight = MAX_W / aspect;
+  markHeight = Math.min(Math.max((18 * s) / aspect ** 0.4, 10 * s), 20 * s);
+  const maxW = size === 'md' ? 68 : 58;
+  if (markHeight * aspect > maxW) markHeight = maxW / aspect;
 }
+
+const useRemote = !hasFile && Boolean(logoSource);
+const hasLogo = hasFile || useRemote;
 ---
 
 <span
-  class:list={['mark', `mark--${size}`, hasLogo && 'mark--logo']}
+  class:list={['mark', `mark--${size}`, hasLogo && 'mark--logo', useRemote && 'mark--remote']}
   aria-hidden="true"
-  style={markHeight ? `--mark-h:${markHeight.toFixed(2)}px` : undefined}
+  style={[
+    markHeight ? `--mark-h:${markHeight.toFixed(2)}px` : null,
+    useRemote && logoScale !== 1 ? `--mark-scale:${logoScale}` : null,
+  ]
+    .filter(Boolean)
+    .join(';') || undefined}
 >
-  {hasLogo ? <Fragment set:html={svg} /> : monogram}
+  {hasFile && <Fragment set:html={svg} />}
+  {
+    useRemote && (
+      <img
+        src={logoSource!}
+        alt=""
+        loading="lazy"
+        decoding="async"
+        referrerpolicy="no-referrer"
+        onerror="this.remove()"
+      />
+    )
+  }
+  <span class="mark__mono">{monogram}</span>
 </span>
 
 <style>
@@ -113,10 +137,35 @@ if (hasLogo) {
     padding-inline: 0.35rem;
   }
 
+  .mark--logo.mark--sm {
+    width: 3.5rem;
+    padding-inline: 0.25rem;
+  }
+
+  /* The monogram stays in the DOM as the fallback. It is hidden while a mark is
+     actually present, and an image that fails to load removes itself, so a dead
+     URL reveals the monogram rather than a broken-image icon. */
+  .mark:has(svg) .mark__mono,
+  .mark:has(img) .mark__mono {
+    display: none;
+  }
+
   .mark :global(svg) {
     display: block;
     width: auto;
     height: var(--mark-h, 1rem);
     max-width: 100%;
+  }
+
+  /* A remote logo cannot be measured at build time, so it is contained in the
+     tile instead of area-normalised: the tighter dimension decides, which
+     keeps every mark inside its box whatever its shape. */
+  .mark--remote img {
+    display: block;
+    max-width: calc(100% * var(--mark-scale, 1));
+    max-height: calc(56% * var(--mark-scale, 1));
+    width: auto;
+    height: auto;
+    object-fit: contain;
   }
 </style>

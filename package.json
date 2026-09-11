@@ -18,7 +18,8 @@
     "logos": "node scripts/fit-logos.mjs",
     "portrait": "node scripts/portrait.mjs",
     "logos:fetch": "node scripts/fetch-logos.mjs",
-    "logos:import": "node scripts/import-logos.mjs"
+    "logos:import": "node scripts/import-logos.mjs",
+    "logos:preview": "node scripts/preview-logos.mjs"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.19",

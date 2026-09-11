@@ -60,10 +60,23 @@ tiles in the site's own typography — uniform height, monochrome, one visual
 system — in the credibility row under the hero and beside each role in the
 timeline.
 
-Real marks ship for **AWS** and **Samsung**. The other seven have their source
-URL recorded in `institutions.yaml` under `logoSource`, but the files are not in
-the repo yet — the sandbox this was built in has no outbound network, so they
-could not be downloaded here.
+Logos resolve in three tiers, best first:
+
+1. **A downloaded file** at `public/img/logos/<key>.svg` — inlined, so it can
+   inherit type colour, is measured for optical sizing, and costs no
+   third-party request.
+2. **The `logoSource` URL**, loaded by the visitor's browser. This is what ships
+   today: no files are committed, so all eight load from the URLs recorded in
+   `institutions.yaml`.
+3. **The monogram**, if there is no file and no URL — or if the URL fails, since
+   the image removes itself on error and reveals the monogram underneath rather
+   than a broken-image icon.
+
+Tier 1 takes over automatically once a file lands, with no content change. The
+trade-off of tier 2 is worth being explicit about: it depends on four
+third-party hosts staying up and not blocking hotlinks, it leaks visitor IPs to
+them, and it adds cross-origin requests to a page that otherwise makes none.
+Run `npm run logos:fetch` when you want that gone.
 
 To fetch them all, on a machine with network access:
 
@@ -216,6 +229,7 @@ npm run og           # redraws public/og.png from the design tokens
 npm run portrait     # rebuilds the hero portrait from assets/
 npm run logos:fetch  # downloads every logoSource and normalises it
 npm run logos        # refits logo viewBoxes after adding one by hand
+npm run logos:preview # renders the logo rows with stand-ins, offline
 ```
 
 The PDF is generated from the `/cv` page itself, so the two cannot drift apart.
