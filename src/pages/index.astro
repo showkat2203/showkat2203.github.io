@@ -1,0 +1,379 @@
+---
+import Base from '../layouts/Base.astro';
+import Magnitude from '../components/Magnitude.astro';
+import WorkEntry from '../components/WorkEntry.astro';
+import Citation from '../components/Citation.astro';
+import CopyEmail from '../components/CopyEmail.astro';
+import { getCollection, getEntry } from 'astro:content';
+
+const profile = await getEntry('profile', 'main');
+if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
+const p = profile.data;
+
+const domains = (await getCollection('domains')).sort((a, b) => a.data.order - b.data.order);
+const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+// Newest first by actual start date, so the year in the rail runs monotonically.
+const experience = (await getCollection('experience')).sort(
+  (a, b) => b.data.start.localeCompare(a.data.start) || a.data.order - b.data.order,
+);
+
+const headline = (await getCollection('publications'))
+  .filter((pub) => pub.data.headlineOrder !== null)
+  // Newest first, so the year in the rail actually orders the list. The
+  // headlineOrder field decides *which* five appear, not their order.
+  .sort((a, b) => b.data.year - a.data.year || (a.data.headlineOrder ?? 0) - (b.data.headlineOrder ?? 0));
+
+---
+
+<Base title={`${p.name} — systems engineer`} current="home">
+  <section class="hero shell" aria-labelledby="hero-name">
+    <h1 class="hero__name" id="hero-name">{p.name}</h1>
+    <p class="hero__sentence">{p.heroSentence}</p>
+  </section>
+  <div class="shell"><div class="hero__stub"></div></div>
+
+  <div class="spined">
+    <!-- what I work on ------------------------------------------------- -->
+    <section class="section shell" id="range" aria-labelledby="range-title">
+      <div class="section__head measure">
+        <h2 class="section__title" id="range-title">What I work on</h2>
+        <p class="section__lede">
+          Three domains, one axis. The scale on the left is the size of the thing
+          being reasoned about, from a single microcontroller to a graph with
+          millions of nodes.
+        </p>
+      </div>
+
+      <div class="domains">
+        {
+          domains.map((d) => (
+            <article class="band domain">
+              <div class="band__rail">
+                <span class="band__figure">
+                  <Magnitude exponent={d.data.exponent} />
+                </span>
+                <span class="band__unit">{d.data.unit}</span>
+              </div>
+              <div class="band__body">
+                <h3 class="domain__label">{d.data.label}</h3>
+                <p class="measure">{d.data.body}</p>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+
+      <div class="band band--nomark connective">
+        <div class="band__rail"></div>
+        <div class="band__body">
+          <p class="measure">
+            They are the same problem at three magnitudes: state that several
+            things touch at once, failure modes that appear only under load, and
+            a correctness claim that has to survive both. The tools change
+            completely between the bands. The reasoning does not.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- selected work --------------------------------------------------- -->
+    <section class="section shell" id="work" aria-labelledby="work-title">
+      <div class="section__head measure">
+        <h2 class="section__title" id="work-title">Selected work</h2>
+        <p class="section__lede">
+          Chosen for the difficulty of the problem rather than how recent it is,
+          and ordered up the same scale.
+        </p>
+      </div>
+      {work.map((entry) => <WorkEntry entry={entry.data} />)}
+    </section>
+
+    <!-- publications ---------------------------------------------------- -->
+    <section class="section shell" id="publications" aria-labelledby="pubs-title">
+      <div class="section__head measure">
+        <h2 class="section__title" id="pubs-title">Publications</h2>
+        <p class="section__lede">
+          {p.record.publications} peer-reviewed papers, {p.record.citations} citations,
+          h-index {p.record.hIndex}. Five of them here; the rest on the
+          <a href="/publications">full publications page</a>.
+        </p>
+      </div>
+
+      <ol class="pubs">
+        {
+          headline.map((pub) => (
+            <li class="band pub">
+              <div class="band__rail">
+                <span class="band__figure">{pub.data.year}</span>
+                <span class="band__unit">{pub.data.venueShort}</span>
+              </div>
+              <div class="band__body">
+                <Citation pub={pub.data} selfAliases={p.selfAliases} />
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </section>
+
+    <!-- experience ------------------------------------------------------ -->
+    <section class="section shell" id="experience" aria-labelledby="exp-title">
+      <div class="section__head measure">
+        <h2 class="section__title" id="exp-title">Experience</h2>
+        <p class="section__lede">
+          Ordered by start date. The rail marks the year a role began; each
+          role's exact period is on its own line.
+        </p>
+      </div>
+
+      <ol class="timeline">
+        {
+          experience.map((role, i) => {
+            const previous = experience[i - 1];
+            const year = role.data.start.slice(0, 4);
+            const showYear = !previous || previous.data.start.slice(0, 4) !== year;
+            return (
+              <li class="band role">
+                <div class="band__rail">
+                  {showYear && <span class="band__figure">{year}</span>}
+                </div>
+                <div class="band__body">
+                  <h3 class="role__title">
+                    {role.data.role}
+                    {role.data.current && <span class="role__now mono">current</span>}
+                  </h3>
+                  <p class="role__org">
+                    {role.data.org}, {role.data.location}
+                    <span class="role__period mono">{role.data.period}</span>
+                  </p>
+                  {role.data.summary && <p class="role__summary measure">{role.data.summary}</p>}
+                  {role.data.concurrentWith && (
+                    <p class="role__concurrent">{role.data.concurrentWith}</p>
+                  )}
+                </div>
+              </li>
+            );
+          })
+        }
+      </ol>
+    </section>
+
+    <!-- contact --------------------------------------------------------- -->
+    <section class="section shell" id="contact" aria-labelledby="contact-title">
+      <div class="section__head measure">
+        <h2 class="section__title" id="contact-title">Contact</h2>
+      </div>
+
+      <div class="band band--nomark">
+        <div class="band__rail"></div>
+        <div class="band__body">
+          <dl class="contact">
+            <div class="contact__row">
+              <dt>Email</dt>
+              <dd><CopyEmail email={p.email} /></dd>
+            </div>
+            <div class="contact__row">
+              <dt>Code</dt>
+              <dd><a href={p.links.github.url!}>{p.links.github.label}</a></dd>
+            </div>
+            <div class="contact__row">
+              <dt>Papers</dt>
+              <dd>
+                {
+                  p.links.scholar.url ? (
+                    <a href={p.links.scholar.url}>{p.links.scholar.label}</a>
+                  ) : (
+                    <span>
+                      {p.links.scholar.label} <span class="pending mono">link pending</span>
+                    </span>
+                  )
+                }
+              </dd>
+            </div>
+            <div class="contact__row">
+              <dt>Profile</dt>
+              <dd>
+                {
+                  p.links.linkedin.url ? (
+                    <a href={p.links.linkedin.url}>{p.links.linkedin.label}</a>
+                  ) : (
+                    <span>
+                      {p.links.linkedin.label} <span class="pending mono">link pending</span>
+                    </span>
+                  )
+                }
+              </dd>
+            </div>
+            <div class="contact__row">
+              <dt>CV</dt>
+              <dd>
+                <a href="/cv">Read the CV on this site</a>, or
+                <a href="/cv.pdf">download it as a PDF</a>.
+              </dd>
+            </div>
+          </dl>
+          <p class="contact__where">
+            {p.location}. {p.residency}.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .hero {
+    padding-block: clamp(4rem, 12vw, 8.5rem) 0;
+  }
+
+  .hero__name {
+    font-size: 0.9375rem;
+    font-variation-settings: 'wght' 600, 'wdth' 100;
+    letter-spacing: 0.01em;
+    margin-bottom: clamp(1.25rem, 3vw, 2rem);
+  }
+
+  .hero__sentence {
+    font-size: var(--t-hero);
+    font-variation-settings: 'wght' 500, 'wdth' 94;
+    line-height: 1.14;
+    letter-spacing: -0.021em;
+    max-width: 22ch;
+    text-wrap: balance;
+  }
+
+  .section__lede {
+    margin-top: 0.75rem;
+    color: var(--graphite);
+    font-size: var(--t-lead);
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .domains .domain {
+    padding-block: 1.4rem;
+  }
+
+  .domain__label {
+    font-size: var(--t-h3);
+    font-variation-settings: 'wght' 600, 'wdth' 100;
+    margin-bottom: 0.4rem;
+  }
+
+  .domain p {
+    color: var(--graphite);
+    text-wrap: pretty;
+  }
+
+  .connective {
+    padding-top: 1.75rem;
+  }
+
+  .connective p {
+    border-top: 1px solid var(--hairline);
+    padding-top: 1.5rem;
+    text-wrap: pretty;
+  }
+
+  .pubs .pub {
+    padding-block: 1.5rem;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .pubs .pub:last-child {
+    border-bottom: 0;
+  }
+
+  .timeline .role {
+    padding-block: 1.1rem;
+  }
+
+  .role__title {
+    font-size: 1.0625rem;
+    font-variation-settings: 'wght' 600, 'wdth' 100;
+    line-height: 1.35;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.6rem;
+  }
+
+  .role__now {
+    font-size: var(--t-unit);
+    font-weight: 400;
+    color: var(--paper);
+    background: var(--ink);
+    padding: 0.1rem 0.35rem;
+  }
+
+  .role__org {
+    color: var(--graphite);
+    font-size: var(--t-meta);
+    margin-top: 0.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.15rem 0.9rem;
+  }
+
+  .role__period {
+    color: var(--tick);
+  }
+
+  /* Stated only where two roles genuinely overlapped. */
+  .role__concurrent {
+    margin-top: 0.4rem;
+    font-size: var(--t-meta);
+    color: var(--tick);
+    border-left: 1px solid var(--hairline);
+    padding-left: 0.7rem;
+    max-width: var(--measure);
+  }
+
+  .role__summary {
+    margin-top: 0.5rem;
+    color: var(--graphite);
+    font-size: 1rem;
+    line-height: 1.55;
+    text-wrap: pretty;
+  }
+
+  .contact {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .contact__row {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: 0.5rem 1rem;
+    align-items: baseline;
+    border-top: 1px solid var(--hairline);
+    padding-top: 0.9rem;
+  }
+
+  .contact__row dt {
+    font-size: var(--t-meta);
+    color: var(--tick);
+  }
+
+  .contact__row dd {
+    margin: 0;
+  }
+
+  .pending {
+    font-size: var(--t-unit);
+    color: var(--tick);
+  }
+
+  .contact__where {
+    margin-top: 1.75rem;
+    color: var(--graphite);
+    font-size: var(--t-meta);
+  }
+
+  @media (max-width: 30rem) {
+    .contact__row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

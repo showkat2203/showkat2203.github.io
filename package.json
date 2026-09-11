@@ -1,0 +1,34 @@
+{
+  "name": "chy-io",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "a11y": "node scripts/a11y.mjs",
+    "verify": "node scripts/verify.mjs",
+    "lighthouse": "node scripts/lighthouse.mjs",
+    "audit": "npm run check && npm run build && npm run a11y && npm run verify && npm run lighthouse",
+    "cv:pdf": "node scripts/cv-pdf.mjs",
+    "og": "node scripts/og-image.mjs",
+    "shots": "node scripts/shots.mjs"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^5.18.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@axe-core/playwright": "^4.13.0",
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@fontsource/dm-mono": "^5.3.0",
+    "axe-core": "^4.13.0",
+    "lighthouse": "^13.4.1",
+    "playwright": "^1.63.0",
+    "typescript": "^5.9.3",
+    "yaml": "^2.9.0"
+  }
+}

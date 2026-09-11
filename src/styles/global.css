@@ -1,0 +1,432 @@
+/* ---------------------------------------------------------------------------
+   chy.io — design system
+
+   Six colours, two typefaces, one structural device (the magnitude rail).
+   Rules to keep: colour appears only on the rail; monospace is only ever used
+   for a quantity, an ordinal, or a date; nothing has a border-radius or a
+   shadow; motion only answers an action.
+   ------------------------------------------------------------------------ */
+
+@font-face {
+  font-family: 'Archivo';
+  src: url('/fonts/archivo-var.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Mono';
+  src: url('/fonts/dm-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Mono';
+  src: url('/fonts/dm-mono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Palette. Contrast against --paper, measured:
+     ink 15.99  graphite 5.66  tick 4.70  plot 8.24  hairline 1.33
+     --tick carries small text, so it has to clear 4.5 rather than the 3.0
+     non-text floor; it stays distinct from --graphite by size and family,
+     not by lightness. --hairline is never load-bearing on its own. */
+  --paper: #f4f5f3;
+  --paper-sunk: #eaece8;
+  --ink: #171a1c;
+  --graphite: #5c6266;
+  --tick: #696f6a;
+  --hairline: #d3d7d2;
+  --plot: #1e3fa8;
+
+  --sans: 'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'DM Mono', ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, monospace;
+
+  /* Type scale */
+  --t-hero: clamp(1.75rem, 1.05rem + 2.7vw, 2.875rem);
+  --t-h2: clamp(1.25rem, 1.1rem + 0.5vw, 1.375rem);
+  --t-h3: 1.125rem;
+  --t-lead: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+  --t-body: 1.0625rem;
+  --t-meta: 0.875rem;
+  --t-figure: 0.9375rem;
+  --t-unit: 0.75rem;
+
+  /* Layout */
+  --page-pad: clamp(1.25rem, 5vw, 4.5rem);
+  --page-max: 61rem;
+  /* Fixed, not fluid: the longest axis label ('microcontroller') must fit
+     without breaking, and the shell stops growing at --page-max anyway. */
+  --rail-w: 8.25rem;
+  --rail-gap: clamp(1.25rem, 3vw, 2.5rem);
+  --measure: 34rem;
+  --band-gap: clamp(3.5rem, 8vw, 6rem);
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--t-body);
+  font-variation-settings: 'wght' 400, 'wdth' 100;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+figure,
+dl {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--hairline);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  transition: text-decoration-color 120ms linear, text-decoration-thickness 120ms linear;
+}
+
+a:hover,
+a:focus-visible {
+  text-decoration-color: var(--ink);
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: var(--plot);
+  color: var(--paper);
+}
+
+/* --- primitives --------------------------------------------------------- */
+
+.measure {
+  max-width: var(--measure);
+}
+
+.mono {
+  font-family: var(--mono);
+  font-feature-settings: 'tnum' 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.6rem 1rem;
+  z-index: 10;
+  text-decoration: none;
+}
+.skip:focus {
+  left: 0;
+}
+
+.shell {
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--page-pad);
+}
+
+/* --- the rail ----------------------------------------------------------- */
+
+/* A band is one row hung off the rail: the figure column on the left, the
+   content column on the right. The rail line itself sits on the boundary. */
+.band {
+  display: grid;
+  grid-template-columns: var(--rail-w) minmax(0, 1fr);
+  align-items: start;
+}
+
+.band__rail {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  padding-right: 0.9rem;
+  text-align: right;
+}
+
+.band__figure {
+  display: block;
+  font-size: var(--t-figure);
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+.band__unit {
+  display: block;
+  font-size: var(--t-unit);
+  color: var(--tick);
+  line-height: 1.35;
+  margin-top: 0.15rem;
+  /* Wrap between words only. A hyphenless break inside "microcontroller"
+     makes the axis label look like a defect. */
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+}
+
+.band__body {
+  position: relative;
+  padding-left: var(--rail-gap);
+  min-width: 0;
+}
+
+/* The marker: the only chromatic mark on the page. */
+.band__body::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 7px;
+  height: 7px;
+  margin-left: -3px;
+  background: var(--plot);
+}
+
+.band--nomark .band__body::before {
+  display: none;
+}
+
+/* The continuous line, drawn once on load. Everything between the hero and
+   the footer lives inside .spined. */
+.spined {
+  position: relative;
+}
+
+.spined::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - var(--page-max) / 2 + var(--page-pad) + var(--rail-w));
+  width: 1px;
+  background: var(--hairline);
+  transform-origin: top;
+  animation: rail-draw 520ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@media (max-width: 63rem) {
+  .spined::before {
+    left: calc(var(--page-pad) + var(--rail-w));
+  }
+}
+
+@keyframes rail-draw {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.hero__stub {
+  height: clamp(2rem, 5vw, 3.25rem);
+  border-left: 1px solid var(--hairline);
+  margin-left: var(--rail-w);
+}
+
+/* --- sections ----------------------------------------------------------- */
+
+.section {
+  padding-block: var(--band-gap) 0;
+}
+
+.section__head {
+  margin-bottom: 2rem;
+  margin-left: calc(var(--rail-w) + var(--rail-gap));
+}
+
+.section__title {
+  font-size: var(--t-h2);
+  font-variation-settings: 'wght' 600, 'wdth' 100;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.section__note {
+  color: var(--graphite);
+  font-size: var(--t-meta);
+  margin-top: 0.5rem;
+}
+
+.rule {
+  border: 0;
+  border-top: 1px solid var(--hairline);
+  margin: 0;
+}
+
+/* --- motion ------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* --- narrow ------------------------------------------------------------- */
+
+@media (max-width: 48rem) {
+  .spined::before {
+    display: none;
+  }
+
+  .band {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.4rem;
+  }
+
+  .band__rail {
+    text-align: left;
+    padding-right: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .band__unit {
+    margin-top: 0;
+  }
+
+  .band__body {
+    padding-left: 1rem;
+    border-left: 2px solid var(--hairline);
+  }
+
+  .band__body::before {
+    left: -2px;
+    top: 0.55em;
+    width: 6px;
+    height: 6px;
+    margin-left: -2px;
+  }
+
+  .hero__stub {
+    margin-left: 0;
+  }
+
+  .section__head {
+    margin-left: 0;
+  }
+}
+
+/* --- print (drives /cv.pdf) --------------------------------------------- */
+
+@media print {
+  :root {
+    --paper: #ffffff;
+    --page-pad: 0;
+    --page-max: 100%;
+    --rail-w: 6.5rem;
+    --rail-gap: 1.25rem;
+    --measure: 100%;
+    --band-gap: 1.25rem;
+    --t-body: 10pt;
+    --t-meta: 8.5pt;
+    --t-unit: 8pt;
+    --t-figure: 9pt;
+    --t-h2: 12.5pt;
+    --t-h3: 10.5pt;
+    --t-lead: 10.5pt;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+    line-height: 1.42;
+  }
+
+  /* The rail is a screen device; on paper the period column carries it. */
+  .spined::before,
+  .band__body::before,
+  .hero__stub {
+    display: none !important;
+  }
+
+  .band__body {
+    padding-left: var(--rail-gap);
+    border-left: 0;
+  }
+
+  a {
+    text-decoration: none;
+    color: #000;
+  }
+
+  /* Only individual records avoid breaking. Whole sections must be allowed to
+     split, or a long one jumps to the next page and leaves half a page blank. */
+  .band,
+  .cite,
+  details {
+    break-inside: avoid;
+  }
+
+  .masthead {
+    padding-block: 0;
+  }
+
+  .masthead__name {
+    font-size: 15pt;
+    letter-spacing: -0.01em;
+  }
+
+  details > summary {
+    display: none;
+  }
+
+  details[open] > p,
+  details > p {
+    display: block;
+  }
+
+  h1,
+  h2,
+  h3 {
+    break-after: avoid;
+  }
+}

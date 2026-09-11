@@ -1,0 +1,11 @@
+import { chromium } from 'playwright';
+import { serve, launch } from './lib.mjs';
+const server = await serve();
+const b = await launch(chromium);
+const [,, path='/', y='0', name='view', w='1280', h='900'] = process.argv;
+const page = await b.newPage({ viewport: { width: +w, height: +h }, deviceScaleFactor: 2 });
+await page.goto(`http://localhost:4321${path}`, { waitUntil: 'networkidle' });
+await page.evaluate((yy) => window.scrollTo(0, yy), +y);
+await page.waitForTimeout(300);
+await page.screenshot({ path: `.shots/${name}.png` });
+await b.close(); server.close(); console.log('ok');

@@ -1,0 +1,64 @@
+# Content for /cv beyond what experience.yaml and publications.yaml already
+# hold. Sections render in the order given by `order`.
+education:
+  order: 1
+  heading: Education
+  entries:
+    - institution: Baylor University
+      qualification: M.S. in computer science
+      location: Waco, Texas
+      period: Jan 2022 – Dec 2023
+      notes:
+        - Concentration in machine learning for software systems, microservice
+          architecture, and distributed data processing.
+    - institution: Daffodil International University
+      qualification: B.Sc. in computer science and engineering
+      location: Dhaka, Bangladesh
+      period: Jan 2013 – May 2018
+      notes: []
+
+service:
+  order: 2
+  heading: Academic service and peer review
+  items:
+    - Program chair, 32nd International Conference on Information Systems
+      Development, 2024.
+    - Program chair, 18th IEEE International Conference on Service-Oriented
+      System Engineering, 2024.
+    - Reviewer, Springer Cluster Computing, 2024.
+    - Member, IEEE, IEEE Computer Society, and IEEE Young Professionals, 2024
+      to present.
+
+teaching:
+  order: 3
+  heading: Teaching and mentoring
+  items:
+    - Teaching assistant, software engineering (Java) and C++ programming,
+      Baylor University — 125 students across five sections, 2022–2023.
+    - Research mentor, CloudHubs Lab, University of Arizona — 15 graduate and
+      undergraduate students in software-architecture research and empirical
+      methods, 2024.
+    - Capstone supervisor, Baylor University, from requirements through final
+      delivery.
+    - Engineering mentor, Samsung Research — four junior engineers in debugging,
+      test-driven development, and code review, 2018–2021.
+    - Contest trainer, judge, and problem setter, Daffodil International
+      University, 2015–2017.
+
+background:
+  order: 4
+  heading: Competitive programming and awards
+  items:
+    - ACM ICPC contestant, 2013–2016 — four Dhaka Site Regionals, six national
+      contests, around 1,200 problems solved.
+    - First runner-up, Inter-University Programming Contest, 2014. Champion,
+      DIIT Code Fest, 2015.
+    - Chief Technology Officer Award, Samsung Electronics, for the Galaxy Fit
+      project, 2019.
+
+languages:
+  order: 5
+  heading: Languages
+  items:
+    - English — IELTS overall band 7.5, listening 8.5, reading 8.0.
+    - Bengali — native proficiency.
