@@ -74,8 +74,21 @@ npm run logos:fetch
 That reads every `logoSource`, downloads the SVG, sanitises it, refits its
 viewBox to the mark's ink bounds, and writes `public/img/logos/<key>.svg`. Add
 `--mono` to flatten the marks to `currentColor` instead of keeping brand
-colours. Anything that fails is named in the output, with its URL, so you can
-save it by hand and run `npm run logos` to refit just that one.
+colours. Failures are named individually with their URL, and the rest still
+land, so one dead host does not cost you the other seven.
+
+If you already downloaded the files some other way, import them instead:
+
+```bash
+npm run logos:import -- ~/portfolio_logos
+```
+
+Filenames in logo bundles rarely match this site's institution keys —
+`university_of_arizona.svg` against `arizona`, `divine_it.svg` against
+`divine-it` — and a mismatch fails **silently**, because the tile simply falls
+back to a monogram. The importer matches each file against every institution's
+key, name, and short name, sanitises and refits it, prints what landed where,
+and lists anything it could not place rather than guessing.
 
 Logos sit on a **white tile in both themes**, which is the ground brand marks
 are drawn for; a dark wordmark would otherwise vanish on the dark palette.

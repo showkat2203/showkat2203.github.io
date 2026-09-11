@@ -30,7 +30,7 @@ const fetched = [];
 for (const [key, value] of targets) {
   try {
     const res = await fetch(value.logoSource, {
-      headers: { 'user-agent': 'chy.io logo fetch (personal site build)' },
+      headers: { 'user-agent': 'chy.io-logo-fetch/1.0 (+https://chy.io; personal site build)' },
       redirect: 'follow',
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
