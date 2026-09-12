@@ -18,13 +18,13 @@
 # `asOf` is set by the sync and printed beside the numbers, so a figure is
 # never shown as though it were live.
 main:
-  asOf: 2026-09
-  totalCitations: 148
-  hIndex: 8
+  asOf: 2026-09-12
+  totalCitations: 128
+  hIndex: 6
   perPublication: {}
   source:
     name: OpenAlex
     # Pinned by the first sync, which resolves it from the DOIs in
     # publications.yaml and prints what it matched.
-    id: null
-    url: null
+    id: A5092167079
+    url: https://openalex.org/A5092167079
