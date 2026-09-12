@@ -63,7 +63,8 @@ const record = buildRecord(pubs, scholar.data);
       </dl>
       <p class="cv-note measure">
         Venues include {record.venues.slice(0, -1).join(', ')}, and {record.venues.at(-1)}.
-        Citations and h-index are from <a href={p.links.scholar.url}>Google Scholar</a>,
+        Citations and h-index are from
+        {record.source.url ? <a href={record.source.url}>{record.source.name}</a> : record.source.name},
         read {formatAsOf(record.asOf)}.
       </p>
     </section>

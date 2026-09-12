@@ -3,6 +3,7 @@ import { chromium } from 'playwright';
 import { readdir, readFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
+import { parse as parseYaml } from 'yaml';
 import { serve, launch } from './lib.mjs';
 // The domain comes from the build config, so a move cannot leave the checks
 // asserting the old host while every page has already changed.
@@ -123,7 +124,13 @@ const check = (name, pass, detail = '') => results.push({ check: name, pass: pas
   check('venues lead with the most recent', venues[0] === 'JSS', venues.join(', '));
   check('venues break ties by paper count', venues[1] === 'ECSA', venues.join(', '));
 
-  const stored = { asOf: '2026-09', totalCitations: 148, hIndex: 8, perPublication: {} };
+  const stored = {
+    asOf: '2026-09',
+    totalCitations: 148,
+    hIndex: 8,
+    perPublication: {},
+    source: { name: 'OpenAlex', id: 'A1', url: 'https://openalex.org/A1' },
+  };
   const fallback = buildRecord(pubs, stored);
   check('record counts publications from the collection', fallback.publications === 4, String(fallback.publications));
   check('record falls back to stored citations', fallback.citations === 148 && !fallback.computed);
@@ -148,6 +155,16 @@ const check = (name, pass, detail = '') => results.push({ check: name, pass: pas
     fillTokens('{unknown} and {citations}', fallback),
   );
   check('asOf renders as a month and year', formatAsOf('2026-09') === 'September 2026', formatAsOf('2026-09'));
+  check(
+    'asOf keeps the day when the sync supplied one',
+    formatAsOf('2026-09-12') === '12 September 2026',
+    formatAsOf('2026-09-12'),
+  );
+  check(
+    'the record carries the source of its figures',
+    fallback.source.name === 'OpenAlex',
+    JSON.stringify(fallback.source),
+  );
 }
 
 // --- no horizontal overflow at narrow widths -----------------------------
@@ -632,6 +649,36 @@ for (const width of [320, 360, 414, 768]) {
     check(`no internal link skips its trailing slash on ${route}`, slashless.length === 0, slashless.join(', '));
   }
 
+  await ctx.close();
+}
+
+// --- citation figures are attributed to where they came from -------------
+// The numbers are fetched from OpenAlex, not Google Scholar, which has no API.
+// Saying "Google Scholar" over an OpenAlex figure would be a false citation of
+// a source, so the attribution is read from the data rather than written out.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const page = await ctx.newPage();
+  const scholar = parseYaml(readFileSync('src/content/scholar.yaml', 'utf8')).main;
+
+  for (const route of ['/publications/', '/cv/']) {
+    await page.goto(`http://localhost:4321${route}`, { waitUntil: 'load' });
+    const text = await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' '));
+    const claim = text.match(/Citations and h-index are from ([^,]+), read ([^.]+)\./);
+    check(`${route} says where the figures came from`, Boolean(claim), claim?.[0] ?? 'no attribution found');
+    if (!claim) continue;
+    check(
+      `${route} names the source in the data, not a hardcoded one`,
+      claim[1].trim() === scholar.source.name,
+      `page says "${claim[1].trim()}", data says "${scholar.source.name}"`,
+    );
+    check(
+      `${route} does not credit the figures to Google Scholar`,
+      !/^Google Scholar/.test(claim[1].trim()),
+      claim[1].trim(),
+    );
+    check(`${route} dates the figures`, claim[2].trim().length > 0, claim[2]);
+  }
   await ctx.close();
 }
 

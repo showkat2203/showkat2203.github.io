@@ -28,18 +28,26 @@ const profile = defineCollection({
 });
 
 /**
- * Scholar's own figures. Everything else about the research record is computed
- * from the publications collection — see src/lib/record.ts.
+ * The citation figures, which are the only research numbers that cannot be
+ * computed from the publications collection. Refreshed weekly from OpenAlex;
+ * everything else is derived — see src/lib/record.ts.
  */
 const scholar = defineCollection({
   loader: file('src/content/scholar.yaml'),
   schema: z.object({
-    /** `YYYY-MM` these figures were read off the Scholar profile. */
-    asOf: z.string().regex(/^\d{4}-\d{2}$/),
+    /** When these figures were read. `YYYY-MM`, or `YYYY-MM-DD` from the sync. */
+    asOf: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/),
     totalCitations: z.number().int().nonnegative(),
     hIndex: z.number().int().nonnegative(),
     /** Citation count per publications.yaml key. Complete means computed. */
     perPublication: z.record(z.string(), z.number().int().nonnegative()).default({}),
+    /** Who the figures came from, so the page can attribute them correctly. */
+    source: z.object({
+      name: z.string(),
+      /** OpenAlex author id, pinned by the first sync. */
+      id: z.string().nullable(),
+      url: z.string().url().nullable(),
+    }),
   }),
 });
 

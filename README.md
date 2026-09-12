@@ -370,7 +370,7 @@ states is configured, blog series, and the no-JavaScript fallback),
 
 Last run: Lighthouse performance 96–100, accessibility 100, best practices
 96–100, SEO 100 across all five routes; zero axe violations across five routes,
-two widths, and both themes (24 combinations); 268 of 268 behaviour checks
+two widths, and both themes (24 combinations); 278 of 278 behaviour checks
 passing.
 
 Best practices is 96 rather than 100 on `/` and `/cv/` only inside this sandbox,
@@ -510,12 +510,36 @@ adding a paper updates the home page, `/publications`, `/cv`, and the meta
 descriptions at once. Prose can use `{publications}`, `{citations}` and
 `{hIndex}` — the tokens in `profile.yaml` are filled from the same record.
 
-Citations and the h-index are the two figures that cannot be derived: Google
-Scholar is the source of truth and it has no API. They live in `scholar.yaml`
-with an `asOf` date, which the site prints beside them, so a figure is never
-shown as though it were live. Filling in `perPublication` with the per-paper
-"Cited by" numbers makes both figures computed rather than asserted — once
-every paper has an entry, the stored aggregates are ignored.
+Citations and the h-index are the two figures that cannot be derived from the
+content, so they are fetched.
+
+**Not from Google Scholar.** Scholar has no API, has never had one, and blocks
+automated access; the only ways to get its numbers are to scrape it, which
+breaks its terms and gets CAPTCHA'd within days of running from CI, or to pay a
+service that scrapes it. The figures come from
+[OpenAlex](https://openalex.org) instead — an open REST API built to be queried
+— and the page attributes them to OpenAlex rather than claiming a Scholar
+figure it never got from Scholar. OpenAlex indexes less than Scholar, so the
+numbers run lower; the page links the Scholar profile beside them and says so.
+
+`npm run scholar` reads the OpenAlex author record and rewrites `scholar.yaml`
+in place, keeping its comments. `--dry` reports without writing. The author id
+is resolved once from the DOIs already in `publications.yaml`, printed so the
+match can be eyeballed, then pinned in the file.
+
+`.github/workflows/scholar.yml` runs it weekly, commits only when a number
+actually moves, and then explicitly dispatches the deploy — a `GITHUB_TOKEN`
+push does not start other workflows, so without that step new figures would sit
+unpublished until the next unrelated commit.
+
+**The site never calls the API at page load.** The numbers are baked into the
+build, so a failed fetch leaves last week's figures standing rather than
+breaking a page or showing a spinner. `asOf` is printed beside them, gaining a
+day of precision once the sync has run.
+
+`perPublication` remains a manual override: fill it with a count per paper and,
+once every paper has one, the total and h-index are computed from those and the
+fetched aggregates are ignored.
 
 ## Optional extras
 

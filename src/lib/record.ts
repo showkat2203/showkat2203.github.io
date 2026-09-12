@@ -18,6 +18,7 @@ export type ScholarData = {
   totalCitations: number;
   hIndex: number;
   perPublication: Record<string, number>;
+  source: { name: string; id: string | null; url: string | null };
 };
 
 export type ResearchRecord = {
@@ -27,10 +28,12 @@ export type ResearchRecord = {
   hIndex: number;
   /** Venue names, most-published first, then alphabetically. */
   venues: string[];
-  /** `YYYY-MM` the Scholar figures were read. */
+  /** When the citation figures were read. `YYYY-MM` or `YYYY-MM-DD`. */
   asOf: string;
   /** True when citations and h-index were computed from per-paper counts. */
   computed: boolean;
+  /** Where the citation figures came from, for attribution on the page. */
+  source: { name: string; url: string | null };
 };
 
 /** h-index: the largest h such that h papers have at least h citations each. */
@@ -63,10 +66,15 @@ export function venuesOf(pubs: PublicationLike[]): string[] {
     .map(([name]) => name);
 }
 
-/** Format a `YYYY-MM` stamp as e.g. `September 2026`. */
+/**
+ * Format a stamp as e.g. `September 2026`, or `12 September 2026` when the day
+ * is known — which it is once the weekly sync has run, and a weekly figure
+ * deserves the precision it actually has.
+ */
 export function formatAsOf(asOf: string, month: 'long' | 'short' = 'long'): string {
-  const [year, m] = asOf.split('-').map(Number);
-  return new Date(Date.UTC(year, m - 1, 1)).toLocaleDateString('en-US', {
+  const [year, m, day] = asOf.split('-').map(Number);
+  return new Date(Date.UTC(year, m - 1, day ?? 1)).toLocaleDateString('en-GB', {
+    ...(day ? { day: 'numeric' } : {}),
     month,
     year: 'numeric',
     timeZone: 'UTC',
@@ -85,6 +93,7 @@ export function buildRecord(pubs: PublicationLike[], scholar: ScholarData): Rese
     venues: venuesOf(pubs),
     asOf: scholar.asOf,
     computed: complete,
+    source: { name: scholar.source.name, url: scholar.source.url },
   };
 }
 

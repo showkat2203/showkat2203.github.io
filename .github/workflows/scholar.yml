@@ -1,0 +1,61 @@
+name: Refresh citation figures
+
+# Weekly, and on demand. Citation counts move slowly, so a weekly read keeps
+# the asOf date honest without churning commits.
+on:
+  schedule:
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+
+# contents to commit the refreshed figures; actions to start the deploy, which
+# a GITHUB_TOKEN push does not do on its own — that guard exists to stop
+# workflows retriggering each other, so the deploy has to be asked for.
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: scholar
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Read the figures from OpenAlex
+        run: npm run scholar
+
+      - name: Commit only if a number moved
+        id: commit
+        run: |
+          if git diff --quiet -- src/content/scholar.yaml; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No change; nothing to commit."
+            exit 0
+          fi
+          git config user.name  'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/content/scholar.yaml
+          git commit -m 'Refresh citation figures from OpenAlex
+
+          Written by .github/workflows/scholar.yml. Figures and the asOf date
+          come from the OpenAlex author record; everything else on the page is
+          still derived from publications.yaml.'
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      # The push above used GITHUB_TOKEN, so it will not have started the
+      # deploy. Ask for it, or the new numbers would sit unpublished until the
+      # next unrelated commit.
+      - name: Publish the new figures
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run deploy.yml --ref main

@@ -48,7 +48,9 @@ const record = buildRecord(pubs, scholar.data);
     </dl>
     <p class="rec__src">
       The paper count is the list below. Citations and h-index are from
-      <a href={p.links.scholar.url}>Google Scholar</a>, read {formatAsOf(record.asOf)}.
+      {record.source.url ? <a href={record.source.url}>{record.source.name}</a> : record.source.name},
+      read {formatAsOf(record.asOf)}. Google Scholar indexes more and reports higher —
+      <a href={p.links.scholar.url}>the profile is here</a>.
     </p>
   </div>
 
