@@ -50,11 +50,19 @@ invite — without leaving the site. Cal.com's calendar is embedded inline;
 Cal.com holds the availability and sends the mail, because doing either needs a
 server and this site is static.
 
-To switch it on, set `booking.calUser` in `prep.yaml` to the Cal.com username.
-Give each format its own `calEvent` slug to offer them as separate session
-types, or set just `booking.calEvent` to run everything through one event type.
-Turn on the **Additional notes** question on the Cal.com event so the message
-field appears in the booking form.
+Configured in `prep.yaml` as `cal.com/showkat`, running all four formats through
+one `30min` event. Two things to check on the Cal.com side:
+
+- **The event slug.** `30min` is the 30-minute event a new account starts with.
+  If it has been renamed, take the slug from the end of the event's booking URL
+  and put it in `booking.calEvent`.
+- **The notes field.** Turn on the **Additional notes** question on that event,
+  or there is nowhere for the visitor to say what they want out of the session.
+
+To offer the four formats as separate calendars instead, create an event type
+per format and put each slug in that format's `calEvent`. The page then shows a
+chooser above the calendar; with one shared event it does not, because there
+would be nothing to choose between, and the format is named in the notes.
 
 Three states, all of them working:
 
@@ -341,7 +349,7 @@ states is configured, blog series, and the no-JavaScript fallback),
 
 Last run: Lighthouse performance 96–100, accessibility 100, best practices
 96–100, SEO 100 across all five routes; zero axe violations across five routes,
-two widths, and both themes (24 combinations); 266 of 266 behaviour checks
+two widths, and both themes (24 combinations); 268 of 268 behaviour checks
 passing.
 
 Best practices is 96 rather than 100 on `/` and `/cv/` only inside this sandbox,
@@ -473,9 +481,6 @@ every paper has an entry, the stored aggregates are ignored.
 
 ## Optional extras
 
-- `booking.calUser` in `prep.yaml`: a Cal.com username turns the interview-prep
-  section into an inline booking calendar. Until then it is the email address,
-  which works.
 - `cv.drive` and `cv.latex` in `profile.yaml`: put a URL in either and a second
   link appears beside the CV download. The committed PDF always works, so
   neither is needed.

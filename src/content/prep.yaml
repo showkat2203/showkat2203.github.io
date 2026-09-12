@@ -121,10 +121,13 @@ main:
 
   bookingHeading: Book a session
   booking:
-    # Cal.com username, e.g. "showkat". Null means booking is not wired up yet.
-    calUser: null
-    # Event slug used by any format that does not name its own.
-    calEvent: null
+    # Cal.com username. Null means booking is not wired up yet.
+    calUser: showkat
+    # Event slug used by any format that does not name its own. `30min` is the
+    # 30-minute event a new Cal.com account starts with; if the event has been
+    # renamed, take the slug from the end of its booking URL. Give each format
+    # its own slug above to offer them as four separate calendars instead.
+    calEvent: 30min
     # Where the calendar is served from. Only change this for a self-hosted
     # Cal.com instance.
     origin: https://cal.com
@@ -134,10 +137,13 @@ main:
     # there is a calendar to pick from; `email` is used until then.
     calendar:
       cta: Pick a time
+      # True whether or not the four formats are split into separate calendars:
+      # with one shared event there is no chooser on the page, so the notes are
+      # where the format gets named.
       lead: >-
-        Thirty minutes, one to one, no charge. Pick a session, choose a time, and
-        say in the notes what you want out of it — the more specific, the better
-        the thirty minutes goes.
+        Thirty minutes, one to one, no charge. Choose a time below, and say in
+        the notes which of the four you want and what you want out of it — the
+        more specific, the better the thirty minutes goes.
       note: >-
         Sessions are free while I have the time for them. Times are shown in your
         own timezone, and you will get a confirmation and a calendar invite
