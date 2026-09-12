@@ -6,6 +6,13 @@ on:
   schedule:
     - cron: '17 6 * * 1'
   workflow_dispatch:
+  # Also whenever the fetcher itself changes, so a break shows up on the commit
+  # that caused it rather than quietly waiting until the next Monday.
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/scholar.yml'
+      - 'scripts/scholar-sync.mjs'
 
 # contents to commit the refreshed figures; actions to start the deploy, which
 # a GITHUB_TOKEN push does not do on its own — that guard exists to stop
