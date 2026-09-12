@@ -15,7 +15,6 @@ if a required field is missing or misspelled.
 | `profile.yaml` | Name, email, links, hero sentence |
 | `prep.yaml` | The interview-prep offer, including the booking link |
 | `series.yaml` | Blog series, for posts meant to be read in order |
-| `scholar.yaml` | Citation count and h-index, with the date they were read |
 | `domains.yaml` | The three practice areas under "What I work on" |
 | `work.yaml` | Selected work entries, each naming a diagram and its stack |
 | `experience.yaml` | Roles, with exact `start`/`end` dates and CV bullets |
@@ -370,7 +369,7 @@ states is configured, blog series, and the no-JavaScript fallback),
 
 Last run: Lighthouse performance 96–100, accessibility 100, best practices
 96–100, SEO 100 across all five routes; zero axe violations across five routes,
-two widths, and both themes (24 combinations); 283 of 283 behaviour checks
+two widths, and both themes (24 combinations); 259 of 259 behaviour checks
 passing.
 
 Best practices is 96 rather than 100 on `/` and `/cv/` only inside this sandbox,
@@ -502,77 +501,23 @@ Engineer, AWS Infrastructure Supply Chain". Everything else — section
 headings, prose, link text — stays sentence case. Publication titles keep
 whatever capitalisation the publisher used, because they are citations.
 
-## The research numbers
+## The research record
 
-Nothing about the research record is typed out twice. The paper count and the
-venue list are computed from `publications.yaml` by `src/lib/record.ts`, so
-adding a paper updates the home page, `/publications`, `/cv`, and the meta
-descriptions at once. Prose can use `{publications}`, `{citations}` and
-`{hIndex}` — the tokens in `profile.yaml` are filled from the same record.
+Every figure on the site is derived from content in the repository. The paper
+count, the venue list and the co-author list all come from `publications.yaml`,
+so adding a paper updates the home page, `/publications/`, `/cv/` and the meta
+descriptions at once. Prose can use `{publications}`; the token is filled from
+the same source, so a count written in a sentence cannot drift from the same
+count shown elsewhere.
 
-Citations and the h-index are the two figures that cannot be derived from the
-content, so they are entered by hand from the Google Scholar profile and dated.
-
-**Why by hand.** Scholar has no API, has never had one, and blocks automated
-access; the only ways to get its numbers are to scrape it, which breaks its
-terms and gets CAPTCHA'd within days of running from CI, or to pay a service
-that scrapes it.
-
-[OpenAlex](https://openalex.org) *can* be automated and was tried. It returns
-128 citations and an h-index of 6 for the same person, from 14 works, with no
-split profile — checked by listing every work on the record and searching for
-sibling records. That is its honest view of a smaller index: Scholar counts
-more sources, and merges duplicate versions of a paper that OpenAlex lists
-separately. The gap is real rather than a bug, so the Scholar figure is shown
-and Scholar is credited.
-
-`perPublication` holds the per-paper counts from the profile. They appear
-beside each citation, and they are how the stated h-index can be checked rather
-than trusted: sorted, eight papers have at least eight citations and the ninth
-has five. They sum to 165 against a stated 170, because Scholar lists the
-Electronics paper twice — at 34 and at 5 — and counts both. That duplicate is
-one paper, so it gets no key, and the headline stays as the profile reports it.
-
-The stated aggregates always win over the per-paper sum. Recomputing would make
-the page quietly disagree with the source it credits.
-
-`source.mode: manual` stops the weekly job overwriting the hand-set figures. It
-still runs, and earns its keep: it fetches OpenAlex, prints the drift, and
-**fails once the figures pass `staleAfterDays`** (180) — so a hand-set number
-cannot rot silently on the page. Setting `mode: openalex` hands the figures
-back to the job, which then rewrites `scholar.yaml` in place, keeping its
-comments. `npm run scholar -- --dry` reports without writing.
-
-The OpenAlex author id was resolved from the DOIs already in
-`publications.yaml` — nine papers, one candidate, no name-guessing — and is
-kept for the drift comparison.
-
-`.github/workflows/scholar.yml` runs it weekly, **builds the site before
-committing anything**, commits only when a number actually moves, and then
-explicitly dispatches the deploy — a `GITHUB_TOKEN` push does not start other
-workflows, so without that step new figures would sit unpublished until the
-next unrelated commit.
-
-The build-before-commit step is there because the first synced value broke
-`main`. The sync wrote `asOf: 2026-09-12` unquoted, YAML reads a bare date as a
-`Date` rather than a string, the schema rejected it, and it reached `main` and
-failed the deploy before anyone had built with it. The sync now quotes the
-value and the schema normalises a `Date` either way, but the real fix is the
-gate: a refresh the site cannot build never becomes a commit, and last week's
-figures stand instead.
-
-**Co-authors** on `/publications/` are derived from the author lists in
-`publications.yaml`, ranked by shared papers, so the page cannot name a
-collaborator the publication list does not.
-
-**The site never calls anything at page load.** The numbers are baked into the
-build, so a failed fetch leaves last week's figures standing rather than
-breaking a page or showing a spinner. `asOf` is printed beside them, gaining a
-day of precision once the sync has run.
-
-`perPublication` remains a manual override: fill it with a count per paper and,
-once every paper has one, the total and h-index are computed from those and the
-fetched aggregates are ignored.
+Citation counts and the h-index used to be here too, first hand-entered, then
+fetched from OpenAlex, then hand-entered again from Google Scholar. They are
+gone. Google Scholar has no API and blocks automated access, so its numbers
+cannot be kept current without scraping it or paying someone to; OpenAlex can
+be automated but indexes less and reports lower, which meant showing a smaller
+number under a different name. Neither was worth the standing maintenance for
+one figure, and a stale citation count is worse than none. `git log` has the
+implementation if it is ever wanted back.
 
 ## Optional extras
 

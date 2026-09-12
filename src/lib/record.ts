@@ -1,11 +1,9 @@
 /**
- * The research record, assembled from data rather than typed out by hand.
+ * The research record, assembled from the publications collection.
  *
- * The paper count and venue list are computed from the publications collection,
- * so they cannot drift from it. Citations and the h-index come from Scholar,
- * which has no API: they are read from scholar.yaml and carry the date they
- * were read. When that file lists a citation count for every publication, both
- * figures are computed from those counts instead of taken on trust.
+ * Citation counts used to live here too, fetched or hand-entered. They are
+ * gone: every figure on this site is now derived from content in the repo, so
+ * nothing can be stale, mis-sourced, or disagree with the page it sits on.
  */
 
 export type PublicationLike = {
@@ -13,44 +11,12 @@ export type PublicationLike = {
   data: { venue: string; venueShort: string; year: number };
 };
 
-export type ScholarData = {
-  asOf: string;
-  totalCitations: number;
-  hIndex: number;
-  perPublication: Record<string, number>;
-  source: {
-    name: string;
-    url: string | null;
-    mode: 'manual' | 'openalex';
-    staleAfterDays: number;
-    openalexId: string | null;
-  };
-};
-
 export type ResearchRecord = {
   /** Number of publications in the collection. */
   publications: number;
-  citations: number;
-  hIndex: number;
-  /** Venue names, most-published first, then alphabetically. */
+  /** Venue names, most recently published in first. */
   venues: string[];
-  /** When the citation figures were read. `YYYY-MM` or `YYYY-MM-DD`. */
-  asOf: string;
-  /** Citations per publications.yaml key, where known. */
-  perPublication: Record<string, number>;
-  /** True when every publication has a per-paper count. */
-  hasPerPaper: boolean;
-  /** Where the citation figures came from, for attribution on the page. */
-  source: { name: string; url: string | null };
 };
-
-/** h-index: the largest h such that h papers have at least h citations each. */
-export function hIndexOf(counts: number[]): number {
-  const sorted = [...counts].sort((a, b) => b - a);
-  let h = 0;
-  while (h < sorted.length && sorted[h] >= h + 1) h += 1;
-  return h;
-}
 
 /**
  * Venue short names, most recently published in first, then by how many papers
@@ -74,41 +40,8 @@ export function venuesOf(pubs: PublicationLike[]): string[] {
     .map(([name]) => name);
 }
 
-/**
- * Format a stamp as e.g. `September 2026`, or `12 September 2026` when the day
- * is known — which it is once the weekly sync has run, and a weekly figure
- * deserves the precision it actually has.
- */
-export function formatAsOf(asOf: string, month: 'long' | 'short' = 'long'): string {
-  const [year, m, day] = asOf.split('-').map(Number);
-  return new Date(Date.UTC(year, m - 1, day ?? 1)).toLocaleDateString('en-GB', {
-    ...(day ? { day: 'numeric' } : {}),
-    month,
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-}
-
-export function buildRecord(pubs: PublicationLike[], scholar: ScholarData): ResearchRecord {
-  const perPub = pubs.map((pub) => scholar.perPublication[pub.id]);
-  const covered = pubs.length > 0 && perPub.every((n) => typeof n === 'number');
-
-  return {
-    publications: pubs.length,
-    // The stated figures win. They are what the profile reports, and summing
-    // the per-paper counts does not reproduce them: Scholar lists one paper
-    // twice and counts both versions toward its total. Recomputing would
-    // silently disagree with the source the page credits.
-    citations: scholar.totalCitations,
-    hIndex: scholar.hIndex,
-    perPublication: scholar.perPublication,
-    // Only claim per-paper counts when every paper has one, or the papers
-    // without would read as uncited rather than uncounted.
-    hasPerPaper: covered,
-    venues: venuesOf(pubs),
-    asOf: scholar.asOf,
-    source: { name: scholar.source.name, url: scholar.source.url },
-  };
+export function buildRecord(pubs: PublicationLike[]): ResearchRecord {
+  return { publications: pubs.length, venues: venuesOf(pubs) };
 }
 
 /**
@@ -135,13 +68,9 @@ export function coAuthorsOf(
 }
 
 /**
- * Substitute `{publications}`, `{citations}` and `{hIndex}` in prose kept in
- * YAML, so a figure written in a sentence cannot drift from the same figure
- * shown in a stat block.
+ * Substitute `{publications}` in prose kept in YAML, so a figure written in a
+ * sentence cannot drift from the same figure shown elsewhere on the page.
  */
 export function fillTokens(text: string, record: ResearchRecord): string {
-  return text.replace(/\{(publications|citations|hIndex)\}/g, (whole, key) => {
-    const value = record[key as 'publications' | 'citations' | 'hIndex'];
-    return typeof value === 'number' ? String(value) : whole;
-  });
+  return text.replace(/\{publications\}/g, String(record.publications));
 }

@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Citation from '../components/Citation.astro';
 import { getCollection, getEntry } from 'astro:content';
-import { buildRecord, coAuthorsOf, formatAsOf } from '../lib/record';
+import { buildRecord, coAuthorsOf } from '../lib/record';
 import { publicationListNode, publicationNode } from '../lib/schema';
 
 const profile = await getEntry('profile', 'main');
@@ -19,9 +19,7 @@ const counts = {
   conference: pubs.filter((x) => x.data.type === 'conference').length,
 };
 
-const scholar = await getEntry('scholar', 'main');
-if (!scholar) throw new Error('src/content/scholar.yaml is missing the "main" record');
-const record = buildRecord(pubs, scholar.data);
+const record = buildRecord(pubs);
 const coAuthors = coAuthorsOf(pubs, p.selfAliases);
 ---
 
@@ -40,17 +38,6 @@ const coAuthors = coAuthorsOf(pubs, p.selfAliases);
     <p class="lede measure">
       Graph learning over dependency graphs, microservice architecture, and
       measured comparisons of concurrent systems.
-    </p>
-
-    <dl class="rec" data-figures data-rule>
-      <div><dt data-figure={record.publications}>{record.publications}</dt><dd>peer-reviewed papers</dd></div>
-      <div><dt data-figure={record.citations}>{record.citations}</dt><dd>citations</dd></div>
-      <div><dt data-figure={record.hIndex}>{record.hIndex}</dt><dd>h-index</dd></div>
-    </dl>
-    <p class="rec__src">
-      The paper count is the list below. Citations and h-index are from
-      {record.source.url ? <a href={record.source.url}>{record.source.name}</a> : record.source.name},
-      read {formatAsOf(record.asOf)}.
     </p>
   </div>
 
@@ -74,7 +61,6 @@ const coAuthors = coAuthorsOf(pubs, p.selfAliases);
               pub={pub.data}
               selfAliases={p.selfAliases}
               index={i + 1}
-              citations={record.hasPerPaper ? record.perPublication[pub.id] : undefined}
             />
           </li>
         ))
@@ -119,32 +105,8 @@ const coAuthors = coAuthorsOf(pubs, p.selfAliases);
     margin-top: 0.85rem;
   }
 
-  .rec {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem 2.5rem;
-    margin-top: 1.5rem;
-    padding-top: 1.25rem;
-    border-top: 1px solid var(--rule);
-  }
-
-  .rec dt {
-    font-family: var(--serif);
-    font-size: 1.75rem;
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .rec dd {
-    font-size: var(--t-meta);
-    color: var(--sec);
-    margin-top: 0.2rem;
-  }
-
   /* Names in reading order, not a grid of identical chips: this is a list of
-     people, and the count is the only thing worth ranking them by. */
+     people, and the shared-paper count is the only thing worth ranking by. */
   .co {
     list-style: none;
     padding: 0;
@@ -175,13 +137,6 @@ const coAuthors = coAuthorsOf(pubs, p.selfAliases);
     font-size: var(--t-small);
     color: var(--sec);
     flex: none;
-  }
-
-  .rec__src {
-    font-size: var(--t-small);
-    color: var(--sec);
-    margin-top: 0.9rem;
-    max-width: 34rem;
   }
 
   .filter {

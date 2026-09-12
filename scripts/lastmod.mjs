@@ -24,14 +24,12 @@ const ROUTES = {
     `${CONTENT}/work.yaml`,
     `${CONTENT}/experience.yaml`,
     `${CONTENT}/publications.yaml`,
-    `${CONTENT}/scholar.yaml`,
     `${CONTENT}/news.yaml`,
     `${CONTENT}/institutions.yaml`,
   ],
   '/publications/': [
     'src/pages/publications.astro',
     `${CONTENT}/publications.yaml`,
-    `${CONTENT}/scholar.yaml`,
   ],
   '/cv/': [
     'src/pages/cv.astro',
@@ -39,7 +37,6 @@ const ROUTES = {
     `${CONTENT}/experience.yaml`,
     `${CONTENT}/skills.yaml`,
     `${CONTENT}/publications.yaml`,
-    `${CONTENT}/scholar.yaml`,
     `${CONTENT}/profile.yaml`,
     `${CONTENT}/institutions.yaml`,
   ],

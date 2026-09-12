@@ -27,44 +27,6 @@ const profile = defineCollection({
   }),
 });
 
-/**
- * The citation figures, which are the only research numbers that cannot be
- * computed from the publications collection. Refreshed weekly from OpenAlex;
- * everything else is derived — see src/lib/record.ts.
- */
-const scholar = defineCollection({
-  loader: file('src/content/scholar.yaml'),
-  schema: z.object({
-    /**
-     * When these figures were read: `YYYY-MM`, or `YYYY-MM-DD` from the sync.
-     * YAML turns a bare `2026-09-12` into a Date, so that is accepted and
-     * normalised rather than left to fail the build over a missing quote.
-     */
-    asOf: z
-      .union([z.string(), z.date()])
-      .transform((value) => (value instanceof Date ? value.toISOString().slice(0, 10) : value))
-      .pipe(z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/)),
-    totalCitations: z.number().int().nonnegative(),
-    hIndex: z.number().int().nonnegative(),
-    /** Citation count per publications.yaml key. Complete means computed. */
-    perPublication: z.record(z.string(), z.number().int().nonnegative()).default({}),
-    /** Who the figures came from, so the page can attribute them correctly. */
-    source: z.object({
-      name: z.string(),
-      url: z.string().url().nullable(),
-      /**
-       * manual: entered by hand; the weekly job reports drift but never writes.
-       * openalex: the weekly job fetches and commits.
-       */
-      mode: z.enum(['manual', 'openalex']).default('openalex'),
-      /** How long a manual figure may stand before the job calls it stale. */
-      staleAfterDays: z.number().int().positive().default(180),
-      /** OpenAlex author id, kept for the drift comparison. */
-      openalexId: z.string().nullable().default(null),
-    }),
-  }),
-});
-
 const domains = defineCollection({
   loader: file('src/content/domains.yaml'),
   schema: z.object({
@@ -265,7 +227,6 @@ const prep = defineCollection({
 
 export const collections = {
   profile,
-  scholar,
   prep,
   series,
   domains,

@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import Citation from '../components/Citation.astro';
 import InstitutionMark from '../components/InstitutionMark.astro';
 import { getCollection, getEntry } from 'astro:content';
-import { buildRecord, fillTokens, formatAsOf } from '../lib/record';
+import { buildRecord, fillTokens } from '../lib/record';
 import { personId } from '../lib/schema';
 
 const profile = await getEntry('profile', 'main');
@@ -25,9 +25,7 @@ const pubs = (await getCollection('publications')).sort((a, b) => b.data.year - 
 const journals = pubs.filter((x) => x.data.type === 'journal');
 const conferences = pubs.filter((x) => x.data.type === 'conference');
 
-const scholar = await getEntry('scholar', 'main');
-if (!scholar) throw new Error('src/content/scholar.yaml is missing the "main" record');
-const record = buildRecord(pubs, scholar.data);
+const record = buildRecord(pubs);
 ---
 
 <Base
@@ -56,16 +54,9 @@ const record = buildRecord(pubs, scholar.data);
   <div class="shell">
     <section class="section cv-sec" aria-labelledby="cv-rec">
       <h2 class="h2" id="cv-rec">Research record</h2>
-      <dl class="rec" data-figures>
-        <div><dt data-figure={record.publications}>{record.publications}</dt><dd>peer-reviewed papers</dd></div>
-        <div><dt data-figure={record.citations}>{record.citations}</dt><dd>citations</dd></div>
-        <div><dt data-figure={record.hIndex}>{record.hIndex}</dt><dd>h-index</dd></div>
-      </dl>
       <p class="cv-note measure">
-        Venues include {record.venues.slice(0, -1).join(', ')}, and {record.venues.at(-1)}.
-        Citations and h-index are from
-        {record.source.url ? <a href={record.source.url}>{record.source.name}</a> : record.source.name},
-        read {formatAsOf(record.asOf)}.
+        {record.publications} peer-reviewed publications. Venues include{' '}
+        {record.venues.slice(0, -1).join(', ')}, and {record.venues.at(-1)}.
       </p>
     </section>
 
@@ -211,26 +202,6 @@ const record = buildRecord(pubs, scholar.data);
     margin-bottom: 1.1rem;
   }
 
-  .rec {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem 2.5rem;
-  }
-
-  .rec dt {
-    font-family: var(--serif);
-    font-size: 1.625rem;
-    font-weight: 600;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .rec dd {
-    font-size: var(--t-meta);
-    color: var(--sec);
-    margin-top: 0.2rem;
-  }
 
   .cv-entry {
     display: grid;
@@ -363,9 +334,6 @@ const record = buildRecord(pubs, scholar.data);
       font-size: 9.5pt;
       margin-top: 0.2rem;
       gap: 0.18rem;
-    }
-    .rec dt {
-      font-size: 14pt;
     }
     .cv-pubs {
       gap: 0.5rem;

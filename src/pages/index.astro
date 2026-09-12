@@ -35,9 +35,7 @@ const featured = institutions
   .filter((i) => i.data.featured)
   .sort((a, b) => a.data.order - b.data.order);
 
-const scholar = await getEntry('scholar', 'main');
-if (!scholar) throw new Error('src/content/scholar.yaml is missing the "main" record');
-const record = buildRecord(publications, scholar.data);
+const record = buildRecord(publications);
 
 const news = (await getCollection('news'))
   .sort((a, b) => b.data.date.getTime() - a.data.date.getTime())

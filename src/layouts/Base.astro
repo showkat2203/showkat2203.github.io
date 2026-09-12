@@ -60,9 +60,7 @@ const profile = await getEntry('profile', 'main');
 if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
 const p = profile.data;
 
-const scholar = await getEntry('scholar', 'main');
-if (!scholar) throw new Error('src/content/scholar.yaml is missing the "main" record');
-const record = buildRecord(await getCollection('publications'), scholar.data);
+const record = buildRecord(await getCollection('publications'));
 
 const desc = fillTokens(description ?? p.metaDescription, record);
 // Canonical must name the URL the server serves without redirecting, which

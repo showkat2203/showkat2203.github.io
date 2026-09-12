@@ -3,7 +3,6 @@ import { chromium } from 'playwright';
 import { readdir, readFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { parse as parseYaml } from 'yaml';
 import { serve, launch } from './lib.mjs';
 // The domain comes from the build config, so a move cannot leave the checks
 // asserting the old host while every page has already changed.
@@ -11,21 +10,9 @@ import astroConfig from '../astro.config.mjs';
 
 const SITE = String(astroConfig.site).replace(/\/$/, '');
 
-// What the pages should show, read from the same files they read. Typing the
-// figures in here would make every check stale the first time the weekly sync
-// moved a number — which is precisely what it did.
-const scholarData = parseYaml(readFileSync('src/content/scholar.yaml', 'utf8')).main;
-const publicationCount = Object.keys(
-  parseYaml(readFileSync('src/content/publications.yaml', 'utf8')),
-).length;
-const EXPECTED_FIGURES = [
-  publicationCount,
-  scholarData.totalCitations,
-  scholarData.hIndex,
-].join(',');
 import { sanitiseSvg } from './logo-lib.mjs';
 import { rewriteOutbound } from '../src/integrations/outbound-links.mjs';
-import { buildRecord, coAuthorsOf, hIndexOf, venuesOf, fillTokens, formatAsOf } from '../src/lib/record.ts';
+import { buildRecord, coAuthorsOf, venuesOf, fillTokens } from '../src/lib/record.ts';
 
 const server = await serve();
 const browser = await launch(chromium);
@@ -121,11 +108,6 @@ const check = (name, pass, detail = '') => results.push({ check: name, pass: pas
 
 // --- research record derivation ------------------------------------------
 {
-  check('h-index of an empty list is 0', hIndexOf([]) === 0);
-  check('h-index counts papers at or above their rank', hIndexOf([10, 8, 5, 4, 3]) === 4, String(hIndexOf([10, 8, 5, 4, 3])));
-  check('h-index is capped by paper count', hIndexOf([99, 99]) === 2, String(hIndexOf([99, 99])));
-  check('h-index ignores zero-citation papers', hIndexOf([3, 2, 1, 0, 0]) === 2, String(hIndexOf([3, 2, 1, 0, 0])));
-
   const pubs = [
     { id: 'a', data: { venue: 'Long Journal Name', venueShort: 'JSS', year: 2025 } },
     { id: 'b', data: { venue: 'European Conference', venueShort: 'ECSA', year: 2024 } },
@@ -137,34 +119,20 @@ const check = (name, pass, detail = '') => results.push({ check: name, pass: pas
   check('venues lead with the most recent', venues[0] === 'JSS', venues.join(', '));
   check('venues break ties by paper count', venues[1] === 'ECSA', venues.join(', '));
 
-  const stored = {
-    asOf: '2026-09',
-    totalCitations: 148,
-    hIndex: 8,
-    perPublication: {},
-    source: {
-      name: 'Google Scholar',
-      url: 'https://scholar.google.com/citations?user=X',
-      mode: 'manual',
-      staleAfterDays: 180,
-      openalexId: 'A1',
-    },
-  };
-  const fallback = buildRecord(pubs, stored);
-  check('record counts publications from the collection', fallback.publications === 4, String(fallback.publications));
-  check('record reports the stated citations', fallback.citations === 148 && fallback.hIndex === 8);
-  check('record knows it has no per-paper counts', fallback.hasPerPaper === false);
+  const record = buildRecord(pubs);
+  check('record counts publications from the collection', record.publications === 4, String(record.publications));
+  check('record carries the venue list', record.venues.join(',') === venues.join(','), record.venues.join(','));
 
-  // The stated figures win over the per-paper sum. Scholar lists one paper
-  // twice and counts both versions, so recomputing would silently disagree
-  // with the source the page credits: 10+4+2+0 is 16, and it must still say 148.
-  const full = buildRecord(pubs, { ...stored, perPublication: { a: 10, b: 4, c: 2, d: 0 } });
-  check('per-paper counts do not override the stated total', full.citations === 148, String(full.citations));
-  check('record reports full per-paper coverage', full.hasPerPaper === true);
-  check('record carries the per-paper counts through', full.perPublication.a === 10, JSON.stringify(full.perPublication));
-
-  const partial = buildRecord(pubs, { ...stored, perPublication: { a: 10 } });
-  check('partial coverage is not claimed as full', partial.hasPerPaper === false);
+  check(
+    'the publication token is filled from the record',
+    fillTokens('{publications} papers', record) === '4 papers',
+    fillTokens('{publications} papers', record),
+  );
+  check(
+    'unknown tokens are left alone',
+    fillTokens('{unknown} and {publications}', record) === '{unknown} and 4',
+    fillTokens('{unknown} and {publications}', record),
+  );
 
   // Co-authors, derived from the author lists rather than listed by hand.
   const authored = [
@@ -181,34 +149,6 @@ const check = (name, pass, detail = '') => results.push({ check: name, pass: pas
     JSON.stringify(co),
   );
 
-  check(
-    'tokens are filled from the record',
-    fillTokens('{publications} papers, {citations} citations, h {hIndex}', fallback) ===
-      '4 papers, 148 citations, h 8',
-    fillTokens('{publications} papers, {citations} citations, h {hIndex}', fallback),
-  );
-  check(
-    'unknown tokens are left alone',
-    fillTokens('{unknown} and {citations}', fallback) === '{unknown} and 148',
-    fillTokens('{unknown} and {citations}', fallback),
-  );
-  check('asOf renders as a month and year', formatAsOf('2026-09') === 'September 2026', formatAsOf('2026-09'));
-  check(
-    'asOf keeps the day when the sync supplied one',
-    formatAsOf('2026-09-12') === '12 September 2026',
-    formatAsOf('2026-09-12'),
-  );
-  // No check here for the unquoted-date bug that broke the build. One was
-  // written and removed: the `yaml` package follows YAML 1.2, where
-  // 2026-09-12 is a string, while Astro's loader yields a Date — so the check
-  // passed with the bug present and with it absent, which is worse than none.
-  // The guards that do work are the schema, which normalises a Date, and the
-  // sync workflow, which builds before it commits.
-  check(
-    'the record carries the source of its figures',
-    fallback.source.name === stored.source.name && fallback.source.url === stored.source.url,
-    JSON.stringify(fallback.source),
-  );
 }
 
 // --- no horizontal overflow at narrow widths -----------------------------
@@ -466,16 +406,10 @@ for (const width of [320, 360, 414, 768]) {
   // be in its finished state: rules painted, figures showing real numbers.
   const noJs = await page.evaluate(() => ({
     anim: document.documentElement.classList.contains('anim'),
-    figures: [...document.querySelectorAll('[data-figure]')].map((el) => el.textContent.trim()),
     borders: [...document.querySelectorAll('[data-rule]')].map((el) => getComputedStyle(el).borderTopWidth),
     opacity: [...document.querySelectorAll('[data-rule]')].map((el) => getComputedStyle(el).opacity),
   }));
   check('no-JS leaves the motion layer off', noJs.anim === false);
-  check(
-    'no-JS shows the real figures',
-    noJs.figures.join(',') === EXPECTED_FIGURES,
-    noJs.figures.join(','),
-  );
   check(
     'no-JS still paints the section rules',
     noJs.borders.length > 0 && noJs.borders.every((w) => w !== '0px'),
@@ -693,44 +627,6 @@ for (const width of [320, 360, 414, 768]) {
     check(`no internal link skips its trailing slash on ${route}`, slashless.length === 0, slashless.join(', '));
   }
 
-  await ctx.close();
-}
-
-// --- citation figures are attributed to where they came from -------------
-// The numbers are fetched from OpenAlex, not Google Scholar, which has no API.
-// Saying "Google Scholar" over an OpenAlex figure would be a false citation of
-// a source, so the attribution is read from the data rather than written out.
-{
-  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-  const page = await ctx.newPage();
-  const scholar = parseYaml(readFileSync('src/content/scholar.yaml', 'utf8')).main;
-
-  for (const route of ['/publications/', '/cv/']) {
-    await page.goto(`http://localhost:4321${route}`, { waitUntil: 'load' });
-    const text = await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' '));
-    // Strip the visually hidden new-tab note the outbound-link pass appends;
-    // it is part of the link's accessible name, not part of the source name.
-    const claim = text
-      .replace(/\s*\(opens in a new tab\)/g, '')
-      .match(/Citations and h-index are from ([^,]+), read ([^.]+)\./);
-    check(`${route} says where the figures came from`, Boolean(claim), claim?.[0] ?? 'no attribution found');
-    if (!claim) continue;
-    check(
-      `${route} names the source in the data, not a hardcoded one`,
-      claim[1].trim() === scholar.source.name,
-      `page says "${claim[1].trim()}", data says "${scholar.source.name}"`,
-    );
-    // No check that the page avoids naming Google Scholar: it named OpenAlex
-    // when OpenAlex supplied the figures and names Scholar now Scholar does.
-    // The invariant that survives a change of source is the one above — the
-    // page credits whoever scholar.yaml says, and nobody else.
-    check(
-      `${route} links the source it names`,
-      !scholar.source.url || (await page.evaluate((href) => !!document.querySelector(`a[href="${href}"]`), scholar.source.url)),
-      scholar.source.url ?? 'no url',
-    );
-    check(`${route} dates the figures`, claim[2].trim().length > 0, claim[2]);
-  }
   await ctx.close();
 }
 
@@ -1017,11 +913,9 @@ for (const width of [320, 360, 414, 768]) {
   await qp.goto('http://localhost:4321/publications', { waitUntil: 'networkidle' });
   const q = await qp.evaluate(() => ({
     anim: document.documentElement.classList.contains('anim'),
-    figures: [...document.querySelectorAll('[data-figure]')].map((el) => el.textContent.trim()),
     running: document.getAnimations().length,
   }));
   check('reduced motion leaves the layer off', q.anim === false);
-  check('reduced motion shows the real figures', q.figures.join(',') === EXPECTED_FIGURES, q.figures.join(','));
   check('reduced motion runs no animations', q.running === 0, String(q.running));
   await quiet.close();
 
@@ -1074,10 +968,8 @@ for (const width of [320, 360, 414, 768]) {
   });
   await lp.waitForTimeout(1600);
   const drawn = await lp.evaluate(() => ({
-    figures: [...document.querySelectorAll('[data-figure]')].map((el) => el.textContent.trim()),
     sizes: [...document.querySelectorAll('[data-rule]')].map((el) => getComputedStyle(el).backgroundSize),
   }));
-  check('counted figures settle on the real value', drawn.figures.join(',') === EXPECTED_FIGURES, drawn.figures.join(','));
   check(
     'drawn rules reach full width',
     drawn.sizes.length > 0 && drawn.sizes.every((size) => size.startsWith('100%')),
@@ -1108,13 +1000,6 @@ for (const width of [320, 360, 414, 768]) {
     (await lp.evaluate(() => getComputedStyle(document.querySelector('.tl__row:first-child')).backgroundImage)) === 'none',
   );
 
-  // A figure that changes width mid-count would jog the layout beside it.
-  await lp.goto('http://localhost:4321/cv', { waitUntil: 'networkidle' });
-  await lp.evaluate(() => document.querySelector('[data-figures]').scrollIntoView({ behavior: 'instant' }));
-  const w1 = await lp.evaluate(() => document.querySelector('[data-figure]').getBoundingClientRect().width);
-  await lp.waitForTimeout(1400);
-  const w2 = await lp.evaluate(() => document.querySelector('[data-figure]').getBoundingClientRect().width);
-  check('counting does not resize the figure', Math.abs(w1 - w2) < 0.6, `${w1.toFixed(2)} -> ${w2.toFixed(2)}`);
   await live.close();
 }
 

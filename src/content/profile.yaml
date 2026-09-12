@@ -14,8 +14,8 @@ main:
 
   # The paragraph under the hero headline.
   #
-  # {publications}, {citations} and {hIndex} are substituted here and in
-  # metaDescription from the research record, so no figure is typed twice.
+  # {publications} is substituted here and in metaDescription from the
+  # publications collection, so the count is never typed twice.
   # See src/lib/record.ts.
   positioning: >-
     Seven years on distributed systems and machine learning over large graphs,
@@ -29,8 +29,8 @@ main:
     Md Showkat Hossain Chy builds systems where correctness under concurrency,
     failure, and scale is the hard part: MCU firmware under fixed memory and
     power budgets, distributed services that reconcile out-of-order events, and
-    machine learning over graphs with millions of nodes. {publications}
-    peer-reviewed publications, {citations} citations.
+    machine learning over graphs with millions of nodes, across
+    {publications} peer-reviewed publications.
 
   links:
     github:
