@@ -383,6 +383,23 @@ Chrome disables by command line in a headless container.
 
 `npm run shots` writes screenshots to `.shots/` for design review.
 
+## Changing the domain
+
+The domain lives in exactly one place: `public/CNAME`. GitHub Pages requires
+that file verbatim in the output, so `astro.config.mjs` reads it and derives
+`site` from it, and everything else follows — canonical links, `og:url`, the
+sitemap, the feed, the JSON-LD graph, `robots.txt`, and the checks.
+
+It used to be written down in six places, three of them independent, so a move
+would have left `robots.txt` advertising a sitemap on the old host and `verify`
+asserting the old origin while every page had already changed. `robots.txt` is
+now generated from `site` rather than sitting static in `public/`, and `verify`
+imports the config instead of hardcoding the origin.
+
+To move: edit `public/CNAME`, point the new domain's DNS at GitHub Pages, and
+set the custom domain in the repository's Pages settings. Nothing else in the
+source mentions the host.
+
 ## What search engines are told
 
 Every page carries one `application/ld+json` block holding a `@graph`, built by

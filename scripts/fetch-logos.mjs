@@ -13,6 +13,7 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { parse } from 'yaml';
 import { sanitiseSvg, fitViewBoxes } from './logo-lib.mjs';
+import { domain } from '../astro.config.mjs';
 
 const mono = process.argv.includes('--mono');
 const dir = 'public/img/logos';
@@ -30,7 +31,7 @@ const fetched = [];
 for (const [key, value] of targets) {
   try {
     const res = await fetch(value.logoSource, {
-      headers: { 'user-agent': 'chy.io-logo-fetch/1.0 (+https://chy.io; personal site build)' },
+      headers: { 'user-agent': `${domain}-logo-fetch/1.0 (+https://${domain}; personal site build)` },
       redirect: 'follow',
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

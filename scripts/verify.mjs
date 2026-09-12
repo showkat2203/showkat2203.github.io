@@ -4,6 +4,11 @@ import { readdir, readFile } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { serve, launch } from './lib.mjs';
+// The domain comes from the build config, so a move cannot leave the checks
+// asserting the old host while every page has already changed.
+import astroConfig from '../astro.config.mjs';
+
+const SITE = String(astroConfig.site).replace(/\/$/, '');
 import { sanitiseSvg } from './logo-lib.mjs';
 import { rewriteOutbound } from '../src/integrations/outbound-links.mjs';
 import { buildRecord, hIndexOf, venuesOf, fillTokens, formatAsOf } from '../src/lib/record.ts';
@@ -51,7 +56,7 @@ const check = (name, pass, detail = '') => results.push({ check: name, pass: pas
 // A transform over built HTML, so it is checked against the shapes it has to
 // survive rather than only through the pages it happens to produce today.
 {
-  const site = 'https://chy.io';
+  const site = SITE;
   const one = (html) => rewriteOutbound(html, { site });
 
   const ext = one('<a href="https://scholar.google.com/x">Scholar</a>');
@@ -67,7 +72,7 @@ const check = (name, pass, detail = '') => results.push({ check: name, pass: pas
     ['a root-relative path', '<a href="/publications">Publications</a>'],
     ['a fragment', '<a href="#work">Work</a>'],
     ['a mailto', '<a href="mailto:a@b.com">mail</a>'],
-    ['the canonical origin', '<a href="https://chy.io/cv">CV</a>'],
+    ['the canonical origin', `<a href="${SITE}/cv">CV</a>`],
   ]) {
     const left = one(html);
     check(`rewriter leaves ${label} alone`, left.rewritten === 0 && left.html === html, left.html);
@@ -444,7 +449,7 @@ for (const width of [320, 360, 414, 768]) {
       ld: [...document.querySelectorAll('script[type="application/ld+json"]')].map((s) => s.textContent),
     }));
 
-    const expected = `https://chy.io${route}`;
+    const expected = `${SITE}${route}`;
     check(`canonical is the served URL on ${route}`, head.canonical === expected, head.canonical);
     check(`og:url matches canonical on ${route}`, head.ogUrl === expected, head.ogUrl);
     check(`exactly one h1 on ${route}`, head.h1.length === 1, head.h1.join(' | '));
@@ -848,7 +853,11 @@ for (const width of [320, 360, 414, 768]) {
   check('robots.txt allows crawling', /Allow:\s*\//.test(robots), robots.split('\n')[1]);
   // The CV is published twice; only the page should be indexed.
   check('robots.txt keeps the CV PDF out of the index', /Disallow:\s*\/cv\.pdf/.test(robots), robots);
-  check('robots.txt points at the sitemap', /Sitemap:\s*https:\/\/chy\.io\/sitemap-index\.xml/.test(robots));
+  check(
+    'robots.txt points at this site\'s sitemap',
+    robots.includes(`Sitemap: ${SITE}/sitemap-index.xml`),
+    robots.split('\n').find((line) => line.startsWith('Sitemap:')) ?? 'no Sitemap line',
+  );
 
   const xml = await (await page.request.get('http://localhost:4321/sitemap-0.xml')).text();
   const locs = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
@@ -895,7 +904,7 @@ for (const width of [320, 360, 414, 768]) {
 
   // Each canonical the pages declare must be a URL the sitemap offers.
   for (const loc of locs) {
-    const res = await page.request.get(loc.replace('https://chy.io', 'http://localhost:4321'));
+    const res = await page.request.get(loc.replace(SITE, 'http://localhost:4321'));
     check(`sitemap url ${new URL(loc).pathname} is served`, res.status() === 200, String(res.status()));
   }
   await ctx.close();
