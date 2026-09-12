@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 import Citation from '../components/Citation.astro';
 import { getCollection, getEntry } from 'astro:content';
-import { buildRecord, formatAsOf } from '../lib/record';
+import { buildRecord, coAuthorsOf, formatAsOf } from '../lib/record';
 import { publicationListNode, publicationNode } from '../lib/schema';
 
 const profile = await getEntry('profile', 'main');
@@ -22,6 +22,7 @@ const counts = {
 const scholar = await getEntry('scholar', 'main');
 if (!scholar) throw new Error('src/content/scholar.yaml is missing the "main" record');
 const record = buildRecord(pubs, scholar.data);
+const coAuthors = coAuthorsOf(pubs, p.selfAliases);
 ---
 
 <Base
@@ -49,8 +50,7 @@ const record = buildRecord(pubs, scholar.data);
     <p class="rec__src">
       The paper count is the list below. Citations and h-index are from
       {record.source.url ? <a href={record.source.url}>{record.source.name}</a> : record.source.name},
-      read {formatAsOf(record.asOf)}. Google Scholar indexes more and reports higher —
-      <a href={p.links.scholar.url}>the profile is here</a>.
+      read {formatAsOf(record.asOf)}.
     </p>
   </div>
 
@@ -70,12 +70,36 @@ const record = buildRecord(pubs, scholar.data);
       {
         pubs.map((pub, i) => (
           <li class="pub" data-type={pub.data.type}>
-            <Citation pub={pub.data} selfAliases={p.selfAliases} index={i + 1} />
+            <Citation
+              pub={pub.data}
+              selfAliases={p.selfAliases}
+              index={i + 1}
+              citations={record.hasPerPaper ? record.perPublication[pub.id] : undefined}
+            />
           </li>
         ))
       }
     </ol>
   </div>
+
+  <section class="shell section" aria-labelledby="co-t">
+    <div class="section__head">
+      <h2 class="h2" id="co-t">Co-authors</h2>
+      <p class="section__more">{coAuthors.length} people across {record.publications} papers</p>
+    </div>
+    <ul class="co" data-rule>
+      {
+        coAuthors.map((person) => (
+          <li class="co__i">
+            <span class="co__n">{person.name}</span>
+            <span class="co__p mono">
+              {person.papers} {person.papers === 1 ? 'paper' : 'papers'}
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
 </Base>
 
 <style>
@@ -117,6 +141,40 @@ const record = buildRecord(pubs, scholar.data);
     font-size: var(--t-meta);
     color: var(--sec);
     margin-top: 0.2rem;
+  }
+
+  /* Names in reading order, not a grid of identical chips: this is a list of
+     people, and the count is the only thing worth ranking them by. */
+  .co {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    border-top: 1px solid var(--rule);
+    columns: 3 14rem;
+    column-gap: 2.5rem;
+  }
+
+  .co__i {
+    break-inside: avoid;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.5rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .co__n {
+    font-family: var(--serif);
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.008em;
+  }
+
+  .co__p {
+    font-size: var(--t-small);
+    color: var(--sec);
+    flex: none;
   }
 
   .rec__src {

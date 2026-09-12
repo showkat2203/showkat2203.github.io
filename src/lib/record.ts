@@ -18,7 +18,13 @@ export type ScholarData = {
   totalCitations: number;
   hIndex: number;
   perPublication: Record<string, number>;
-  source: { name: string; id: string | null; url: string | null };
+  source: {
+    name: string;
+    url: string | null;
+    mode: 'manual' | 'openalex';
+    staleAfterDays: number;
+    openalexId: string | null;
+  };
 };
 
 export type ResearchRecord = {
@@ -30,8 +36,10 @@ export type ResearchRecord = {
   venues: string[];
   /** When the citation figures were read. `YYYY-MM` or `YYYY-MM-DD`. */
   asOf: string;
-  /** True when citations and h-index were computed from per-paper counts. */
-  computed: boolean;
+  /** Citations per publications.yaml key, where known. */
+  perPublication: Record<string, number>;
+  /** True when every publication has a per-paper count. */
+  hasPerPaper: boolean;
   /** Where the citation figures came from, for attribution on the page. */
   source: { name: string; url: string | null };
 };
@@ -83,18 +91,47 @@ export function formatAsOf(asOf: string, month: 'long' | 'short' = 'long'): stri
 
 export function buildRecord(pubs: PublicationLike[], scholar: ScholarData): ResearchRecord {
   const perPub = pubs.map((pub) => scholar.perPublication[pub.id]);
-  const complete = pubs.length > 0 && perPub.every((n) => typeof n === 'number');
-  const counts = complete ? (perPub as number[]) : [];
+  const covered = pubs.length > 0 && perPub.every((n) => typeof n === 'number');
 
   return {
     publications: pubs.length,
-    citations: complete ? counts.reduce((sum, n) => sum + n, 0) : scholar.totalCitations,
-    hIndex: complete ? hIndexOf(counts) : scholar.hIndex,
+    // The stated figures win. They are what the profile reports, and summing
+    // the per-paper counts does not reproduce them: Scholar lists one paper
+    // twice and counts both versions toward its total. Recomputing would
+    // silently disagree with the source the page credits.
+    citations: scholar.totalCitations,
+    hIndex: scholar.hIndex,
+    perPublication: scholar.perPublication,
+    // Only claim per-paper counts when every paper has one, or the papers
+    // without would read as uncited rather than uncounted.
+    hasPerPaper: covered,
     venues: venuesOf(pubs),
     asOf: scholar.asOf,
-    computed: complete,
     source: { name: scholar.source.name, url: scholar.source.url },
   };
+}
+
+/**
+ * Everyone who has appeared on a paper alongside the site's owner, most
+ * frequent first. Derived from the author lists already in publications.yaml,
+ * so it cannot name a collaborator the publication list does not.
+ */
+export function coAuthorsOf(
+  pubs: Array<{ data: { authors: string[] } }>,
+  selfAliases: string[],
+): Array<{ name: string; papers: number }> {
+  const self = new Set(selfAliases);
+  const tally = new Map<string, number>();
+  for (const { data } of pubs) {
+    // A name repeated within one author list still counts once for that paper.
+    for (const name of new Set(data.authors)) {
+      if (self.has(name)) continue;
+      tally.set(name, (tally.get(name) ?? 0) + 1);
+    }
+  }
+  return [...tally.entries()]
+    .map(([name, papers]) => ({ name, papers }))
+    .sort((a, b) => b.papers - a.papers || a.name.localeCompare(b.name));
 }
 
 /**

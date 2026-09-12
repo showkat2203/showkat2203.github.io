@@ -51,9 +51,16 @@ const scholar = defineCollection({
     /** Who the figures came from, so the page can attribute them correctly. */
     source: z.object({
       name: z.string(),
-      /** OpenAlex author id, pinned by the first sync. */
-      id: z.string().nullable(),
       url: z.string().url().nullable(),
+      /**
+       * manual: entered by hand; the weekly job reports drift but never writes.
+       * openalex: the weekly job fetches and commits.
+       */
+      mode: z.enum(['manual', 'openalex']).default('openalex'),
+      /** How long a manual figure may stand before the job calls it stale. */
+      staleAfterDays: z.number().int().positive().default(180),
+      /** OpenAlex author id, kept for the drift comparison. */
+      openalexId: z.string().nullable().default(null),
     }),
   }),
 });

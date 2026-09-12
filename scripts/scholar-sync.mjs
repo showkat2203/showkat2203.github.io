@@ -105,7 +105,16 @@ const current = parse(raw).main;
 const profile = parse(await readFile('src/content/profile.yaml', 'utf8')).main;
 const names = [profile.name, ...(profile.selfAliases ?? [])];
 
-let id = current.source?.id ?? null;
+const manual = current.source?.mode === 'manual';
+if (manual) {
+  console.log(
+    `Figures are set by hand from ${current.source.name} ` +
+      `(${current.totalCitations} citations, h-index ${current.hIndex}, as of ${current.asOf}).\n` +
+      'Nothing will be written. Reporting drift against OpenAlex instead.\n',
+  );
+}
+
+let id = current.source?.openalexId ?? null;
 if (!id) {
   console.log('No author id pinned; resolving from the DOIs in publications.yaml');
   const found = await resolveAuthor(names);
@@ -194,6 +203,33 @@ if (!Number.isFinite(next.citations) || !Number.isFinite(next.hIndex)) {
 const changed = next.citations !== current.totalCitations || next.hIndex !== current.hIndex;
 const asOf = new Date().toISOString().slice(0, 10);
 
+/**
+ * A hand-set figure is accurate the day it is entered and quietly less so every
+ * week after. Nothing on the page can tell, so the job says it: it never writes
+ * in manual mode, and once the figures pass their staleness window it fails, so
+ * the reminder arrives as a red workflow rather than not at all.
+ */
+if (manual) {
+  const days = Math.floor(
+    (Date.now() - Date.parse(`${current.asOf.length === 7 ? `${current.asOf}-01` : current.asOf}T00:00:00Z`)) /
+      86400000,
+  );
+  const limit = current.source.staleAfterDays ?? 180;
+  const gap = current.totalCitations - next.citations;
+  console.log(
+    `\n  hand-set ${current.totalCitations} vs OpenAlex ${next.citations} ` +
+      `(${gap >= 0 ? '+' : ''}${gap}), set ${days} days ago`,
+  );
+  if (days > limit) {
+    throw new Error(
+      `the hand-set figures are ${days} days old, past the ${limit}-day limit — ` +
+        `read ${current.source.url} and update src/content/scholar.yaml`,
+    );
+  }
+  console.log(`  within the ${limit}-day window; nothing to do`);
+  process.exit(0);
+}
+
 if (dry) {
   console.log(`\n--dry: ${changed ? 'would update' : 'no change'}`);
   process.exit(0);
@@ -207,8 +243,7 @@ let out = raw
   .replace(/^(\s*asOf:).*$/m, `$1 '${asOf}'`)
   .replace(/^(\s*totalCitations:).*$/m, `$1 ${next.citations}`)
   .replace(/^(\s*hIndex:).*$/m, `$1 ${next.hIndex}`)
-  .replace(/^(\s*id:).*$/m, `$1 ${shortId}`)
-  .replace(/^(\s*url:).*$/m, `$1 ${next.url}`);
+  .replace(/^(\s*openalexId:).*$/m, `$1 ${shortId}`);
 
 if (out === raw && changed) throw new Error('nothing was substituted; scholar.yaml shape has drifted');
 await writeFile(SCHOLAR, out);

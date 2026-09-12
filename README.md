@@ -370,7 +370,7 @@ states is configured, blog series, and the no-JavaScript fallback),
 
 Last run: Lighthouse performance 96–100, accessibility 100, best practices
 96–100, SEO 100 across all five routes; zero axe violations across five routes,
-two widths, and both themes (24 combinations); 278 of 278 behaviour checks
+two widths, and both themes (24 combinations); 283 of 283 behaviour checks
 passing.
 
 Best practices is 96 rather than 100 on `/` and `/cv/` only inside this sandbox,
@@ -511,21 +511,41 @@ descriptions at once. Prose can use `{publications}`, `{citations}` and
 `{hIndex}` — the tokens in `profile.yaml` are filled from the same record.
 
 Citations and the h-index are the two figures that cannot be derived from the
-content, so they are fetched.
+content, so they are entered by hand from the Google Scholar profile and dated.
 
-**Not from Google Scholar.** Scholar has no API, has never had one, and blocks
-automated access; the only ways to get its numbers are to scrape it, which
-breaks its terms and gets CAPTCHA'd within days of running from CI, or to pay a
-service that scrapes it. The figures come from
-[OpenAlex](https://openalex.org) instead — an open REST API built to be queried
-— and the page attributes them to OpenAlex rather than claiming a Scholar
-figure it never got from Scholar. OpenAlex indexes less than Scholar, so the
-numbers run lower; the page links the Scholar profile beside them and says so.
+**Why by hand.** Scholar has no API, has never had one, and blocks automated
+access; the only ways to get its numbers are to scrape it, which breaks its
+terms and gets CAPTCHA'd within days of running from CI, or to pay a service
+that scrapes it.
 
-`npm run scholar` reads the OpenAlex author record and rewrites `scholar.yaml`
-in place, keeping its comments. `--dry` reports without writing. The author id
-is resolved once from the DOIs already in `publications.yaml`, printed so the
-match can be eyeballed, then pinned in the file.
+[OpenAlex](https://openalex.org) *can* be automated and was tried. It returns
+128 citations and an h-index of 6 for the same person, from 14 works, with no
+split profile — checked by listing every work on the record and searching for
+sibling records. That is its honest view of a smaller index: Scholar counts
+more sources, and merges duplicate versions of a paper that OpenAlex lists
+separately. The gap is real rather than a bug, so the Scholar figure is shown
+and Scholar is credited.
+
+`perPublication` holds the per-paper counts from the profile. They appear
+beside each citation, and they are how the stated h-index can be checked rather
+than trusted: sorted, eight papers have at least eight citations and the ninth
+has five. They sum to 165 against a stated 170, because Scholar lists the
+Electronics paper twice — at 34 and at 5 — and counts both. That duplicate is
+one paper, so it gets no key, and the headline stays as the profile reports it.
+
+The stated aggregates always win over the per-paper sum. Recomputing would make
+the page quietly disagree with the source it credits.
+
+`source.mode: manual` stops the weekly job overwriting the hand-set figures. It
+still runs, and earns its keep: it fetches OpenAlex, prints the drift, and
+**fails once the figures pass `staleAfterDays`** (180) — so a hand-set number
+cannot rot silently on the page. Setting `mode: openalex` hands the figures
+back to the job, which then rewrites `scholar.yaml` in place, keeping its
+comments. `npm run scholar -- --dry` reports without writing.
+
+The OpenAlex author id was resolved from the DOIs already in
+`publications.yaml` — nine papers, one candidate, no name-guessing — and is
+kept for the drift comparison.
 
 `.github/workflows/scholar.yml` runs it weekly, **builds the site before
 committing anything**, commits only when a number actually moves, and then
@@ -541,7 +561,11 @@ value and the schema normalises a `Date` either way, but the real fix is the
 gate: a refresh the site cannot build never becomes a commit, and last week's
 figures stand instead.
 
-**The site never calls the API at page load.** The numbers are baked into the
+**Co-authors** on `/publications/` are derived from the author lists in
+`publications.yaml`, ranked by shared papers, so the page cannot name a
+collaborator the publication list does not.
+
+**The site never calls anything at page load.** The numbers are baked into the
 build, so a failed fetch leaves last week's figures standing rather than
 breaking a page or showing a spinner. `asOf` is printed beside them, gaining a
 day of precision once the sync has run.

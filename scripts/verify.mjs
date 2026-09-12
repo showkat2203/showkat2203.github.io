@@ -25,7 +25,7 @@ const EXPECTED_FIGURES = [
 ].join(',');
 import { sanitiseSvg } from './logo-lib.mjs';
 import { rewriteOutbound } from '../src/integrations/outbound-links.mjs';
-import { buildRecord, hIndexOf, venuesOf, fillTokens, formatAsOf } from '../src/lib/record.ts';
+import { buildRecord, coAuthorsOf, hIndexOf, venuesOf, fillTokens, formatAsOf } from '../src/lib/record.ts';
 
 const server = await serve();
 const browser = await launch(chromium);
@@ -142,19 +142,44 @@ const check = (name, pass, detail = '') => results.push({ check: name, pass: pas
     totalCitations: 148,
     hIndex: 8,
     perPublication: {},
-    source: { name: 'OpenAlex', id: 'A1', url: 'https://openalex.org/A1' },
+    source: {
+      name: 'Google Scholar',
+      url: 'https://scholar.google.com/citations?user=X',
+      mode: 'manual',
+      staleAfterDays: 180,
+      openalexId: 'A1',
+    },
   };
   const fallback = buildRecord(pubs, stored);
   check('record counts publications from the collection', fallback.publications === 4, String(fallback.publications));
-  check('record falls back to stored citations', fallback.citations === 148 && !fallback.computed);
+  check('record reports the stated citations', fallback.citations === 148 && fallback.hIndex === 8);
+  check('record knows it has no per-paper counts', fallback.hasPerPaper === false);
 
+  // The stated figures win over the per-paper sum. Scholar lists one paper
+  // twice and counts both versions, so recomputing would silently disagree
+  // with the source the page credits: 10+4+2+0 is 16, and it must still say 148.
   const full = buildRecord(pubs, { ...stored, perPublication: { a: 10, b: 4, c: 2, d: 0 } });
-  check('record computes citations when counts are complete', full.citations === 16 && full.computed, String(full.citations));
-  // [10, 4, 2, 0]: two papers have at least two citations, none has three.
-  check('record computes the h-index from counts', full.hIndex === 2, String(full.hIndex));
+  check('per-paper counts do not override the stated total', full.citations === 148, String(full.citations));
+  check('record reports full per-paper coverage', full.hasPerPaper === true);
+  check('record carries the per-paper counts through', full.perPublication.a === 10, JSON.stringify(full.perPublication));
 
   const partial = buildRecord(pubs, { ...stored, perPublication: { a: 10 } });
-  check('record ignores partial counts', partial.citations === 148 && !partial.computed, String(partial.citations));
+  check('partial coverage is not claimed as full', partial.hasPerPaper === false);
+
+  // Co-authors, derived from the author lists rather than listed by hand.
+  const authored = [
+    { data: { authors: ['M. S. H. Chy', 'T. Cerny', 'K. Sooksatra'] } },
+    { data: { authors: ['T. Cerny', 'M. S. H. Chy'] } },
+    { data: { authors: ['A. Other', 'A. Other'] } },
+  ];
+  const co = coAuthorsOf(authored, ['M. S. H. Chy']);
+  check('co-authors exclude the author themselves', !co.some((x) => x.name === 'M. S. H. Chy'), JSON.stringify(co));
+  check('co-authors rank by shared papers', co[0].name === 'T. Cerny' && co[0].papers === 2, JSON.stringify(co[0]));
+  check(
+    'a name repeated in one author list counts once',
+    co.find((x) => x.name === 'A. Other')?.papers === 1,
+    JSON.stringify(co),
+  );
 
   check(
     'tokens are filled from the record',
@@ -181,7 +206,7 @@ const check = (name, pass, detail = '') => results.push({ check: name, pass: pas
   // sync workflow, which builds before it commits.
   check(
     'the record carries the source of its figures',
-    fallback.source.name === 'OpenAlex',
+    fallback.source.name === stored.source.name && fallback.source.url === stored.source.url,
     JSON.stringify(fallback.source),
   );
 }
@@ -695,10 +720,14 @@ for (const width of [320, 360, 414, 768]) {
       claim[1].trim() === scholar.source.name,
       `page says "${claim[1].trim()}", data says "${scholar.source.name}"`,
     );
+    // No check that the page avoids naming Google Scholar: it named OpenAlex
+    // when OpenAlex supplied the figures and names Scholar now Scholar does.
+    // The invariant that survives a change of source is the one above — the
+    // page credits whoever scholar.yaml says, and nobody else.
     check(
-      `${route} does not credit the figures to Google Scholar`,
-      !/^Google Scholar/.test(claim[1].trim()),
-      claim[1].trim(),
+      `${route} links the source it names`,
+      !scholar.source.url || (await page.evaluate((href) => !!document.querySelector(`a[href="${href}"]`), scholar.source.url)),
+      scholar.source.url ?? 'no url',
     );
     check(`${route} dates the figures`, claim[2].trim().length > 0, claim[2]);
   }
@@ -1035,6 +1064,14 @@ for (const width of [320, 360, 414, 768]) {
   const lp = await live.newPage();
   await lp.goto('http://localhost:4321/publications', { waitUntil: 'networkidle' });
   check('motion layer turns on', await lp.evaluate(() => document.documentElement.classList.contains('anim')));
+  // Rules draw as they come into view, so a rule far down the page has not
+  // drawn yet on load. Walk to the bottom before asking whether they all did.
+  await lp.evaluate(async () => {
+    for (let y = 0; y < document.body.scrollHeight; y += window.innerHeight / 2) {
+      window.scrollTo(0, y);
+      await new Promise((done) => setTimeout(done, 60));
+    }
+  });
   await lp.waitForTimeout(1600);
   const drawn = await lp.evaluate(() => ({
     figures: [...document.querySelectorAll('[data-figure]')].map((el) => el.textContent.trim()),

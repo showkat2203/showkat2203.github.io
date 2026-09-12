@@ -1,30 +1,55 @@
-# Citation figures, refreshed weekly from OpenAlex by `npm run scholar`
-# (.github/workflows/scholar.yml runs it and commits only when a number moves).
+# Citation figures, read off the Google Scholar profile by hand.
 #
-# Not Google Scholar: it has no API, has never had one, and blocks automated
-# access. OpenAlex is an open REST API built to be queried, so these numbers
-# come from a source that consents to being read — and the page attributes them
-# to OpenAlex rather than claiming a Scholar figure it never got from Scholar.
-# OpenAlex indexes less than Scholar, so expect these to run lower.
+# Scholar has no API and blocks automated access, so the only ways to automate
+# it are to scrape it — against its terms, and CAPTCHA'd within days of running
+# from CI — or to pay a service that scrapes it. The figures are entered here
+# and dated instead, and the page prints the date beside them.
 #
-# Everything else is still derived from publications.yaml: the paper count and
-# the venue list come straight from it, so adding a paper updates every page.
+# OpenAlex *can* be automated and was tried: it returns 128 and h-index 6 from
+# 14 works, with no split profile. That is its honest view of a smaller index —
+# Scholar counts more sources and merges duplicate versions of a paper, which
+# OpenAlex lists separately. The gap is real rather than a bug, so the Scholar
+# figure is the one shown and Scholar is the one credited.
 #
-# `perPublication` is a manual override. Fill it with a count per
-# publications.yaml key and, once every paper has one, the total and h-index
-# are computed from those instead of the aggregates below. Leave it empty to
-# let the weekly sync drive the figures.
+# `mode: manual` stops the weekly job overwriting these. It still runs: it
+# reports drift against OpenAlex and fails once the figures pass
+# `staleAfterDays`, so a hand-set number cannot rot silently on the page.
 #
-# `asOf` is set by the sync and printed beside the numbers, so a figure is
-# never shown as though it were live.
+# The paper count and venue list are still derived from publications.yaml.
 main:
   asOf: '2026-09-12'
-  totalCitations: 128
-  hIndex: 6
-  perPublication: {}
+
+  # The headline figures, exactly as the profile reports them.
+  totalCitations: 170
+  # Confirmed against the per-paper counts below: sorted, eight papers have at
+  # least eight citations and the ninth has five.
+  hIndex: 8
+
+  # Per paper, keyed by publications.yaml. Shown beside each citation, and the
+  # reason the h-index above can be checked rather than taken on trust.
+  #
+  # These sum to 165, five short of the 170 above, because Scholar lists the
+  # Electronics message-queue paper twice — once at 34 and once at 5 — and
+  # counts both toward the profile total. The duplicate is one paper, not two,
+  # so it gets no key here; the headline stays as the profile reports it.
+  perPublication:
+    telecom-2023-benchmarking: 41
+    electronics-2023-queues: 34
+    segah-2023-design-patterns: 24
+    jss-2025-dependencies: 14
+    closer-2024-propagation: 14
+    ase-2024-fuzzy-cmeans: 13
+    ecsa-2023-microprospect: 11
+    cluster-2024-micro2micro: 9
+    ecsa-2024-benchmark: 2
+    ccis-2024-dependencies: 2
+    segah-2023-bless: 1
+    icsec-2023-chromatin: 0
+
   source:
-    name: OpenAlex
-    # Pinned by the first sync, which resolves it from the DOIs in
-    # publications.yaml and prints what it matched.
-    id: A5092167079
-    url: https://openalex.org/A5092167079
+    name: Google Scholar
+    url: https://scholar.google.com/citations?user=Z9VUfzEAAAAJ&hl=en
+    mode: manual
+    staleAfterDays: 180
+    # Kept for the drift comparison the weekly job prints.
+    openalexId: A5092167079

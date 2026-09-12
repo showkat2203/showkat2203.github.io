@@ -6,9 +6,11 @@ interface Props {
   selfAliases: string[];
   index?: number;
   level?: 'h3' | 'h4';
+  /** Citations for this paper. Omitted where the count is not known. */
+  citations?: number;
 }
 
-const { pub, selfAliases, index, level = 'h3' } = Astro.props;
+const { pub, selfAliases, index, level = 'h3', citations } = Astro.props;
 const Heading = level;
 
 const href = pub.doi ? `https://doi.org/${pub.doi}` : pub.url;
@@ -70,6 +72,13 @@ if (pub.doi) {
       }
     </p>
     {pub.doi && <p class="cite__doi mono">doi {pub.doi}</p>}
+    {
+      typeof citations === 'number' && (
+        <p class="cite__n mono">
+          {citations === 0 ? 'not yet cited' : `cited by ${citations}`}
+        </p>
+      )
+    }
   </div>
 </article>
 
@@ -129,6 +138,12 @@ if (pub.doi) {
 
   .cite__link {
     font-weight: 500;
+  }
+
+  .cite__n {
+    margin-top: 0.3rem;
+    font-size: var(--t-small);
+    color: var(--sec);
   }
 
   .cite__doi {
