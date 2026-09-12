@@ -679,6 +679,42 @@ for (const width of [320, 360, 414, 768]) {
   });
 
   check('the booking block renders', booking.present);
+
+  // The bug this guards against: a call to action labelled for a calendar,
+  // pointing at a section that has no calendar in it. Whichever state the site
+  // is in, the lead button has to lead somewhere that keeps its promise.
+  const lead = await page.evaluate(() => {
+    const a = document.querySelector('.head__cta a');
+    const href = a?.getAttribute('href') ?? '';
+    const target = href.startsWith('#') ? document.querySelector(href) : null;
+    return {
+      href,
+      text: a?.textContent?.trim() ?? '',
+      isButton: a?.classList.contains('btn') ?? false,
+      targetExists: href.startsWith('#') ? !!target : null,
+      targetHasCalendar: target ? !!target.querySelector('[data-booking-mount]') : null,
+    };
+  });
+  check('the page leads with a real button', lead.isButton && lead.href.length > 0, JSON.stringify(lead));
+  if (lead.href.startsWith('#')) {
+    check('the lead button jumps to a section that exists', lead.targetExists === true, lead.href);
+    check(
+      'a lead button that offers a time jumps to an actual calendar',
+      lead.targetHasCalendar === true,
+      JSON.stringify(lead),
+    );
+  } else {
+    check(
+      'with no calendar, the lead button is the email itself rather than a scroll',
+      lead.href.startsWith('mailto:'),
+      lead.href,
+    );
+    check(
+      'the lead button does not offer a time it cannot give',
+      !/pick a time|choose a time|book a time/i.test(lead.text),
+      lead.text,
+    );
+  }
   check(
     'every booking action is a real anchor with a destination',
     booking.cta.length > 0 && booking.cta.every((c) => c.tag === 'A' && c.href.length > 0),
@@ -699,21 +735,32 @@ for (const width of [320, 360, 414, 768]) {
       booking.mountText.length > 0,
       booking.mountText.slice(0, 60),
     );
-    check(
-      'session types are links, not dead buttons',
-      booking.types.length > 0 && booking.types.every((t) => t.href?.startsWith('https://')),
-      JSON.stringify(booking.types.map((t) => t.href)),
-    );
-    check(
-      'exactly one session type starts selected',
-      booking.types.filter((t) => t.current === 'true').length === 1,
-      JSON.stringify(booking.types.map((t) => t.current)),
-    );
-    check(
-      'every session type names a distinct calendar',
-      new Set(booking.types.map((t) => t.calLink)).size === booking.types.length,
-      JSON.stringify(booking.types.map((t) => t.calLink)),
-    );
+    // The chooser is only rendered where the formats resolve to more than one
+    // calendar. Running every format through a single shared event is a
+    // supported setup, and there it is correctly absent.
+    if (booking.types.length > 0) {
+      check(
+        'session types are links, not dead buttons',
+        booking.types.every((t) => t.href?.startsWith('https://')),
+        JSON.stringify(booking.types.map((t) => t.href)),
+      );
+      check(
+        'exactly one session type starts selected',
+        booking.types.filter((t) => t.current === 'true').length === 1,
+        JSON.stringify(booking.types.map((t) => t.current)),
+      );
+      check(
+        'every session type names a distinct calendar',
+        new Set(booking.types.map((t) => t.calLink)).size === booking.types.length,
+        JSON.stringify(booking.types.map((t) => t.calLink)),
+      );
+    } else {
+      check(
+        'with one shared event, no chooser is offered',
+        booking.types.length === 0 && Boolean(booking.mountLink),
+        booking.mountLink ?? 'no calendar named',
+      );
+    }
     check(
       'the booking action says where it goes',
       booking.cta.some((c) => /Cal\.com/.test(c.text)),

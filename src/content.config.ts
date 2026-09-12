@@ -189,6 +189,8 @@ const series = defineCollection({
   }),
 });
 
+const bookingCopy = z.object({ cta: z.string(), lead: z.string(), note: z.string() });
+
 /**
  * The interview-prep offer. `booking.calUser` null is a working state, not a
  * placeholder: with no calendar to embed the page falls back to the email
@@ -232,7 +234,9 @@ const prep = defineCollection({
       /** Event slug for formats that do not name their own. */
       calEvent: z.string().nullable(),
       origin: z.string().url(),
-      note: z.string(),
+      /** Words for each state, so no label promises a calendar that is absent. */
+      calendar: bookingCopy,
+      email: bookingCopy,
     }),
   }),
 });

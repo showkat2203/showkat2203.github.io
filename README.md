@@ -64,6 +64,13 @@ Three states, all of them working:
 | Configured, script blocked or failed | A real link to the same Cal.com booking page. |
 | Configured, script runs | The calendar inline, no navigation. |
 
+Every label follows the state, because a call to action has to be named for
+where it actually leads. With a calendar, the page leads with "Pick a time"
+jumping to it; without one there is nothing to pick, so the button is the email
+itself rather than a scroll to a section that only repeats it. `src/lib/booking.ts`
+decides the state once and both the page and the block read it, and `verify`
+fails a lead button that offers a time it cannot give.
+
 The third state is an upgrade of the second, never a replacement for it. That
 distinction is the whole difficulty: installing the embed **never throws** — it
 appends a script tag and queues instructions against it — so a blocked or
@@ -334,7 +341,7 @@ states is configured, blog series, and the no-JavaScript fallback),
 
 Last run: Lighthouse performance 96–100, accessibility 100, best practices
 96–100, SEO 100 across all five routes; zero axe violations across five routes,
-two widths, and both themes (24 combinations); 263 of 263 behaviour checks
+two widths, and both themes (24 combinations); 266 of 266 behaviour checks
 passing.
 
 Best practices is 96 rather than 100 on `/` and `/cv/` only inside this sandbox,

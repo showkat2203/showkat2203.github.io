@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import Booking from '../components/Booking.astro';
 import { getCollection, getEntry } from 'astro:content';
 import { serviceNode } from '../lib/schema';
+import { bookingCopy, hasCalendar } from '../lib/booking';
 
 const profile = await getEntry('profile', 'main');
 if (!profile) throw new Error('src/content/profile.yaml is missing the "main" record');
@@ -13,6 +14,16 @@ if (!entry) throw new Error('src/content/prep.yaml is missing the "main" record'
 const prep = entry.data;
 
 const formats = [...prep.formats].sort((a, b) => a.order - b.order);
+
+// A call to action has to be labelled for where it actually leads. With a
+// calendar configured, "Pick a time" jumps to it; without one there is nothing
+// to pick, so the button is the email itself rather than a scroll to a section
+// that only repeats it.
+const calendar = hasCalendar(prep.booking, formats);
+const copy = bookingCopy(prep.booking, formats);
+const leadHref = calendar
+  ? '#book'
+  : `mailto:${p.email}?subject=${encodeURIComponent('Interview prep session')}`;
 const process = [...prep.process].sort((a, b) => a.order - b.order);
 
 // Series are only worth pointing at once they hold something to read.
@@ -35,9 +46,9 @@ const series = (await getCollection('series'))
     <p class="kicker">{prep.kicker}</p>
     <h1 class="page__t">{prep.headline}</h1>
     <p class="lede measure">{prep.lede}</p>
-    <p class="head__jump">
-      <a href="#book">Pick a time</a>
-    </p>
+    <div class="head__cta">
+      <a class="btn btn--primary" href={leadHref}>{copy.cta}</a>
+    </div>
   </div>
 
   <div class="shell">
@@ -135,11 +146,7 @@ const series = (await getCollection('series'))
       <div class="section__head">
         <h2 class="h2" id="book-t">{prep.bookingHeading}</h2>
       </div>
-      <p class="measure">
-        Thirty minutes, one to one, no charge. Pick a session, choose a time, and
-        say in the notes what you want out of it — the more specific, the better
-        the thirty minutes goes.
-      </p>
+      <p class="measure">{copy.lead}</p>
       <div class="book__cta">
         <Booking booking={prep.booking} formats={formats} email={p.email} />
       </div>
@@ -156,9 +163,8 @@ const series = (await getCollection('series'))
     margin-top: 0.85rem;
   }
 
-  .head__jump {
-    margin-top: 1.5rem;
-    font-size: var(--t-meta);
+  .head__cta {
+    margin-top: 1.6rem;
   }
 
   .note {

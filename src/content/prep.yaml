@@ -128,8 +128,26 @@ main:
     # Where the calendar is served from. Only change this for a self-hosted
     # Cal.com instance.
     origin: https://cal.com
-    # Shown beneath the calendar.
-    note: >-
-      Sessions are free while I have the time for them. Pick a slot that suits
-      you — times are shown in your own timezone, and you will get a
-      confirmation and a calendar invite straight away.
+
+    # Two sets of words, because a label must never promise something that is
+    # not at the other end of it. `calendar` is used once calUser is set and
+    # there is a calendar to pick from; `email` is used until then.
+    calendar:
+      cta: Pick a time
+      lead: >-
+        Thirty minutes, one to one, no charge. Pick a session, choose a time, and
+        say in the notes what you want out of it — the more specific, the better
+        the thirty minutes goes.
+      note: >-
+        Sessions are free while I have the time for them. Times are shown in your
+        own timezone, and you will get a confirmation and a calendar invite
+        straight away.
+    email:
+      cta: Email me to arrange a time
+      lead: >-
+        Thirty minutes, one to one, no charge. Email me with which of the four
+        you want and roughly where you are in the process, and we will find a
+        slot that works.
+      note: >-
+        Sessions are free while I have the time for them. I answer within a day
+        or two.

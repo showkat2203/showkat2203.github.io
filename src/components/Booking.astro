@@ -17,41 +17,23 @@
  * The embed is fetched when the section nears the viewport rather than on load,
  * so a reader who never scrolls this far pays nothing for it.
  */
-interface Format {
-  title: string;
-  calEvent: string | null;
-}
+import { bookingCopy, sessionTypes, type BookingConfig, type FormatLike } from '../lib/booking';
 
 interface Props {
-  booking: {
-    calUser: string | null;
-    calEvent: string | null;
-    origin: string;
-    note: string;
-  };
-  formats: Format[];
+  booking: BookingConfig;
+  formats: FormatLike[];
   email: string;
 }
 
 const { booking, formats, email } = Astro.props;
 
-/** A bookable session type: a label, a Cal.com link, and its public URL. */
-const types = booking.calUser
-  ? formats
-      .map((format) => ({ title: format.title, event: format.calEvent ?? booking.calEvent }))
-      .filter((type): type is { title: string; event: string } => Boolean(type.event))
-      .map((type) => ({
-        title: type.title,
-        calLink: `${booking.calUser}/${type.event}`,
-        url: `${booking.origin.replace(/\/$/, '')}/${booking.calUser}/${type.event}`,
-      }))
-  : [];
+const types = sessionTypes(booking, formats);
+const configured = types.length > 0;
+const copy = bookingCopy(booking, formats);
 
 // Where every format shares one event there is nothing to choose between, so
 // the chooser is not shown — the visitor names the format in the notes instead.
-const distinct = new Set(types.map((type) => type.calLink));
-const chooser = distinct.size > 1;
-const configured = types.length > 0;
+const chooser = new Set(types.map((type) => type.calLink)).size > 1;
 const mailto = `mailto:${email}?subject=${encodeURIComponent('Interview prep session')}`;
 ---
 
@@ -94,7 +76,7 @@ const mailto = `mailto:${email}?subject=${encodeURIComponent('Interview prep ses
         </div>
       </div>
 
-      <p class="bk__note">{booking.note}</p>
+      <p class="bk__note">{copy.note}</p>
     </div>
   ) : (
     /* data-booking is the script's hook and is deliberately absent here:
@@ -104,7 +86,7 @@ const mailto = `mailto:${email}?subject=${encodeURIComponent('Interview prep ses
       <a class="btn btn--primary" href={mailto}>
         Email me to arrange a time
       </a>
-      <p class="bk__note">{booking.note}</p>
+      <p class="bk__note">{copy.note}</p>
     </div>
   )
 }
