@@ -35,8 +35,15 @@ const profile = defineCollection({
 const scholar = defineCollection({
   loader: file('src/content/scholar.yaml'),
   schema: z.object({
-    /** When these figures were read. `YYYY-MM`, or `YYYY-MM-DD` from the sync. */
-    asOf: z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/),
+    /**
+     * When these figures were read: `YYYY-MM`, or `YYYY-MM-DD` from the sync.
+     * YAML turns a bare `2026-09-12` into a Date, so that is accepted and
+     * normalised rather than left to fail the build over a missing quote.
+     */
+    asOf: z
+      .union([z.string(), z.date()])
+      .transform((value) => (value instanceof Date ? value.toISOString().slice(0, 10) : value))
+      .pipe(z.string().regex(/^\d{4}-\d{2}(-\d{2})?$/)),
     totalCitations: z.number().int().nonnegative(),
     hIndex: z.number().int().nonnegative(),
     /** Citation count per publications.yaml key. Complete means computed. */

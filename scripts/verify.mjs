@@ -10,6 +10,19 @@ import { serve, launch } from './lib.mjs';
 import astroConfig from '../astro.config.mjs';
 
 const SITE = String(astroConfig.site).replace(/\/$/, '');
+
+// What the pages should show, read from the same files they read. Typing the
+// figures in here would make every check stale the first time the weekly sync
+// moved a number — which is precisely what it did.
+const scholarData = parseYaml(readFileSync('src/content/scholar.yaml', 'utf8')).main;
+const publicationCount = Object.keys(
+  parseYaml(readFileSync('src/content/publications.yaml', 'utf8')),
+).length;
+const EXPECTED_FIGURES = [
+  publicationCount,
+  scholarData.totalCitations,
+  scholarData.hIndex,
+].join(',');
 import { sanitiseSvg } from './logo-lib.mjs';
 import { rewriteOutbound } from '../src/integrations/outbound-links.mjs';
 import { buildRecord, hIndexOf, venuesOf, fillTokens, formatAsOf } from '../src/lib/record.ts';
@@ -160,6 +173,12 @@ const check = (name, pass, detail = '') => results.push({ check: name, pass: pas
     formatAsOf('2026-09-12') === '12 September 2026',
     formatAsOf('2026-09-12'),
   );
+  // No check here for the unquoted-date bug that broke the build. One was
+  // written and removed: the `yaml` package follows YAML 1.2, where
+  // 2026-09-12 is a string, while Astro's loader yields a Date — so the check
+  // passed with the bug present and with it absent, which is worse than none.
+  // The guards that do work are the schema, which normalises a Date, and the
+  // sync workflow, which builds before it commits.
   check(
     'the record carries the source of its figures',
     fallback.source.name === 'OpenAlex',
@@ -429,7 +448,7 @@ for (const width of [320, 360, 414, 768]) {
   check('no-JS leaves the motion layer off', noJs.anim === false);
   check(
     'no-JS shows the real figures',
-    noJs.figures.join(',') === '12,148,8',
+    noJs.figures.join(',') === EXPECTED_FIGURES,
     noJs.figures.join(','),
   );
   check(
@@ -664,7 +683,11 @@ for (const width of [320, 360, 414, 768]) {
   for (const route of ['/publications/', '/cv/']) {
     await page.goto(`http://localhost:4321${route}`, { waitUntil: 'load' });
     const text = await page.evaluate(() => document.body.innerText.replace(/\s+/g, ' '));
-    const claim = text.match(/Citations and h-index are from ([^,]+), read ([^.]+)\./);
+    // Strip the visually hidden new-tab note the outbound-link pass appends;
+    // it is part of the link's accessible name, not part of the source name.
+    const claim = text
+      .replace(/\s*\(opens in a new tab\)/g, '')
+      .match(/Citations and h-index are from ([^,]+), read ([^.]+)\./);
     check(`${route} says where the figures came from`, Boolean(claim), claim?.[0] ?? 'no attribution found');
     if (!claim) continue;
     check(
@@ -969,7 +992,7 @@ for (const width of [320, 360, 414, 768]) {
     running: document.getAnimations().length,
   }));
   check('reduced motion leaves the layer off', q.anim === false);
-  check('reduced motion shows the real figures', q.figures.join(',') === '12,148,8', q.figures.join(','));
+  check('reduced motion shows the real figures', q.figures.join(',') === EXPECTED_FIGURES, q.figures.join(','));
   check('reduced motion runs no animations', q.running === 0, String(q.running));
   await quiet.close();
 
@@ -1017,7 +1040,7 @@ for (const width of [320, 360, 414, 768]) {
     figures: [...document.querySelectorAll('[data-figure]')].map((el) => el.textContent.trim()),
     sizes: [...document.querySelectorAll('[data-rule]')].map((el) => getComputedStyle(el).backgroundSize),
   }));
-  check('counted figures settle on the real value', drawn.figures.join(',') === '12,148,8', drawn.figures.join(','));
+  check('counted figures settle on the real value', drawn.figures.join(',') === EXPECTED_FIGURES, drawn.figures.join(','));
   check(
     'drawn rules reach full width',
     drawn.sizes.length > 0 && drawn.sizes.every((size) => size.startsWith('100%')),

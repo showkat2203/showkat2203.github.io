@@ -144,7 +144,9 @@ if (dry) {
 // Rewritten field by field rather than re-serialised, so the file keeps its
 // comments — they are the instructions for anyone editing it by hand.
 let out = raw
-  .replace(/^(\s*asOf:).*$/m, `$1 ${asOf}`)
+  // Quoted, because a bare 2026-09-12 is a YAML *date*, not a string — which
+  // is why 2026-09 worked and the first synced value broke the build.
+  .replace(/^(\s*asOf:).*$/m, `$1 '${asOf}'`)
   .replace(/^(\s*totalCitations:).*$/m, `$1 ${next.citations}`)
   .replace(/^(\s*hIndex:).*$/m, `$1 ${next.hIndex}`)
   .replace(/^(\s*id:).*$/m, `$1 ${shortId}`)

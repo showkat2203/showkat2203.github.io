@@ -18,7 +18,7 @@
 # `asOf` is set by the sync and printed beside the numbers, so a figure is
 # never shown as though it were live.
 main:
-  asOf: 2026-09-12
+  asOf: '2026-09-12'
   totalCitations: 128
   hIndex: 6
   perPublication: {}

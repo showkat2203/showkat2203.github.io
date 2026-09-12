@@ -527,10 +527,19 @@ in place, keeping its comments. `--dry` reports without writing. The author id
 is resolved once from the DOIs already in `publications.yaml`, printed so the
 match can be eyeballed, then pinned in the file.
 
-`.github/workflows/scholar.yml` runs it weekly, commits only when a number
-actually moves, and then explicitly dispatches the deploy — a `GITHUB_TOKEN`
-push does not start other workflows, so without that step new figures would sit
-unpublished until the next unrelated commit.
+`.github/workflows/scholar.yml` runs it weekly, **builds the site before
+committing anything**, commits only when a number actually moves, and then
+explicitly dispatches the deploy — a `GITHUB_TOKEN` push does not start other
+workflows, so without that step new figures would sit unpublished until the
+next unrelated commit.
+
+The build-before-commit step is there because the first synced value broke
+`main`. The sync wrote `asOf: 2026-09-12` unquoted, YAML reads a bare date as a
+`Date` rather than a string, the schema rejected it, and it reached `main` and
+failed the deploy before anyone had built with it. The sync now quotes the
+value and the schema normalises a `Date` either way, but the real fix is the
+gate: a refresh the site cannot build never becomes a commit, and last week's
+figures stand instead.
 
 **The site never calls the API at page load.** The numbers are baked into the
 build, so a failed fetch leaves last week's figures standing rather than

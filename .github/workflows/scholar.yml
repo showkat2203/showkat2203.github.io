@@ -39,6 +39,16 @@ jobs:
       - name: Read the figures from OpenAlex
         run: npm run scholar
 
+      # Build before committing, never after. A refresh that the site cannot
+      # build is a refresh that must not reach main: the first synced value was
+      # an unquoted date, which YAML reads as a Date and the schema rejected,
+      # and it went straight to main and broke the deploy. Now a bad number or
+      # a bad shape fails here, uncommitted, and last week's figures stand.
+      - name: Prove the site still builds with the new figures
+        run: |
+          npm run check
+          npm run build
+
       - name: Commit only if a number moved
         id: commit
         run: |
