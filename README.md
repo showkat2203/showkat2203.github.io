@@ -92,8 +92,29 @@ The embed is fetched when the section nears the viewport rather than on load, so
 a reader who never scrolls that far pays nothing for it. `/interview-prep/`
 scores 100 on all four Lighthouse categories.
 
-The calendar follows the site's light and dark setting, including later changes
-from the theme toggle and the system preference behind it.
+### How the calendar is dressed
+
+Cal.com exposes its colours as CSS custom properties, so the calendar wears the
+site's palette instead of arriving in its own. `booking.ts` reads the live
+values off `:root` — `--bg`, `--tint`, `--rule`, `--ink`, `--sec`, `--navy` —
+and hands them over as `cssVarsPerTheme`, so there is no second palette to keep
+in step with `global.css`. It follows the theme toggle and the system
+preference behind it, re-sending on every change. Both key spellings
+(`cal-brand` and `--cal-brand`) are sent: the package ships the type for this
+but not the code that reads it, so which one it wants could not be checked
+here.
+
+`hideEventTypeDetails` is on. The page already states the duration, the price
+and who I am, in its own typography; Cal repeating it is duplication in a
+second typeface.
+
+The panel is not a card. This design separates things with hairline rules
+rather than boxing them, and a framed panel is what makes an embed read as a
+widget bolted on rather than part of the page. The reserved height sits on the
+frame instead of the panel, so it is claimed only while a calendar is on its
+way and given back if none arrives. The frame caps at 54rem — the shell runs to
+72rem, which is wider than a month grid wants — and that cap is the one number
+most likely to need adjusting once the real calendar is on screen.
 
 One limit worth stating: the happy path could not be verified here, because
 Cal.com is unreachable from this sandbox. The integration follows the documented

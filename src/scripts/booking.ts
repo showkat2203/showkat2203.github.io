@@ -37,6 +37,61 @@ if (root && mount && original) {
   const theme = (): 'light' | 'dark' =>
     html.dataset.theme === 'dark' || (!html.dataset.theme && systemDark.matches) ? 'dark' : 'light';
 
+  /**
+   * Dress the calendar in the site's own palette.
+   *
+   * Cal.com exposes its colours as CSS custom properties, so the calendar can
+   * read as part of the page instead of as a widget dropped into it. The values
+   * are read from the live stylesheet rather than copied here, so there is no
+   * second palette to keep in step with global.css.
+   *
+   * Both key spellings are sent. The package ships only the type for this, not
+   * the code that consumes it — that comes from cal.com at runtime — so which
+   * of the two it expects could not be checked here. The unused one is ignored.
+   */
+  const palette = (): Record<string, string> => {
+    const computed = getComputedStyle(html);
+    const read = (name: string) => computed.getPropertyValue(name).trim();
+    const map: Record<string, string> = {
+      // Grounds: the calendar sits on the page, not on a card of its own.
+      'cal-bg': read('--bg'),
+      'cal-bg-subtle': read('--tint'),
+      'cal-bg-muted': read('--tint'),
+      'cal-bg-emphasis': read('--tint'),
+      'cal-bg-inverted': read('--ink'),
+      'cal-border': read('--rule'),
+      'cal-border-subtle': read('--rule'),
+      'cal-border-booker': read('--rule'),
+      'cal-border-emphasis': read('--rule-strong'),
+      'cal-text': read('--ink'),
+      'cal-text-emphasis': read('--ink'),
+      'cal-text-subtle': read('--sec'),
+      'cal-text-muted': read('--sec'),
+      'cal-text-inverted': read('--bg'),
+      'cal-brand': read('--navy'),
+      'cal-brand-emphasis': read('--navy'),
+      'cal-brand-text': read('--on-accent'),
+    };
+    return { ...map, ...Object.fromEntries(Object.entries(map).map(([k, v]) => [`--${k}`, v])) };
+  };
+
+  /**
+   * The `ui` payload. Both theme keys carry the palette that is live right now:
+   * only the active one is used, and a theme change re-sends this with the new
+   * values, so the inactive set never gets a chance to be wrong.
+   */
+  const ui = () => {
+    const vars = palette();
+    return {
+      theme: theme(),
+      layout: 'month_view' as const,
+      // The page already states the duration, the price and who I am, in its
+      // own typography. Cal repeating it is duplication in a second typeface.
+      hideEventTypeDetails: true,
+      cssVarsPerTheme: { light: vars, dark: vars },
+    };
+  };
+
   let cal: Cal | null = null;
   /** Namespace of the calendar on screen, for theme updates. */
   let current: string | null = null;
@@ -53,10 +108,13 @@ if (root && mount && original) {
     return node;
   };
 
-  /** Give up on the calendar and hand the link back, without the empty box. */
+  /**
+   * Give up on the calendar and hand the link back. The reserved height lives
+   * on the frame, so removing it also gives the space back rather than leaving
+   * a tall gap around a single link.
+   */
   const fail = (url: string): void => {
     mount.removeAttribute('data-booking-ready');
-    mount.dataset.bookingFailed = '';
     mount.replaceChildren(linkTo(url, 'The calendar could not load here. The link still works.'));
   };
 
@@ -100,7 +158,6 @@ if (root && mount && original) {
     const frame = document.createElement('div');
     frame.className = 'bk__frame';
     // The link stays beside the frame until the calendar proves it rendered.
-    mount.removeAttribute('data-booking-failed');
     mount.replaceChildren(linkTo(url), frame);
     mount.setAttribute('aria-busy', 'true');
 
@@ -112,7 +169,7 @@ if (root && mount && original) {
         calLink,
         config: { layout: 'month_view', theme: theme() },
       });
-      api.ns[ns]('ui', { theme: theme(), layout: 'month_view', hideEventTypeDetails: false });
+      api.ns[ns]('ui', ui());
     } catch {
       mount.removeAttribute('aria-busy');
       fail(url);
@@ -125,7 +182,6 @@ if (root && mount && original) {
 
     if (ok) {
       current = ns;
-      mount.removeAttribute('data-booking-failed');
       mount.dataset.bookingReady = '';
       mount.replaceChildren(frame);
     } else {
@@ -153,7 +209,7 @@ if (root && mount && original) {
   const retheme = () => {
     if (!cal || !current) return;
     try {
-      cal.ns[current]('ui', { theme: theme(), layout: 'month_view' });
+      cal.ns[current]('ui', ui());
     } catch {
       /* the calendar keeps the theme it has */
     }

@@ -146,36 +146,35 @@ const mailto = `mailto:${email}?subject=${encodeURIComponent('Interview prep ses
     color: var(--on-accent);
   }
 
+  /* No border, no card, no radius. This design separates things with hairline
+     rules rather than boxing them, and a framed panel is what makes an embed
+     read as a widget bolted onto the page instead of part of it. The calendar
+     brings plenty of structure of its own. */
   .bk__cal {
     width: 100%;
-    /* Reserve the calendar's height so its arrival does not shove the page. */
-    min-height: 34rem;
-    border: 1px solid var(--rule);
-    border-radius: var(--r);
-    background: var(--card);
+    padding-top: 1.35rem;
+    border-top: 1px solid var(--rule);
     display: grid;
-    align-content: center;
-    justify-items: center;
-    overflow: hidden;
+    gap: 1rem;
   }
 
-  .bk__cal[data-booking-ready] {
-    align-content: start;
-    justify-items: stretch;
-  }
-
-  /* Nothing is coming: give the reserved height back rather than leave a
-     tall empty box around a single link. */
-  .bk__cal[data-booking-failed] {
-    min-height: 0;
+  /* The reserved height sits on the frame, not the panel, so it is claimed
+     only while a calendar is actually on its way and given back if none
+     arrives — rather than leaving a tall gap around a single link. */
+  .bk__frame {
+    width: 100%;
+    /* The shell runs to 72rem, which is far wider than a month grid wants; left
+       unconstrained the calendar reads as sparse rather than generous. This is
+       the one number most likely to want adjusting once the real calendar is
+       on screen — it is a single value, in one place, on purpose. */
+    max-width: 54rem;
+    min-height: 34rem;
   }
 
   .bk__await {
     display: grid;
-    gap: 0.8rem;
-    justify-items: center;
-    padding: 2rem 1.25rem;
-    text-align: center;
+    gap: 0.7rem;
+    justify-items: start;
   }
 
   .bk__hint,
@@ -190,7 +189,7 @@ const mailto = `mailto:${email}?subject=${encodeURIComponent('Interview prep ses
   }
 
   @media (max-width: 40rem) {
-    .bk__cal {
+    .bk__frame {
       min-height: 40rem;
     }
   }
@@ -199,5 +198,11 @@ const mailto = `mailto:${email}?subject=${encodeURIComponent('Interview prep ses
     .bk__cal {
       display: none;
     }
+  }
+
+  /* The block spans the column: a calendar squeezed into a text measure is
+     harder to read than the paragraph the measure exists for. */
+  .bk {
+    width: 100%;
   }
 </style>
