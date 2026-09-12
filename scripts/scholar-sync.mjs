@@ -116,6 +116,64 @@ if (!id) {
 const shortId = String(id).replace(/^https?:\/\/openalex\.org\//, '');
 const author = await get(`/authors/${shortId}`);
 
+/**
+ * OpenAlex disambiguates authors automatically and sometimes splits one person
+ * across several records. A split profile undercounts silently: the record we
+ * pinned looks healthy, it is just missing half the papers. So report what the
+ * aggregate is actually made of, and name any sibling record that looks like
+ * the same person, rather than trusting a single number.
+ */
+async function audit() {
+  const works = [];
+  let cursor = '*';
+  while (cursor) {
+    const page = await get(
+      `/works?filter=author.id:${shortId}&per-page=200&cursor=${encodeURIComponent(cursor)}` +
+        `&select=id,doi,title,publication_year,cited_by_count`,
+    );
+    works.push(...page.results);
+    cursor = page.results.length ? page.meta?.next_cursor : null;
+  }
+  const summed = works.reduce((total, work) => total + (work.cited_by_count ?? 0), 0);
+  console.log(`\n  ${works.length} works on this record, summing to ${summed} citations`);
+  for (const work of [...works].sort((a, b) => b.cited_by_count - a.cited_by_count)) {
+    console.log(
+      `    ${String(work.cited_by_count).padStart(4)}  ${work.publication_year}  ` +
+        `${(work.title ?? '').slice(0, 68)}`,
+    );
+  }
+
+  // Anyone else on OpenAlex answering to the same name.
+  const name = author.display_name ?? '';
+  const others = await get(
+    `/authors?search=${encodeURIComponent(name)}&per-page=25` +
+      `&select=id,display_name,works_count,cited_by_count`,
+  );
+  const siblings = (others.results ?? []).filter(
+    (other) => !String(other.id).endsWith(shortId) && isSamePerson(other.display_name ?? '', names),
+  );
+  if (siblings.length) {
+    console.log(`\n  OTHER OpenAlex records matching this name — the profile may be split:`);
+    let extra = 0;
+    for (const other of siblings) {
+      extra += other.cited_by_count ?? 0;
+      console.log(
+        `    ${other.id}  ${other.display_name}  ` +
+          `${other.works_count} works, ${other.cited_by_count} citations`,
+      );
+    }
+    console.log(`    combined with the pinned record: ${(author.cited_by_count ?? 0) + extra}`);
+  } else {
+    console.log('\n  No other OpenAlex record matches this name; the profile is not split.');
+  }
+}
+
+try {
+  await audit();
+} catch (err) {
+  console.log(`\n  (audit skipped: ${err})`);
+}
+
 const next = {
   citations: author.cited_by_count ?? 0,
   hIndex: author.summary_stats?.h_index ?? 0,
